@@ -1,0 +1,32 @@
+@startuml
+skinparam componentStyle rectangle
+
+package "Rhapsody Tool" {
+    [Rhapsody Application]
+    [Rhapsody Plugin]
+}
+
+package "Python Backend" {
+    [Requirement Processor]
+    [Design Generator]
+    [Code Extractor]
+    [Embedding Service]
+}
+
+package "External Services" {
+    [OpenAI API]
+    [ChromaDB]
+}
+
+[Rhapsody Application] --> [Rhapsody Plugin] : User Interaction
+[Rhapsody Plugin] --> [Requirement Processor] : Send Requirements
+[Rhapsody Plugin] --> [Design Generator] : Request UML Design
+[Rhapsody Plugin] --> [Code Extractor] : Send Reference Code
+[Requirement Processor] --> [Embedding Service] : Generate Text Embeddings
+[Design Generator] --> [OpenAI API] : Generate UML Design
+[Code Extractor] --> [Embedding Service] : Generate Code Embeddings
+[Embedding Service] --> [ChromaDB] : Store/Retrieve Embeddings
+[ChromaDB] --> [Embedding Service] : Query Results
+[Rhapsody Plugin] <-- [Python Backend] : Return UML Diagrams & Results
+
+@enduml
