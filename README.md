@@ -1,7 +1,10 @@
-# GenAI_Projects
-Generative AI Projects
+# Rhapsody plugin for GenAI
 
-This Project demonstrates the usage of Ollama and RAG with Ollama both Online documentation and PDF parsing.
+This Project demonstrates the plugin for Rhapsody that can offer Generative AI Support.
+
+# Plugin Architechture
+
+![alt text](images/image.png)
 
 # Python Environment Setup.
 Step1: 
@@ -26,10 +29,6 @@ python3 -m ipykernel install --user --name=<your_env_name>
 ```
 Step5:
 Select the newly created kernel in your notebook and run.
-
-# Plugin Architechture
-
-![alt text](images/image.png)
 
 # Steps for JAVA Setup in Linux (for Rhapsody plugin Compilation), and Rhapsody Pluggin Execution.
 Step1:
