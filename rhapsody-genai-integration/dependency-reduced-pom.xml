@@ -55,8 +55,14 @@
     </plugins>
   </build>
   <properties>
+<<<<<<< HEAD
     <rhapsody-api-systemPath>${project.basedir}/lib/rhapsody.jar</rhapsody-api-systemPath>
     <swt-systemPath>${project.basedir}/lib/org.eclipse.swt.win32.win32.x86_64-4.3.jar</swt-systemPath>
     <RHAPSODY_JAVA_API_LOCATION>C:\Program Files\IBM\Rhapsody\10.0.1\Share\JavaAPI</RHAPSODY_JAVA_API_LOCATION>
+=======
+    <RHAPSODY_JAVA_API_LOCATION>C:\Program Files\IBM\Rhapsody\10.0.1\Share\JavaAPI</RHAPSODY_JAVA_API_LOCATION>
+    <swt-systemPath>${project.basedir}/lib/org.eclipse.swt.win32.win32.x86_64-4.3.jar</swt-systemPath>
+    <rhapsody-api-systemPath>${project.basedir}/lib/rhapsody.jar</rhapsody-api-systemPath>
+>>>>>>> e322f23 (Rhapsody Plugin configuration and UI for Chatbot)
   </properties>
 </project>

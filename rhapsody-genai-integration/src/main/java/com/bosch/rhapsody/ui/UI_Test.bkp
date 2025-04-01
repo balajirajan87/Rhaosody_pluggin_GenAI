@@ -1,0 +1,297 @@
+package com.bosch.rhapsody.ui;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.internal.win32.OS;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+
+/**
+ * @author AI generated
+ */
+public class UI_Test {
+
+  public static void main(String[] args) {
+    UI_Test ui = new UI_Test();
+    ui.createUI();
+  }
+
+
+  /**
+   * @param shell   - shell input
+   * @param isOnTop - boolean to show shell in the top of the display
+   */
+  public final static void toggleAlwaysOnTop(Shell shell, boolean isOnTop) {
+    long handle = shell.handle;
+    org.eclipse.swt.graphics.Point location = shell.getLocation();
+    org.eclipse.swt.graphics.Point dimension = shell.getSize();
+    OS.SetWindowPos(handle, isOnTop ? OS.HWND_TOPMOST : OS.HWND_NOTOPMOST, location.x, location.y, dimension.x,
+        dimension.y, 0);
+  }
+
+
+  /**
+   * @param display - display input
+   * @param shell   - shell input
+   */
+  public static void setShellLocation(Display display, Shell shell) {
+    org.eclipse.swt.widgets.Monitor primary = display.getPrimaryMonitor();
+    org.eclipse.swt.graphics.Rectangle bounds = primary.getBounds();
+    int centerX = bounds.x + (bounds.width - shell.getSize().x) / 2;
+    int centerY = bounds.y + (bounds.height - shell.getSize().y) / 2;
+    shell.setLocation(centerX, centerY);
+  }
+
+  public void createUI() {
+
+    Display display = new Display();
+    Shell shell = new Shell(display);
+    setShellLocation(display, shell);
+    toggleAlwaysOnTop(shell, true);
+
+    shell.setText("UML diagram generator");
+    shell.setSize(800, 600);
+    shell.setLayout(new GridLayout(1, false));
+    Color blue = new Color(display, 82, 181, 230);
+
+    Image icon = new Image(display,
+        "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhaosody_pluggin_GenAI\\rhapsody-genai-integration\\src\\main\\resources\\getstarted.gif");
+    shell.setImage(icon);
+
+    CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
+    tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    tabFolder.setSimple(false);
+
+    // Tab 1: Text Input Section
+    CTabItem tab1 = new CTabItem(tabFolder, SWT.NONE);
+    tab1.setText("Requirement Input");
+
+    Composite tab1Composite = new Composite(tabFolder, SWT.NONE);
+    tab1Composite.setLayout(new GridLayout(1, false));
+    tab1.setControl(tab1Composite);
+
+    // Text Input Section
+    Label textLabel = new Label(tab1Composite, SWT.NONE);
+    textLabel.setText("Enter Requirement Text:");
+    textLabel.setFont(new Font(display, "Arial", 14, SWT.BOLD));
+    textLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    Text textInput = new Text(tab1Composite, SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.V_SCROLL);
+    textInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+    GridData textInputData = new GridData(SWT.FILL, SWT.FILL, true, false);
+    textInputData.heightHint = 100; // Increased height to 150 pixels
+    textInput.setLayoutData(textInputData);
+
+    Composite dragDropArea = new Composite(tab1Composite, SWT.BORDER);
+    dragDropArea.setLayout(new GridLayout(1, false));
+    dragDropArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    dragDropArea.setBackground(display.getSystemColor(SWT.COLOR_GRAY));
+    dragDropArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false)); // Adjusted height
+
+//    GridData dragDropAreaData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//    dragDropAreaData.heightHint = 80; // Decreased height to 100 pixels
+//    dragDropArea.setLayout(new GridLayout(2, false)); // Set layout with 2 columns
+//
+//    // Drag-and-Drop Text
+//    Label dragDropText = new Label(dragDropArea, SWT.CENTER);
+//    dragDropText.setText("Drag files here");
+//    dragDropText.setFont(new Font(display, "Arial", 14, SWT.BOLD)); // Bold font
+//    dragDropText.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
+//    dragDropText.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+//    dragDropText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    // Select File Button
+    Button selectFileButton = new Button(dragDropArea, SWT.PUSH);
+    selectFileButton.setText("Select File");
+    selectFileButton.setFont(new Font(display, "Arial", 12, SWT.BOLD)); // Bold font
+    selectFileButton.setForeground(display.getSystemColor(SWT.COLOR_WHITE)); // White text
+    selectFileButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+
+    Label fileListLabel = new Label(tab1Composite, SWT.NONE);
+    fileListLabel.setText("Uploaded Files:");
+    fileListLabel.setFont(new Font(display, "Arial", 14, SWT.BOLD));
+    fileListLabel.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
+    fileListLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    List fileList = new List(tab1Composite, SWT.BORDER | SWT.V_SCROLL);
+    fileList.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    fileList.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+    fileList.setForeground(display.getSystemColor(SWT.COLOR_BLACK));
+    fileList.setFont(new Font(display, "Courier New", 12, SWT.NORMAL));
+
+    selectFileButton.addListener(SWT.Selection, e -> {
+      FileDialog fileDialog = new FileDialog(shell, SWT.OPEN);
+      fileDialog.setText("Select a File");
+      fileDialog.setFilterPath(System.getProperty("user.home")); // Default to user's home directory
+      fileDialog.setFilterExtensions(new String[] { "*.*" }); // Allow all file types
+      String selectedFile = fileDialog.open();
+      if (selectedFile != null) {
+        fileList.add(selectedFile); // Add the selected file to the file list
+      }
+    });
+
+    Composite buttonRow1 = new Composite(tab1Composite, SWT.NONE);
+    GridLayout buttonRowLayout1 = new GridLayout(2, true); // Two columns for two buttons
+    buttonRow1.setLayout(buttonRowLayout1);
+    buttonRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    // Add "Remove Selected File" button
+    Button removeFileButton = new Button(buttonRow1, SWT.PUSH);
+    removeFileButton.setText("Remove Selected File");
+    removeFileButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    removeFileButton.addListener(SWT.Selection, e -> {
+      int selectedIndex = fileList.getSelectionIndex();
+      if (selectedIndex != -1) {
+        fileList.remove(selectedIndex);
+
+        // Highlight the immediate next item if any
+        if (selectedIndex < fileList.getItemCount()) {
+          fileList.select(selectedIndex); // Select the next item
+        }
+        else if (fileList.getItemCount() > 0) {
+          fileList.select(fileList.getItemCount() - 1); // Select the last item if no next item
+        }
+      }
+      else {
+        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
+        messageBox.setMessage("No file selected to remove.");
+        messageBox.open();
+      }
+    });
+
+    Button goToOutputButton = new Button(buttonRow1, SWT.PUSH);
+    goToOutputButton.setText("Go to Generated Output");
+    goToOutputButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    goToOutputButton.addListener(SWT.Selection, event -> tabFolder.setSelection(1));
+
+    // Move "Submit Text" button to the bottom middle
+    Button submitTextButton = new Button(tab1Composite, SWT.PUSH);
+    submitTextButton.setText("Submit");
+    submitTextButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+    GridData submitButtonData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+    submitButtonData.widthHint = 120; // Increased width
+    submitButtonData.heightHint = 40; // Increased height
+    submitTextButton.setLayoutData(submitButtonData);
+
+    // Add style
+    submitTextButton.setFont(new Font(display, "Arial", 12, SWT.BOLD)); // Bold font
+    submitTextButton.setBackground(display.getSystemColor(SWT.COLOR_BLUE)); // Blue background
+    submitTextButton.setForeground(display.getSystemColor(SWT.COLOR_WHITE)); // White text
+
+    submitTextButton.addListener(SWT.Selection, e -> {
+      if (textInput.getText().isEmpty()) { // Check if no files are uploaded
+        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
+        messageBox.setMessage("Please enter requirement text.");
+        messageBox.open();
+        return; // Stop further execution
+      }
+      if (fileList.getItemCount() == 0) { // Check if no files are uploaded
+        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
+        messageBox.setMessage("Please upload/select at least one file before submitting.");
+        messageBox.open();
+        return; // Stop further execution
+      }
+
+
+      String userText = textInput.getText();
+//      MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
+//      messageBox.setMessage("Text Submitted: " + userText);
+//      messageBox.open();
+    });
+
+//    // Drag-and-Drop Support
+//    DragSource dragSource = new DragSource(dragDropArea, DND.DROP_COPY | DND.DROP_MOVE);
+//    dragSource.setTransfer(new Transfer[] { FileTransfer.getInstance() });
+//
+//    DropTarget dropTarget = new DropTarget(dragDropArea, DND.DROP_COPY | DND.DROP_MOVE);
+//    dropTarget.setTransfer(new Transfer[] { FileTransfer.getInstance() });
+//
+//    dropTarget.addDropListener(new DropTargetAdapter() {
+//
+//      @Override
+//      public void drop(DropTargetEvent event) {
+//        if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
+//          String[] files = (String[]) event.data;
+//          for (String file : files) {
+//            fileList.add(file);
+//          }
+//        }
+//      }
+//    });
+
+    // Add padding and spacing for better layout
+    GridLayout layout = new GridLayout(1, false);
+    layout.marginWidth = 10;
+    layout.marginHeight = 10;
+    layout.verticalSpacing = 10;
+    shell.setLayout(layout);
+
+    CTabItem tab2 = new CTabItem(tabFolder, SWT.NONE);
+    tab2.setText("Generated Output");
+
+    Composite tab2Composite = new Composite(tabFolder, SWT.NONE);
+    tab2Composite.setLayout(new GridLayout(1, false));
+    tab2.setControl(tab2Composite);
+
+    Text nonEditableText = new Text(tab2Composite, SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.READ_ONLY);
+    nonEditableText.setText("Generated UML diagram details will appear here.");
+    GridData nonEditableTextData = new GridData(SWT.FILL, SWT.FILL, true, true);
+    nonEditableTextData.heightHint = 100;
+    nonEditableText.setLayoutData(nonEditableTextData);
+
+    // Composite for buttons
+    Composite buttonRow = new Composite(tab2Composite, SWT.NONE);
+    GridLayout buttonRowLayout = new GridLayout(2, true); // Two columns for two buttons
+    buttonRow.setLayout(buttonRowLayout);
+    buttonRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false)); // Positioned directly below
+                                                                              // nonEditableText
+
+    // Copy to Clipboard button
+    Button copyButton = new Button(buttonRow, SWT.PUSH);
+    copyButton.setText("Copy to Clipboard");
+    copyButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    copyButton.addListener(SWT.Selection, event -> {
+      Clipboard clipboard = new Clipboard(display);
+      clipboard.setContents(new Object[] { nonEditableText.getText() }, new Transfer[] { TextTransfer.getInstance() });
+      clipboard.dispose();
+    });
+
+    // Go to Requirement Input button
+    Button goToInputButton = new Button(buttonRow, SWT.PUSH);
+    goToInputButton.setText("Go to Requirement Input");
+    goToInputButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    goToInputButton.addListener(SWT.Selection, event -> tabFolder.setSelection(0));
+
+    // Set the first tab as selected
+    tabFolder.setSelection(0);
+
+    // Open the Shell
+    shell.open();
+    while (!shell.isDisposed()) {
+      if (!display.readAndDispatch()) {
+        display.sleep();
+      }
+    }
+    display.dispose();
+  }
+
+
+}
