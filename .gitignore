@@ -1,0 +1,9 @@
+myvenv/
+.vscode
+myvenv/
+myenv/
+persistent_dir*/
+ExtractedImages/
+.github*/
+*.json
+*_Docs/

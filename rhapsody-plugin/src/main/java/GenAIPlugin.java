@@ -7,6 +7,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+private java.util.List<String> loadedDocuments = new ArrayList<>();
+
 public class GenAIPlugin {
     private IRPApplication rhapsodyApp;
     private Process pythonBackendProcess;
@@ -60,6 +62,138 @@ public class GenAIPlugin {
         }
     }
 
+    public void loadDocuments() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setMultiSelectionEnabled(true);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Files", "pdf"));
+        int result = fileChooser.showOpenDialog(null);
+    
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File[] selectedFiles = fileChooser.getSelectedFiles();
+            for (File file : selectedFiles) {
+                loadedDocuments.add(file.getAbsolutePath());
+            }
+            JOptionPane.showMessageDialog(null, "Documents loaded successfully.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    public void embedRequirementDocuments() {
+        if (loadedDocuments.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No documents loaded. Please load documents first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        try {
+            // Backend URL
+            String backendUrl = "http://localhost:5000/embed_requirement_documents";
+    
+            // Create HTTP connection
+            URL url = new URL(backendUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+    
+            // Create JSON payload
+            String payload = new Gson().toJson(loadedDocuments);
+    
+            // Send JSON payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = payload.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+    
+            // Read response
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                JOptionPane.showMessageDialog(null, " Requirement Documents embedded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to embed Requirement documents. Backend returned error: " + responseCode, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void embedReferenceDocuments() {
+        if (loadedDocuments.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No documents loaded. Please load documents first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        try {
+            // Backend URL
+            String backendUrl = "http://localhost:5000/embed_reference_documents";
+    
+            // Create HTTP connection
+            URL url = new URL(backendUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+    
+            // Create JSON payload
+            String payload = new Gson().toJson(loadedDocuments);
+    
+            // Send JSON payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = payload.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+    
+            // Read response
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                JOptionPane.showMessageDialog(null, " Reference Documents embedded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to embed Reference documents. Backend returned error: " + responseCode, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void embedGuideLineDocuments() {
+        if (loadedDocuments.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No documents loaded. Please load documents first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        try {
+            // Backend URL
+            String backendUrl = "http://localhost:5000/embed_guideline_documents";
+    
+            // Create HTTP connection
+            URL url = new URL(backendUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+    
+            // Create JSON payload
+            String payload = new Gson().toJson(loadedDocuments);
+    
+            // Send JSON payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = payload.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+    
+            // Read response
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                JOptionPane.showMessageDialog(null, " guideline Documents embedded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to embed guideline documents. Backend returned error: " + responseCode, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void generateUMLDesign() {
         try {
             // Prompt user to input requirement text
@@ -96,7 +230,7 @@ public class GenAIPlugin {
     private String sendRequirementToBackend(String requirementText) {
         try {
             // Backend URL (update this to match your Python backend's URL)
-            String backendUrl = "http://localhost:5000/create_uml_design";
+            String backendUrl = "http://localhost:5000/summarize_requirements";
 
             // Create HTTP connection
             URL url = new URL(backendUrl);

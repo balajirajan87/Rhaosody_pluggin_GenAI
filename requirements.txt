@@ -1,0 +1,7 @@
+requests
+numpy
+pillow
+flask
+pymupdf
+flask-cors
+chromadb  # Needs to be installed via pip
