@@ -6,28 +6,39 @@ This Project demonstrates the plugin for Rhapsody that can offer Generative AI S
 
 ![alt text](images/image.png)
 
-# Python Environment Setup.
+# Python Environment Setup for Windows
 Step1: 
-create a python virtual Environment
+install Anaconda Distribution for Windows from ITSP:
+https://service-management.bosch.tech/sp?id=sc_cat_item&sys_id=b08ed16c1b83c91078087403dd4bcbb1
+![alt text](images/Anaconda_installation.png)
+Step2:
+Activate your Conda to enable python:
 ```
-python3 -m venv myvenv
+Conda list <command to list your conda environments>
+conda create --name <command to create your own conda env>
+conda activate <your env / base>
+```
+Step3
+create a python virtual Environment (local to your project)
+```
+python -m venv myvenv
 ```
 Step2:
 Activate your Virtual Environment:
 ```
-source myvenv/bin/activate
+./myvenv/Scripts/activate
 ```
-Step3:
+Step4:
 install the pip packages available as listed in the requirements.txt
 ```
 pip install -r requirements.txt
 ```
-Step4:
+Step4 (optional: only if you are using Jupyter notebook):
 create a new Jupyter kernel to run your jupyter notebook.
 ```
 python3 -m ipykernel install --user --name=<your_env_name>
 ```
-Step5:
+Step5 (optional: only if you are using Jupyter notebook):
 Select the newly created kernel in your notebook and run.
 
 # Steps for JAVA Setup in Linux (for Rhapsody plugin Compilation), and Rhapsody Pluggin Execution.
