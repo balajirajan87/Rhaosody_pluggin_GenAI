@@ -10,6 +10,7 @@ import os
 from PIL import Image
 from flask import Flask, request, jsonify
 import io
+from flask_cors import CORS
 
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "text-embedding-3-small"
@@ -29,6 +30,13 @@ REQUIREMENT_METADATA_FILE = "Requirement_pdf_metadata.json"
 REFERENCE_DATA_METADATA_FILE = "Reference_pdf_metadata.json"
 GUIDELINE_DATA_METADATA_FILE = "Guideline_pdf_metadata.json"
 REFERENCE_CODE_METADATA_FILE = "Reference_Code_metadata.json"
+
+req_collection = None
+ref_collection = None
+code_collection = None
+guideline_collection = None
+
+print(f"Current working directory: {os.getcwd()}")
 
 # Function to calculate MD5 hash of a PDF file
 def calculate_pdf_hash(pdf_path):
@@ -180,7 +188,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
                 print("Embedding not found in response")
                 return None
             except requests.exceptions.RequestException as e:
-                if response.status_code == 429:
+                if 'response' in locals() and response.status_code == 429:
                     # Handle rate limiting
                     print(f"Rate limit exceeded. Retrying in {self.backoff_factor * (2 ** attempt)} seconds...")
                     time.sleep(self.backoff_factor * (2 ** attempt))
@@ -818,6 +826,7 @@ def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry,
     return uml_design
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for cross-origin requests
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -826,6 +835,106 @@ def handle_exception(e):
         "message": "An error occurred while processing your request."
     }
     return jsonify(response), 500
+
+@app.route('/embed_requirement_documents', methods=['POST'])
+def embed_requirement_documents():
+    """
+    API endpoint to receive Requirement document paths and embed them.
+    """
+    try:
+        # Parse the JSON payload
+        data = request.get_json()
+        if not data or not isinstance(data, list):
+            return jsonify({"error": "Invalid input. Expected a list of file paths."}), 400
+
+        # Initialize Chroma client and metadata
+        collection_name = "reqs"  # Adjust collection name as needed
+        Reqclient, req_collection = init_chroma_client(collection_name)
+        for pdf_path in data:
+            if os.path.exists(pdf_path):
+                process_all_pdfs(pdf_path, req_collection, REQUIREMENT_METADATA_FILE)
+            else:
+                print(f"File not found: {pdf_path}")
+
+        return jsonify({"message": "Requirement Documents embedded successfully."}), 200
+    except Exception as e:
+        print(f"Error embedding documents: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/embed_reference_documents', methods=['POST'])
+def embed_reference_documents():
+    """
+    API endpoint to receive Reference Data document paths and embed them.
+    """
+    try:
+        # Parse the JSON payload
+        data = request.get_json()
+        if not data or not isinstance(data, list):
+            return jsonify({"error": "Invalid input. Expected a list of file paths."}), 400
+
+        # Initialize Chroma client and metadata
+        collection_name = "refs"  # Adjust collection name as needed
+        Refclient, ref_collection = init_chroma_client(collection_name)
+        for pdf_path in data:
+            if os.path.exists(pdf_path):
+                process_all_pdfs(pdf_path, ref_collection, REFERENCE_DATA_METADATA_FILE)
+            else:
+                print(f"File not found: {pdf_path}")
+
+        return jsonify({"message": "Reference Documents embedded successfully."}), 200
+    except Exception as e:
+        print(f"Error embedding documents: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/embed_code_documents', methods=['POST'])
+def embed_code_documents():
+    """
+    API endpoint to receive Reference Data document paths and embed them.
+    """
+    try:
+        # Parse the JSON payload
+        data = request.get_json()
+        if not data or not isinstance(data, list):
+            return jsonify({"error": "Invalid input. Expected a list of file paths."}), 400
+
+        # Initialize Chroma client and metadata
+        collection_name = "code"  # Adjust collection name as needed
+        ReferenceCodeClient, code_collection = init_chroma_client(collection_name)
+        for pdf_path in data:
+            if os.path.exists(pdf_path):
+                process_reference_code(pdf_path, code_collection, REFERENCE_CODE_METADATA_FILE)
+            else:
+                print(f"File not found: {pdf_path}")
+
+        return jsonify({"message": "Source Code embedded successfully."}), 200
+    except Exception as e:
+        print(f"Error embedding documents: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/embed_guideline_documents', methods=['POST'])
+def embed_guideline_documents():
+    """
+    API endpoint to receive Design Guidelines Data document paths and embed them.
+    """
+    try:
+        # Parse the JSON payload
+        data = request.get_json()
+        if not data or not isinstance(data, list):
+            return jsonify({"error": "Invalid input. Expected a list of file paths."}), 400
+
+        # Initialize Chroma client and metadata
+        collection_name = "UML"  # Adjust collection name as needed
+        guidelineclient, guideline_collection = init_chroma_client(collection_name)
+        for pdf_path in data:
+            if os.path.exists(pdf_path):
+                process_all_pdfs(pdf_path, guideline_collection, REFERENCE_DATA_METADATA_FILE)
+            else:
+                print(f"File not found: {pdf_path}")
+
+        return jsonify({"message": "Requirement Documents embedded successfully."}), 200
+    except Exception as e:
+        print(f"Error embedding documents: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/summarize_requirements', methods=['POST'])
 def summarize_requirements_api():
@@ -838,14 +947,14 @@ def summarize_requirements_api():
 def extract_design_information_api():
     data = request.json
     requirements_summary = data.get('requirements_summary', '')
-    design_info = extract_design_information(requirements_summary, desgn_collection)
+    design_info = extract_design_information(requirements_summary, ref_collection)
     return jsonify({"design_info": design_info})
 
 @app.route('/extract_code_information', methods=['POST'])
 def extract_code_information_api():
     data = request.json
     requirements_summary = data.get('requirements_summary', '')
-    code_design_info = extract_code_information(requirements_summary, reference_code_collection)
+    code_design_info = extract_code_information(requirements_summary, code_collection)
     return jsonify({"code_design_info": code_design_info})
 
 @app.route('/create_uml_design', methods=['POST'])
@@ -859,44 +968,5 @@ def create_uml_design_api():
     return jsonify({"uml_design": uml_design})
 
 if __name__ == "__main__":
-    req_directory = "ReqDocs"
-    desgn_directory = "ReferenceDocs"
-    Design_guideline_directory = "ReferenceUMLDesignDocs"
-    reference_code_directory = "ReferenceCode"
-
-    # Initialize Chroma clients and collections
-    Reqclient, req_collection = init_chroma_client("reqs")
-    Desgnclient, desgn_collection = init_chroma_client("refs")
-    guidelineclient, guideline_collection = init_chroma_client("UML")
-    ReferenceCodeClient, reference_code_collection = init_chroma_client("code")
-
-    # Get user input for feature and UML diagram
-    # feature_input = input("Enter the feature you want to extract requirements for: ")
-    # UML_Diagram = input("Enter the type of UML diagram you want to create (e.g., Sequence Diagram, Class Diagram): ")
-
-    # Process all PDFs
-    process_all_pdfs(req_directory, req_collection, REQUIREMENT_METADATA_FILE)
-    process_all_pdfs(desgn_directory, desgn_collection, REFERENCE_DATA_METADATA_FILE)
-    process_all_pdfs(Design_guideline_directory, guideline_collection, GUIDELINE_DATA_METADATA_FILE)
-    process_reference_code(reference_code_directory, reference_code_collection, REFERENCE_CODE_METADATA_FILE)
-
-    """
-    feature_query = f"Extract all requirements related to {feature_input}."
-    requirements_summary = summarize_requirements(feature_query, req_collection)
-    print("Requirements Summary:", requirements_summary)
-
-    
-    design_info = extract_design_information(requirements_summary, desgn_collection)
-    print("Design Information:", design_info)
-
-    
-    code_design_info = extract_code_information(requirements_summary, reference_code_collection)
-    print("Code Design Information: ", code_design_info)
-
-    
-    design_querry = f"Extract the guidelines related to {UML_Diagram}"
-    uml_design = create_uml_design(design_info, code_design_info, design_querry, guideline_collection)
-    print("UML Design:", uml_design)
-    """
     # Start Flask server
     app.run(host='0.0.0.0', port=5000)
