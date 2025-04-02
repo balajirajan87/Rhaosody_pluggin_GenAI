@@ -12,10 +12,10 @@
 			<_id type="a">GUID 4b86ab5f-e7de-448a-803f-b023a5406bb7</_id>
 			<_myState type="a">8192</_myState>
 			<_name type="a">Default</_name>
-			<_modifiedTimeWeak type="a">3.27.2025::5:46:41</_modifiedTimeWeak>
-			<_modifiedTime type="a">3.27.2025::5:46:41</_modifiedTime>
-			<_lastID type="a">1</_lastID>
-			<weakCGTime type="a">3.27.2025::5:46:41</weakCGTime>
+			<_modifiedTimeWeak type="a">4.1.2025::12:8:54</_modifiedTimeWeak>
+			<_modifiedTime type="a">4.1.2025::12:8:54</_modifiedTime>
+			<_lastID type="a">3</_lastID>
+			<weakCGTime type="a">4.1.2025::12:8:54</weakCGTime>
 			<strongCGTime type="a">1.2.1990::0:0:0</strongCGTime>
 			<_defaultComposite type="s">GUID 7894f864-fc6f-46ab-8040-beba5975192a</_defaultComposite>
 			<_eventsBaseID type="a">-1</_eventsBaseID>
@@ -23,6 +23,8 @@
 			<AggregatesList type="e">
 				<value>GUID 7894f864-fc6f-46ab-8040-beba5975192a</value>
 				<value>GUID 99da0ea7-b315-49b5-8ea6-fbe8347eb27d</value>
+				<value>GUID c0f2fd81-beaf-4561-bc48-171b3bf06a3c</value>
+				<value>GUID ca3e9a92-a9be-4275-abf0-4077b764a128</value>
 			</AggregatesList>
 		</ISubsystem>
 		<IClass type="e">
@@ -40,49 +42,51 @@
 			<_classModifier type="a">Unspecified</_classModifier>
 		</IClass>
 		<IClass type="e">
+			<fileName type="a">class_0</fileName>
 			<_id type="a">GUID 99da0ea7-b315-49b5-8ea6-fbe8347eb27d</_id>
+		</IClass>
+		<IClass type="e">
+			<_id type="a">GUID c0f2fd81-beaf-4561-bc48-171b3bf06a3c</_id>
 			<_myState type="a">10240</_myState>
-			<_name type="a">class_0</_name>
-			<_modifiedTimeWeak type="a">3.27.2025::5:47:2</_modifiedTimeWeak>
-			<_modifiedTime type="a">3.27.2025::5:47:2</_modifiedTime>
-			<_lastID type="a">1</_lastID>
-			<weakCGTime type="a">3.27.2025::5:47:2</weakCGTime>
-			<strongCGTime type="a">3.27.2025::5:46:41</strongCGTime>
+			<_name type="a">class_1</_name>
+			<_modifiedTimeWeak type="a">4.1.2025::12:8:53</_modifiedTimeWeak>
+			<_theMainDiagram type="r">
+				<IHandle type="e">
+					<_hm2Class type="a">IDiagram</_hm2Class>
+					<_hname type="a">Model1</_hname>
+					<_hid type="a">GUID bb0b0c4f-210f-4b4f-9c6f-c1e2c8f269b1</_hid>
+				</IHandle>
+			</_theMainDiagram>
+			<_modifiedTime type="a">4.1.2025::12:8:53</_modifiedTime>
+			<weakCGTime type="a">4.1.2025::12:8:53</weakCGTime>
+			<strongCGTime type="a">4.1.2025::12:8:53</strongCGTime>
 			<_itsStateChart type="r">
 				<IHandle type="e">
 				</IHandle>
 			</_itsStateChart>
 			<_classModifier type="a">Unspecified</_classModifier>
-			<AggregatesList type="e">
-				<value>GUID 99a13397-d10d-4413-825a-d5e53a0587ed</value>
-			</AggregatesList>
 		</IClass>
-		<IPrimitiveOperation type="e">
-			<_id type="a">GUID 99a13397-d10d-4413-825a-d5e53a0587ed</_id>
+		<IClass type="e">
+			<_id type="a">GUID ca3e9a92-a9be-4275-abf0-4077b764a128</_id>
 			<_myState type="a">10240</_myState>
-			<_name type="a">Operation_0</_name>
-			<_modifiedTimeWeak type="a">3.27.2025::5:47:2</_modifiedTimeWeak>
-			<_modifiedTime type="a">3.27.2025::5:47:2</_modifiedTime>
-			<_virtual type="a">0</_virtual>
-			<Args type="c">
-				<IRPYRawContainer type="e">
-				</IRPYRawContainer>
-			</Args>
-			<_returnType type="r">
+			<_name type="a">class_2</_name>
+			<_modifiedTimeWeak type="a">4.1.2025::12:8:54</_modifiedTimeWeak>
+			<_theMainDiagram type="r">
 				<IHandle type="e">
-					<_hm2Class type="a">IType</_hm2Class>
-					<_hsubsystem type="a">PredefinedTypesCpp</_hsubsystem>
-					<_hname type="a">void</_hname>
-					<_hid type="a">GUID c6b70728-b655-45a0-abb7-8ea5d3da94be</_hid>
+					<_hm2Class type="a">IDiagram</_hm2Class>
+					<_hname type="a">Model1</_hname>
+					<_hid type="a">GUID bb0b0c4f-210f-4b4f-9c6f-c1e2c8f269b1</_hid>
 				</IHandle>
-			</_returnType>
-			<_abstract type="a">0</_abstract>
-			<_final type="a">0</_final>
-			<_concurrency type="a">Sequential</_concurrency>
-			<_protection type="a">iPublic</_protection>
-			<_static type="a">0</_static>
-			<_constant type="a">0</_constant>
-		</IPrimitiveOperation>
+			</_theMainDiagram>
+			<_modifiedTime type="a">4.1.2025::12:8:54</_modifiedTime>
+			<weakCGTime type="a">4.1.2025::12:8:54</weakCGTime>
+			<strongCGTime type="a">4.1.2025::12:8:54</strongCGTime>
+			<_itsStateChart type="r">
+				<IHandle type="e">
+				</IHandle>
+			</_itsStateChart>
+			<_classModifier type="a">Unspecified</_classModifier>
+		</IClass>
 		
 	</RHAPSODY-MODEL>
 	<OslcLinks type="c">

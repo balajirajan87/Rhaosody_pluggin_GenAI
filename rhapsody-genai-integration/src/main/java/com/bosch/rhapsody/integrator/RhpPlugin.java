@@ -35,9 +35,14 @@ public class RhpPlugin extends RPUserPlugin {
   @Override
   public void OnMenuItemSelect(String menuItem) {
     if (menuItem.equals("Generate UML Design")) {
-      UI ui = new UI();
-      ui.createUI();
-            // Call the GenAIHandler class to generate UML design
+      UI ui = new UI(genAiHandler);
+      try {
+        ui.createUI();
+      }
+      catch (Exception e) {
+        rhapsodyApp.writeToOutputWindow("GenAIPlugin", e.getMessage());
+      }
+      // Call the GenAIHandler class to generate UML design
       // genAiHandler.generateUMLDesign();
     }
   }

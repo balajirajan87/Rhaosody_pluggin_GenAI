@@ -1,5 +1,7 @@
 package com.bosch.rhapsody.ui;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -8,13 +10,6 @@ import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.DropTarget;
-import org.eclipse.swt.dnd.DropTargetAdapter;
-import org.eclipse.swt.dnd.DropTargetEvent;
-import org.eclipse.swt.dnd.FileTransfer;
-import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -36,13 +31,27 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.integrator.GenAiHandler;
+import com.telelogic.rhapsody.core.IRPApplication;
+import com.telelogic.rhapsody.core.RhapsodyAppServer;
+
 /**
  * @author AI generated
  */
 public class UI {
 
+  GenAiHandler genAiHandler = null;
+
+  public UI(GenAiHandler genAiHandler) {
+    this.genAiHandler = genAiHandler;
+  }
+
+
   public static void main(String[] args) {
-    UI ui = new UI();
+    IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+    GenAiHandler aiHandler = new GenAiHandler(app);
+    UI ui = new UI(aiHandler);
     ui.createUI();
   }
 
@@ -74,7 +83,6 @@ public class UI {
 
   public void createUI() {
 
-
     Map<String, ArrayList<String>> dropdownFileMapping = new HashMap<>();
 
     Display display = new Display();
@@ -85,11 +93,12 @@ public class UI {
     shell.setText("UML diagram generator");
     shell.setSize(800, 600);
     shell.setLayout(new GridLayout(1, false));
-    Color blue = new Color(display, 82, 181, 230);
 
-    Image icon = new Image(display,
-        "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhaosody_pluggin_GenAI\\rhapsody-genai-integration\\src\\main\\resources\\getstarted.gif");
-    shell.setImage(icon);
+    // URL fullPathString = getClass().getResource("/resources/getstarted.gif");
+
+    // Image icon = new Image(display,
+    //     "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhaosody_pluggin_GenAI\\rhapsody-genai-integration\\src\\main\\resources\\getstarted.gif");
+    // shell.setImage(icon);
 
     CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
     tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -115,7 +124,7 @@ public class UI {
     dropdownCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
     // Add three inputs to the combo list
-    dropdownCombo.setItems(new String[] { "Option 1", "Option 2", "Option 3" });
+    dropdownCombo.setItems(Constants.options);
 
     // Initialize mapping for each dropdown option
     for (String option : dropdownCombo.getItems()) {
@@ -137,14 +146,22 @@ public class UI {
     selectFileButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
     selectFileButton.setEnabled(false);
 
-    // Add a listener to handle selection events
-    dropdownCombo.addListener(SWT.Selection, e -> {
-      String selectedOption = dropdownCombo.getText();
-      selectFileButton.setEnabled(dropdownCombo.getSelectionIndex() != -1);
-      dragDropArea.setEnabled(true);
-      System.out.println("Selected option: " + selectedOption);
-    });
 
+    GridData dragDropAreaData = new GridData(SWT.FILL, SWT.FILL, true, false);
+    dragDropAreaData.heightHint = 80; // Decreased height to 100 pixels
+    dragDropArea.setLayout(new GridLayout(2, false)); // Set layout with 2 columns
+
+    // Drag-and-Drop Text
+    // Label dragDropText = new Label(dragDropArea, SWT.CENTER);
+    // dragDropText.setText("Drag files here");
+    // dragDropText.setFont(new Font(display, "Arial", 14, SWT.BOLD)); // Bold font
+    // dragDropText.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
+    // dragDropText.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+    // dragDropText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+
+    // DropTarget dropTarget = new DropTarget(dragDropArea, DND.DROP_COPY | DND.DROP_MOVE);
+    // dropTarget.setTransfer(new Transfer[] { FileTransfer.getInstance() });
 
     Label fileListLabel = new Label(tab1Composite, SWT.NONE);
     fileListLabel.setText("Selected Files:");
@@ -158,12 +175,59 @@ public class UI {
     fileList.setForeground(display.getSystemColor(SWT.COLOR_BLACK));
     fileList.setFont(new Font(display, "Courier New", 12, SWT.NORMAL));
 
+
+    Composite buttonRow1 = new Composite(tab1Composite, SWT.NONE);
+    GridLayout buttonRowLayout1 = new GridLayout(2, true); // Two columns for two buttons
+    buttonRow1.setLayout(buttonRowLayout1);
+    buttonRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+
+    // Add a status text box below the file list
+    Text statusTextBoxTab1 = new Text(tab1Composite, SWT.BORDER | SWT.READ_ONLY | SWT.WRAP);
+    statusTextBoxTab1.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false));
+    statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
+    statusTextBoxTab1.setText("Status: Ready");
+
+    // Add "Remove Selected File" button
+    Button removeFileButton = new Button(buttonRow1, SWT.PUSH);
+    removeFileButton.setText("Remove Selected File");
+    removeFileButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    Button goToOutputButton = new Button(buttonRow1, SWT.PUSH);
+    goToOutputButton.setText("Go to chat");
+    goToOutputButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    goToOutputButton.addListener(SWT.Selection, event -> tabFolder.setSelection(1));
+
+// Move "Submit Text" button to the bottom middle
+    Button uploadTextButton = new Button(tab1Composite, SWT.PUSH);
+    uploadTextButton.setText("Upload files");
+    uploadTextButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+    GridData submitButtonData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+    submitButtonData.widthHint = 120; // Increased width
+    submitButtonData.heightHint = 40; // Increased height
+    uploadTextButton.setLayoutData(submitButtonData);
+
+// Add style
+    uploadTextButton.setFont(new Font(display, "Arial", 12, SWT.BOLD)); // Bold font
+    uploadTextButton.setBackground(display.getSystemColor(SWT.COLOR_BLUE)); // Blue background
+    uploadTextButton.setForeground(display.getSystemColor(SWT.COLOR_WHITE)); // White text
+
+    // Add a listener to handle selection events
+    dropdownCombo.addListener(SWT.Selection, e -> {
+      String selectedOption = dropdownCombo.getText();
+      selectFileButton.setEnabled(dropdownCombo.getSelectionIndex() != -1);
+      dragDropArea.setEnabled(true);
+      statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+      statusTextBoxTab1.setText("Status: Option selected - " + selectedOption);
+      fileList.removeAll();
+    });
+
     selectFileButton.addListener(SWT.Selection, e -> {
       FileDialog fileDialog = new FileDialog(shell, SWT.OPEN);
       // Update the file selection logic
       fileDialog.setText("Select a File");
       fileDialog.setFilterPath(System.getProperty("user.home")); // Default to user's home directory
-      fileDialog.setFilterExtensions(new String[] { "*.*" }); // Allow all file types
+      fileDialog.setFilterExtensions(new String[] { "*.pdf" }); // Restrict to PDF file type
       String selectedFile = fileDialog.open();
       if (selectedFile != null) {
         String selectedOption = dropdownCombo.getText();
@@ -175,19 +239,12 @@ public class UI {
         else {
           fileList.add(selectedFile);
           dropdownFileMapping.get(selectedOption).add(selectedFile);
+          String fileName = new java.io.File(selectedFile).getName();
+          statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+          statusTextBoxTab1.setText("Status: Seleted file " + fileName);
         }
       }
     });
-
-    Composite buttonRow1 = new Composite(tab1Composite, SWT.NONE);
-    GridLayout buttonRowLayout1 = new GridLayout(2, true); // Two columns for two buttons
-    buttonRow1.setLayout(buttonRowLayout1);
-    buttonRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-    // Add "Remove Selected File" button
-    Button removeFileButton = new Button(buttonRow1, SWT.PUSH);
-    removeFileButton.setText("Remove Selected File");
-    removeFileButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
     removeFileButton.addListener(SWT.Selection, e -> {
       int selectedIndex = fileList.getSelectionIndex();
@@ -197,10 +254,14 @@ public class UI {
 
         String selectedOption = dropdownCombo.getText();
         ArrayList<String> arrayList = dropdownFileMapping.get(selectedOption);
-
+        ArrayList<String> removedFileNames = new ArrayList<>();
         for (String selectedItem : selectedItems) {
           arrayList.remove(selectedItem);// Remove from the dropdownFileMapping
+          String fileName = new java.io.File(selectedItem).getName();
+          removedFileNames.add(fileName);
         }
+        statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
+        statusTextBoxTab1.setText("Status: File removed " + String.join(", ", removedFileNames));
 
         // Highlight the immediate next item if any
         if (selectedIndex < fileList.getItemCount()) {
@@ -217,65 +278,50 @@ public class UI {
       }
     });
 
-    Button goToOutputButton = new Button(buttonRow1, SWT.PUSH);
-    goToOutputButton.setText("Go to chat");
-    goToOutputButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-    goToOutputButton.addListener(SWT.Selection, event -> tabFolder.setSelection(1));
-
-    // Move "Submit Text" button to the bottom middle
-    Button submitTextButton = new Button(tab1Composite, SWT.PUSH);
-    submitTextButton.setText("Submit");
-    submitTextButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
-    GridData submitButtonData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-    submitButtonData.widthHint = 120; // Increased width
-    submitButtonData.heightHint = 40; // Increased height
-    submitTextButton.setLayoutData(submitButtonData);
-
-    // Add style
-    submitTextButton.setFont(new Font(display, "Arial", 12, SWT.BOLD)); // Bold font
-    submitTextButton.setBackground(display.getSystemColor(SWT.COLOR_BLUE)); // Blue background
-    submitTextButton.setForeground(display.getSystemColor(SWT.COLOR_WHITE)); // White text
-
-    submitTextButton.addListener(SWT.Selection, e -> {
+    uploadTextButton.addListener(SWT.Selection, e -> {
       if (fileList.getItemCount() == 0) { // Check if no files are uploaded
         MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
         messageBox.setMessage("Please upload/select at least one file before submitting.");
         messageBox.open();
         return; // Stop further execution
       }
-      // trigger background training
-
-
-    });
-
-    GridData dragDropAreaData = new GridData(SWT.FILL, SWT.FILL, true, false);
-    dragDropAreaData.heightHint = 80; // Decreased height to 100 pixels
-    dragDropArea.setLayout(new GridLayout(2, false)); // Set layout with 2 columns
-
-    // Drag-and-Drop Text
-    Label dragDropText = new Label(dragDropArea, SWT.CENTER);
-    dragDropText.setText("Drag files here");
-    dragDropText.setFont(new Font(display, "Arial", 14, SWT.BOLD)); // Bold font
-    dragDropText.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
-    dragDropText.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
-    dragDropText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-
-    DropTarget dropTarget = new DropTarget(dragDropArea, DND.DROP_COPY | DND.DROP_MOVE);
-    dropTarget.setTransfer(new Transfer[] { FileTransfer.getInstance() });
-
-    dropTarget.addDropListener(new DropTargetAdapter() {
-
-      @Override
-      public void drop(DropTargetEvent event) {
-        if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
-          String[] files = (String[]) event.data;
-          for (String file : files) {
-            fileList.add(file);
-          }
-        }
+      statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
+      statusTextBoxTab1.setText("Status: Uploading documents, please wait...");
+      statusTextBoxTab1.update();
+      int responseCode = uploadDoc(dropdownCombo.getText(), fileList);
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+        statusTextBoxTab1.setText("Status: PDF file uploaded successfully.");
+      }
+      else {
+        statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
+        statusTextBoxTab1.setText("Status: Failed to upload PDF file.");
       }
     });
+
+
+    // dropTarget.addDropListener(new DropTargetAdapter() {
+
+    // @Override
+    // public void drop(DropTargetEvent event) {
+    // if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
+    // String[] files = (String[]) event.data;
+    // for (String file : files) {
+    // if (file.toLowerCase().endsWith(".pdf")) { // Allow only PDF files
+    // fileList.add(file);
+    // String fileName = new java.io.File(file).getName();
+    // statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+    // statusTextBoxTab1.setText("Status: Selected file " + fileName);
+    // }
+    // else {
+    // MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
+    // messageBox.setMessage("Only PDF files are allowed.");
+    // messageBox.open();
+    // }
+    // }
+    // }
+    // }
+    // });
 
     // Add padding and spacing for better layout
     GridLayout layout = new GridLayout(1, false);
@@ -304,7 +350,6 @@ public class UI {
 
     // List to store chat messages
     LinkedList<String> chatMessages = new LinkedList<>();
-
 
     // Draw chat messages
     chatDisplay.addPaintListener(e -> {
@@ -345,6 +390,8 @@ public class UI {
           gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
         }
         else {
+          // Clipboard clipboard = new Clipboard(display);
+          // clipboard.setContents(new Object[] {message}, new Transfer[] { TextTransfer.getInstance() });
           gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
         }
 
@@ -423,18 +470,6 @@ public class UI {
       }
     });
 
-
-//    // Copy to Clipboard button
-//    Button copyButton = new Button(buttonRow, SWT.PUSH);
-//    copyButton.setText("Copy to Clipboard");
-//    copyButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-//    copyButton.addListener(SWT.Selection, event -> {
-//      Clipboard clipboard = new Clipboard(display);
-//      clipboard.setContents(new Object[] { nonEditableText.getText() }, new Transfer[] { TextTransfer.getInstance() });
-//      clipboard.dispose();
-//    });
-
-
     // Set the first tab as selected
     tabFolder.setSelection(0);
 
@@ -479,7 +514,18 @@ public class UI {
   // Simulated bot response generation
   private String generateBotResponse(String userMessage) {
     // Replace this with actual chatbot logic
-    return  userMessage;
+    return userMessage;
+  }
+
+
+  private int uploadDoc(String docType, List fileList) {
+    StringBuilder filePaths = new StringBuilder();
+    for (String filePath : fileList.getItems()) {
+      filePaths.append(filePath).append(";");
+    }
+
+    return genAiHandler.sendRequestToBackend(docType, filePaths);
+
   }
 
   // Function to add a new message and scroll to the latest message

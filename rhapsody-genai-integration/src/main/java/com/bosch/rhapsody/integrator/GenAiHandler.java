@@ -7,14 +7,20 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 
+import com.google.gson.Gson;
 import com.telelogic.rhapsody.core.IRPApplication;
-import com.telelogic.rhapsody.core.IRPModelElement;
-import com.telelogic.rhapsody.core.RhapsodyAppServer;
 
+/**
+ * @author DHP4COB
+ */
 public class GenAiHandler {
+
+  String urlTemp = "http://10.169.242.230:5000/";
 
   private Process pythonBackendProcess;
 
@@ -22,11 +28,14 @@ public class GenAiHandler {
 
   public static void main(String[] args) {
 
-    GenAiHandler plugin = new GenAiHandler(RhapsodyAppServer.getActiveRhapsodyApplication());
+//    GenAiHandler plugin = new GenAiHandler(RhapsodyAppServer.getActiveRhapsodyApplication());
     // plugin.startPythonBackend();
-    plugin.generateUMLDesign();
+    // plugin.generateUMLDesign();
   }
 
+  /**
+   * @param rhapsodyApp2
+   */
   public GenAiHandler(IRPApplication rhapsodyApp2) {
     this.rhapsodyApp = rhapsodyApp2;
   }
@@ -64,62 +73,70 @@ public class GenAiHandler {
     }
   }
 
-  public void generateUMLDesign() {
+  public int sendRequestToBackend(String docType, StringBuilder filePaths) {
     try {
-      // Prompt user to input requirement text
-      // String requirementText = JOptionPane.showInputDialog(null, "Enter Requirement Text:", "Generate UML Design",
-      //     JOptionPane.PLAIN_MESSAGE);
-
-      String requirementText = "Extract all requirements related to Thermal Monitoring Unit";
-      
-      if (requirementText == null || requirementText.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Requirement text cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
+      String docTypeApi = "";
+      switch (docType) {
+        case "Requirement doc":
+          docTypeApi = "embed_requirement_documents";
+          break;
+        case "Reference doc":
+          docTypeApi = "embed_reference_documents";
+          break;
+        case "Guideline doc":
+          docTypeApi = "embed_guideline_documents";
+          break;
+        default:
+          break;
       }
 
-      // Send the requirement text to the backend and get the UML diagram
-      String umlDiagram = sendRequirementToBackend(requirementText);
+      String urlFinal = urlTemp + docTypeApi;
 
-      rhapsodyApp.writeToOutputWindow("GenAIPlugin", "Respone : " + umlDiagram);
 
-      if (umlDiagram == null || umlDiagram.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Failed to generate UML diagram. Please check the backend.", "Error",
-            JOptionPane.ERROR_MESSAGE);
-        return;
-      }
+      // URL of the API endpoint
+      URL url = new URL(urlFinal);
 
-      // Display the UML diagram code
-      JOptionPane.showMessageDialog(null, "Generated UML Diagram:\n" + umlDiagram, "UML Diagram",
-          JOptionPane.INFORMATION_MESSAGE);
-
-      // Optionally, add a new diagram to the model
-      IRPModelElement activeElement = rhapsodyApp.getSelectedElement();
-      if (activeElement != null) {
-        IRPModelElement newDiagram = activeElement.addNewAggr("Sequence Diagram", "GeneratedDiagram");
-        rhapsodyApp.writeToOutputWindow("GenAIPlugin", "New diagram created: " + newDiagram.getName());
-      }
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      JOptionPane.showMessageDialog(null, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
-  }
-
-  private String sendRequirementToBackend(String requirementText) {
-    try {
-      // Backend URL (update this to match your Python backend's URL)
-      String backendUrl = "http://10.169.242.230:5000/summarize_requirements";
-
-      // Create HTTP connection
-      URL url = new URL(backendUrl);
+      // Open connection
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+      // Set request method to POST
       connection.setRequestMethod("POST");
+
+      // Set headers
       connection.setRequestProperty("Content-Type", "application/json");
+      connection.setRequestProperty("Accept", "application/json");
+
+      // Enable output for the request body
       connection.setDoOutput(true);
 
+//      // Split the file paths using ";" as a delimiter
+//      String[] pdfFilePaths = filePaths.toString().split(";");
+//
+//      // Iterate through each file path
+//      for (String path : pdfFilePaths) {
+//        File pdfFile = new File(path.trim());
+//        if (pdfFile.exists() && pdfFile.isFile()) {
+//          // Write the PDF file to the request body
+//          try (FileInputStream fis = new FileInputStream(pdfFile); OutputStream os = connection.getOutputStream()) {
+//            byte[] buffer = new byte[1024];
+//            int bytesRead;
+//            while ((bytesRead = fis.read(buffer)) != -1) {
+//              os.write(buffer, 0, bytesRead);
+//            }
+//          }
+//        }
+//        else {
+//          System.err.println("File not found or invalid: " + path);
+//        }
+//      }
+
       // Create JSON payload
-      String payload =
-          String.format("{\"feature_query\": \"%s\", \"uml_type\": \"Sequence Diagram\"}", requirementText);
+      // Convert ";" separated file paths to a list
+      String[] filePathArray = filePaths.toString().split(";");
+      List<String> filePathList = Arrays.asList(filePathArray);
+
+      // Create JSON payload
+      String payload = new Gson().toJson(filePathList);
 
       // Send JSON payload
       try (OutputStream os = connection.getOutputStream()) {
@@ -127,28 +144,19 @@ public class GenAiHandler {
         os.write(input, 0, input.length);
       }
 
-      // Read response
+      // Get the response code
       int responseCode = connection.getResponseCode();
-      if (responseCode == HttpURLConnection.HTTP_OK) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-          StringBuilder response = new StringBuilder();
-          String responseLine;
-          while ((responseLine = br.readLine()) != null) {
-            response.append(responseLine.trim());
-          }
-          // Parse the response (assuming the backend returns JSON with a "uml_design" key)
-          return response.toString();
-        }
-      }
-      else {
-        System.err.println("Backend returned error: " + responseCode);
-      }
+
+      return responseCode;
+      // Close the connection
+      // connection.disconnect();
     }
     catch (Exception e) {
-      System.err.println(e.getLocalizedMessage());
+      e.printStackTrace();
     }
-    return null;
+    return 0;
   }
+
 
   public void shutdown() {
     // Stop the Python backend when the plugin is closed

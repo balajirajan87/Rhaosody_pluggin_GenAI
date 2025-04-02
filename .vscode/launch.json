@@ -14,7 +14,8 @@
         "name": "UI",
         "request": "launch",
         "mainClass": "com.bosch.rhapsody.ui.UI",
-        "projectName": "rhapsody-genai-integration"
+        "projectName": "rhapsody-genai-integration",
+        "vmArgs": "-Xmx8192m -Xss2m -Djava.library.path=\"C:\\Program Files\\IBM\\Rhapsody\\10.0.1\\Share\\JavaAPI\""
       },
       {
         "type": "java",

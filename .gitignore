@@ -1,0 +1,16 @@
+.vscode
+myvenv/
+myenv/
+persistent_dir*/
+ExtractedImages/
+.github*/
+*.json
+*_Docs/
+*.save
+*.rpwx
+*.ehl
+*.log
+*_auto_rpy
+/target/
+*.zip
+*.bkp
