@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RhapsodyArchive>
+	<MagicNumber></MagicNumber>
+	<CODE-PAGE>1252</CODE-PAGE>
+	<version>110.0.1</version>
+	<lang>C++</lang>
+	<BuildNo>202411191641</BuildNo>
+	<RMMMinimumClientVersion>100.0</RMMMinimumClientVersion>
+	
+	<RHAPSODY-MODEL>
+	<IProject type="e">
+			<_id type="a">GUID a2a0dccf-b803-4fe6-a677-3067aa192c10</_id>
+			<_myState type="a">8192</_myState>
+			<_name type="a">Project</_name>
+			<_modifiedTimeWeak type="a">4.1.2025::12:9:7</_modifiedTimeWeak>
+			<_modifiedTime type="a">4.1.2025::12:9:7</_modifiedTime>
+			<_lastID type="a">1</_lastID>
+			<_UserColors type="w">
+				<IRPYRawContainer type="e">
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+					<value>16777215</value>
+				</IRPYRawContainer>
+			</_UserColors>
+			<_defaultSubsystem type="r">
+				<ISubsystemHandle type="e">
+					<_hm2Class type="a">ISubsystem</_hm2Class>
+					<_hname type="a">Default</_hname>
+					<_hid type="a">GUID 4b86ab5f-e7de-448a-803f-b023a5406bb7</_hid>
+				</ISubsystemHandle>
+			</_defaultSubsystem>
+			<_component type="r">
+				<IHandle type="e">
+					<_hm2Class type="a">IComponent</_hm2Class>
+					<_hname type="a">DefaultComponent</_hname>
+					<_hid type="a">GUID 25ecca31-85fc-4ccd-a50d-e628e1e7429a</_hid>
+				</IHandle>
+			</_component>
+			<Multiplicities type="c">
+				<IRPYRawContainer type="e">
+					<IMultiplicityItem type="e">
+						<_name type="a">1</_name>
+						<_count type="a">-1</_count>
+					</IMultiplicityItem>
+					
+					<IMultiplicityItem type="e">
+						<_name type="a">*</_name>
+						<_count type="a">-1</_count>
+					</IMultiplicityItem>
+					
+					<IMultiplicityItem type="e">
+						<_name type="a">0,1</_name>
+						<_count type="a">-1</_count>
+					</IMultiplicityItem>
+					
+					<IMultiplicityItem type="e">
+						<_name type="a">1..*</_name>
+						<_count type="a">-1</_count>
+					</IMultiplicityItem>
+					
+				</IRPYRawContainer>
+			</Multiplicities>
+			<_isImportedFromDM type="a">0</_isImportedFromDM>
+			<mapOslcAddedCollections type="c">
+				<IRPYRawContainer type="e">
+				</IRPYRawContainer>
+			</mapOslcAddedCollections>
+			<mapAssociationsToRemove type="c">
+				<IRPYRawContainer type="e">
+				</IRPYRawContainer>
+			</mapAssociationsToRemove>
+			<AggregatesList type="e">
+				<value>GUID d24d9192-bc4f-48a2-a4e1-fdaebbdfa6b6</value>
+				<value>GUID f314919b-d515-4e22-b648-b08b08074657</value>
+				<value>GUID 4b86ab5f-e7de-448a-803f-b023a5406bb7</value>
+				<value>GUID bb0b0c4f-210f-4b4f-9c6f-c1e2c8f269b1</value>
+				<value>GUID 25ecca31-85fc-4ccd-a50d-e628e1e7429a</value>
+			</AggregatesList>
+		</IProject>
+		<IProfile type="e">
+			<fileName type="a">UMLPerspectives</fileName>
+			<_persistAs type="a">$OMROOT\Settings\UMLPerspectives</_persistAs>
+			<_id type="a">GUID d24d9192-bc4f-48a2-a4e1-fdaebbdfa6b6</_id>
+			<_partOfTheModelKind type="a">referenceunit</_partOfTheModelKind>
+		</IProfile>
+		<IProfile type="e">
+			<fileName type="a">GenAiIntegrationProfile</fileName>
+			<_persistAs type="a">GenAiIntegrationProfile</_persistAs>
+			<_id type="a">GUID f314919b-d515-4e22-b648-b08b08074657</_id>
+		</IProfile>
+		<ISubsystem type="e">
+			<fileName type="a">Default</fileName>
+			<_id type="a">GUID 4b86ab5f-e7de-448a-803f-b023a5406bb7</_id>
+		</ISubsystem>
+		<IDiagram type="e">
+			<fileName type="a">Model1</fileName>
+			<_id type="a">GUID bb0b0c4f-210f-4b4f-9c6f-c1e2c8f269b1</_id>
+		</IDiagram>
+		<IComponent type="e">
+			<fileName type="a">DefaultComponent</fileName>
+			<_id type="a">GUID 25ecca31-85fc-4ccd-a50d-e628e1e7429a</_id>
+		</IComponent>
+		
+	</RHAPSODY-MODEL>
+	<OslcLinks type="c">
+		<IRPYRawContainer type="e">
+		</IRPYRawContainer>
+	</OslcLinks>
+
+<INCLUDES-RHAPSODY-INDEX>false</INCLUDES-RHAPSODY-INDEX>
+</RhapsodyArchive>

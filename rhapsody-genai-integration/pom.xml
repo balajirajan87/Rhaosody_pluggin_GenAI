@@ -1,0 +1,98 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.bosch.rhapsody</groupId>
+    <artifactId>rhapsody-genai-integration</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    
+    <parent>
+        <groupId>Rhapsody</groupId>
+        <artifactId>com.bosch.rph.Configurations</artifactId>
+        <version>0.1</version>
+    </parent>
+    
+        <properties>
+        <rhapsody-api-systemPath>${project.basedir}/lib/rhapsody.jar</rhapsody-api-systemPath>
+        <swt-systemPath>${project.basedir}/lib/org.eclipse.swt.win32.win32.x86_64-4.3.jar</swt-systemPath>
+        <RHAPSODY_JAVA_API_LOCATION>C:\Program Files\IBM\Rhapsody\10.0.1\Share\JavaAPI</RHAPSODY_JAVA_API_LOCATION>
+    </properties>
+    
+    <dependencies>
+
+    <dependency>
+            <artifactId>Rhapsody</artifactId>
+            <groupId>Rhapsody</groupId>
+            <version>${RHAPSODY_VERSION}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.swt</groupId>
+            <artifactId>org.eclipse.swt.win32.win32.x86_64</artifactId>
+            <version>4.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>jface</artifactId>
+            <version>3.3.0-I20070606-0010</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.equinox</groupId>
+                    <artifactId>common</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+   <groupId>com.google.code.gson</groupId>
+  <artifactId>gson</artifactId>
+   <version>2.8.9</version>
+ </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>Rhp-GenAI</finalName>
+        <sourceDirectory>src</sourceDirectory>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources/</directory>
+                <targetPath>resources</targetPath>
+                <includes>
+                    <include>*.gif</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.4.1</version>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <createDependencyReducedPom>true</createDependencyReducedPom>
+                        <transformers>
+                            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <mainClass>com.bosch.rhapsody.integrator.RhpPlugin</mainClass>
+                            </transformer>
+                        </transformers>
+                    </configuration>
+                </execution>
+            </executions>
+            </plugin> 
+        </plugins>
+    </build>
+</project>

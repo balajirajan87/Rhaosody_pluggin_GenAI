@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "java",
+        "name": "RhpPlugin",
+        "request": "launch",
+        "mainClass": "com.bosch.rhapsody.integrator.RhpPlugin",
+        "projectName": "rhapsody-genai-integration",
+        "vmArgs": "-Xmx8192m -Xss2m -Djava.library.path=\"C:\\Program Files\\IBM\\Rhapsody\\10.0.1\\Share\\JavaAPI\""
+      },
+      {
+        "type": "java",
+        "name": "UI",
+        "request": "launch",
+        "mainClass": "com.bosch.rhapsody.ui.UI",
+        "projectName": "rhapsody-genai-integration",
+        "vmArgs": "-Xmx8192m -Xss2m -Djava.library.path=\"C:\\Program Files\\IBM\\Rhapsody\\10.0.1\\Share\\JavaAPI\""
+      },
+      {
+        "type": "java",
+        "name": "GenAiHandler",
+        "request": "launch",
+        "mainClass": "com.bosch.rhapsody.integrator.GenAiHandler",
+        "projectName": "rhapsody-genai-integration",
+        "vmArgs": "-Xmx8192m -Xss2m -Djava.library.path=\"C:\\Program Files\\IBM\\Rhapsody\\10.0.1\\Share\\JavaAPI\""
+      },
+      {
+        "type": "java",
+        "name": "GenAIPlugin",
+        "request": "launch",
+        "mainClass": "GenAIPlugin",
+        "projectName": "rhapsody-plugin",
+        "vmArgs": "-Xmx8192m -Xss2m -Djava.library.path=\"C:\\Program Files\\IBM\\Rhapsody\\10.0.1\\Share\\JavaAPI\""
+      },
+      {
+        "type": "java",
+        "name": "Attach to Remote JVM",
+        "request": "attach",
+        "hostName": "remote-server",
+        "port": 6743
+      }
+    ]
+  }
