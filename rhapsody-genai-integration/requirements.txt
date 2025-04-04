@@ -1,0 +1,6 @@
+requests==2.31.0
+PyMuPDF==1.22.5
+chromadb==0.3.26
+numpy==1.23.5
+Pillow==9.5.0
+Flask==2.3.3

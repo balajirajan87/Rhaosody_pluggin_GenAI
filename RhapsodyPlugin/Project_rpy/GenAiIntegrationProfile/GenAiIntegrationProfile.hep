@@ -1,0 +1,14 @@
+[Helpers]
+numberOfElements=2
+
+name1=Rhp-GenAI
+JavaMainClass1=com.bosch.rhapsody.integrator.RhpPlugin
+JavaClassPath1=C:\MyDir\01_Common\02_CrowdSourc\Rhapsody_GenAI\repo\Rhaosody_pluggin_GenAI\RhapsodyPlugin\Project_rpy\GenAiIntegrationProfile\Rhp-GenAI.jar
+isPlugin1=1
+isVisible1=0
+
+name2=Generate UML Design
+isPluginCommand2=1
+command2=Rhp-GenAI
+applicableTo2=Project
+isVisible2=1
