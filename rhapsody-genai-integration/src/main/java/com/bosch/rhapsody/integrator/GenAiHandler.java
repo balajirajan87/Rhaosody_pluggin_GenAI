@@ -2,17 +2,17 @@ package com.bosch.rhapsody.integrator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
-import com.google.gson.Gson;
 import com.telelogic.rhapsody.core.IRPApplication;
 
 /**
@@ -20,14 +20,13 @@ import com.telelogic.rhapsody.core.IRPApplication;
  */
 public class GenAiHandler {
 
-  String urlTemp = "http://10.169.242.230:5000/";
+  String urlTemp = "http://127.0.0.1:5000/";
 
   private Process pythonBackendProcess;
 
   private IRPApplication rhapsodyApp;
 
   public static void main(String[] args) {
-
 //    GenAiHandler plugin = new GenAiHandler(RhapsodyAppServer.getActiveRhapsodyApplication());
     // plugin.startPythonBackend();
     // plugin.generateUMLDesign();
@@ -76,15 +75,19 @@ public class GenAiHandler {
   public int sendRequestToBackend(String docType, StringBuilder filePaths) {
     try {
       String docTypeApi = "";
+      String jsonInputString = "";
       switch (docType) {
         case "Requirement doc":
           docTypeApi = "embed_requirement_documents";
+          jsonInputString = "[\"Requirement_Docs\"]";
           break;
         case "Reference doc":
           docTypeApi = "embed_reference_documents";
+          jsonInputString = "[\"Reference_Docs\"]";
           break;
         case "Guideline doc":
           docTypeApi = "embed_guideline_documents";
+          jsonInputString = "[\"Guideline_Docs\"]";
           break;
         default:
           break;
@@ -96,60 +99,53 @@ public class GenAiHandler {
       // URL of the API endpoint
       URL url = new URL(urlFinal);
 
+      System.out.println(url);
       // Open connection
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
       // Set request method to POST
       connection.setRequestMethod("POST");
-
-      // Set headers
       connection.setRequestProperty("Content-Type", "application/json");
       connection.setRequestProperty("Accept", "application/json");
-
-      // Enable output for the request body
       connection.setDoOutput(true);
 
-//      // Split the file paths using ";" as a delimiter
-//      String[] pdfFilePaths = filePaths.toString().split(";");
-//
-//      // Iterate through each file path
-//      for (String path : pdfFilePaths) {
-//        File pdfFile = new File(path.trim());
-//        if (pdfFile.exists() && pdfFile.isFile()) {
-//          // Write the PDF file to the request body
-//          try (FileInputStream fis = new FileInputStream(pdfFile); OutputStream os = connection.getOutputStream()) {
-//            byte[] buffer = new byte[1024];
-//            int bytesRead;
-//            while ((bytesRead = fis.read(buffer)) != -1) {
-//              os.write(buffer, 0, bytesRead);
-//            }
-//          }
-//        }
-//        else {
-//          System.err.println("File not found or invalid: " + path);
-//        }
-//      }
+      // // Create JSON payload
+      // String payload = new Gson().toJson(filePathList);
 
-      // Create JSON payload
-      // Convert ";" separated file paths to a list
-      String[] filePathArray = filePaths.toString().split(";");
-      List<String> filePathList = Arrays.asList(filePathArray);
-
-      // Create JSON payload
-      String payload = new Gson().toJson(filePathList);
+      connection.setConnectTimeout(20000); // Set connection timeout to 20 seconds
+      connection.setReadTimeout(20000);
 
       // Send JSON payload
       try (OutputStream os = connection.getOutputStream()) {
-        byte[] input = payload.getBytes("utf-8");
+        byte[] input = jsonInputString.getBytes("utf-8");
         os.write(input, 0, input.length);
       }
 
-      // Get the response code
-      int responseCode = connection.getResponseCode();
+          connection.setConnectTimeout(60000); // Set connection timeout to 60 seconds
+          connection.setReadTimeout(60000);
+          // Attempt connection
+          int responseCode = connection.getResponseCode();
 
-      return responseCode;
+          if (responseCode == HttpURLConnection.HTTP_OK) {
+    System.out.println("Upload successful.");
+} else {
+    InputStream errorStream = connection.getErrorStream();
+    if (errorStream != null) {
+        String errorResponse = new BufferedReader(new InputStreamReader(errorStream))
+            .lines().collect(Collectors.joining("\n"));
+        System.err.println("Error Response: " + errorResponse);
+    }
+    System.err.println("HTTP Error Code: " + responseCode);
+}
+
+          return responseCode;
+
       // Close the connection
       // connection.disconnect();
+    }
+    catch (SocketTimeoutException e) {
+      System.err.println("Connection timed out: " + e.getMessage());
+      e.printStackTrace();
     }
     catch (Exception e) {
       e.printStackTrace();
