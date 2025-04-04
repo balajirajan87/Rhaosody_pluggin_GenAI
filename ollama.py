@@ -23,12 +23,15 @@ REFERENCE_DATA_METADATA_FILE = "Reference_pdf_metadata.json"
 GUIDELINE_DATA_METADATA_FILE = "Guideline_pdf_metadata.json"
 REFERENCE_CODE_METADATA_FILE = "Reference_Code_metadata.json"
 
-req_collection = None
-ref_collection = None
-code_collection = None
-guideline_collection = None
+# req_collection = None
+# ref_collection = None
+# code_collection = None
+# guideline_collection = None
 
 print(f"Current working directory: {os.getcwd()}")
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
 
 # Function to calculate MD5 hash of a PDF file
 def calculate_pdf_hash(pdf_path):
@@ -172,12 +175,12 @@ class MyEmbeddingFunction(EmbeddingFunction):
                 print("API Response:", data_)
 
                 # Extract embeddings if present
-                if 'data' in data_:
+                if 'embeddings' in data_:
                     # Flatten and validate
-                    embeddings = [item.get('embedding') for item in data_['data']]
+                    embeddings = data_['embeddings']  # Directly access the embeddings list
                     return embeddings
                 
-                print("Embedding not found in response")
+                print("Embeddings not found in response")
                 return None
             except requests.exceptions.RequestException as e:
                 if 'response' in locals() and response.status_code == 429:
@@ -211,9 +214,12 @@ class MyEmbeddingFunction(EmbeddingFunction):
                 response = requests.post(f'{OLLAMA_API_URL}/embed', json=data)
                 response.raise_for_status()
                 data_ = response.json()
-                if 'data' in data_:
-                    embeddings = [item.get('embedding') for item in data_['data']]
+                if 'embeddings' in data_:
+                    # Flatten and validate
+                    embeddings = data_['embeddings']  # Directly access the embeddings list
                     return embeddings
+                
+                print("Embeddings not found in response")
                 return None
             except requests.exceptions.RequestException as e:
                 if response.status_code == 429:
@@ -268,8 +274,12 @@ class MyEmbeddingFunction(EmbeddingFunction):
                 response = requests.post(f'{OLLAMA_API_URL}/embed', json=data)
                 response.raise_for_status()
                 data_ = response.json()
-                if 'data' in data_ and len(data_['data']) > 0 and 'embedding' in data_['data'][0]:
-                    return data_['data'][0]['embedding']
+                if 'embeddings' in data_:
+                    # Flatten the embeddings (extract the first list)
+                    embeddings = data_['embeddings'][0]  # Extract the first (and only) list
+                    return embeddings
+                
+                print("Embeddings not found in response")
                 return None
             except requests.exceptions.RequestException as e:
                 if response.status_code == 429:
@@ -530,15 +540,20 @@ def remove_deleted_pdfs_from_chroma(directory, collection, metadata, metadata_fi
     - Ensure that the `save_metadata` function is defined and imported in the script.
     - The "docs" directory should contain only the PDF files that are currently in use.
     """
-    existing_files = {f for f in os.listdir(directory) if f.endswith(".pdf")}
-    hashes_to_remove = [pdf_hash for pdf_hash, info in metadata.items() if info['path'].split('/')[-1] not in existing_files]
+    existing_files = {os.path.basename(f) for f in os.listdir(directory) if f.endswith(".pdf")}
+    hashes_to_remove = [
+        pdf_hash for pdf_hash, info in metadata.items()
+        if os.path.basename(info['path']) not in existing_files
+    ]
 
-    for pdf_hash in hashes_to_remove:
-        print(f"Removing deleted document with hash: {pdf_hash}")
-        collection.delete(where={"doc_hash": pdf_hash})
-        del metadata[pdf_hash]
-    
-    save_metadata(metadata, metadata_file)
+    if hashes_to_remove:  # Only proceed if there are hashes to remove
+        for pdf_hash in hashes_to_remove:
+            print(f"Removing deleted document with hash: {pdf_hash}")
+            collection.delete(where={"doc_hash": pdf_hash})
+            del metadata[pdf_hash]
+
+        # Save metadata only if changes were made
+        save_metadata(metadata, metadata_file)
     
 # Process all PDFs in the docs/ directory
 def process_all_pdfs(directory, collection, metadata_file):
@@ -622,7 +637,7 @@ def find_relevant_chunk(user_query, collection):
     return None
 
 # Prompting the model for text generation
-def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temperature: float = 0.2, top_p: float = 0.7, max_retries: int = 5, backoff_factor: int = 2) -> str:
+def prompt_model(messages, stream_value:bool = False, model: str = CHAT_MODEL, max_tokens: int = 1000, temperature: float = 0.2, top_p: float = 0.7, max_retries: int = 5, backoff_factor: int = 2) -> str:
     """
     Prompt the model for text generation.
 
@@ -652,6 +667,7 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
     data = {
         'model': model,
         'messages': messages,
+        'stream': stream_value,
         'max_tokens': max_tokens,
         'temperature': temperature,
         'top_p': top_p,
@@ -665,8 +681,11 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
             # Debugging: Print the response for troubleshooting
             print("API Response:", data_)
 
-            if 'choices' in data_ and len(data_['choices']) > 0:
-                return data_['choices'][0]['message']['content']
+            if 'message' in data_ and 'content' in data_['message']:
+                return data_['message']['content']
+            
+            # If the response structure is invalid, return None
+            print("Invalid response structure: 'message' or 'content' field is missing")
             return None
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError) and e.response is not None and e.response.status_code == 429:
@@ -833,6 +852,7 @@ def embed_requirement_documents():
     """
     API endpoint to receive Requirement document paths and embed them.
     """
+    global req_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -858,6 +878,7 @@ def embed_reference_documents():
     """
     API endpoint to receive Reference Data document paths and embed them.
     """
+    global ref_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -883,6 +904,7 @@ def embed_code_documents():
     """
     API endpoint to receive Reference Data document paths and embed them.
     """
+    global code_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -908,6 +930,7 @@ def embed_guideline_documents():
     """
     API endpoint to receive Design Guidelines Data document paths and embed them.
     """
+    global guideline_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -919,7 +942,7 @@ def embed_guideline_documents():
         guidelineclient, guideline_collection = init_chroma_client(collection_name)
         for pdf_path in data:
             if os.path.exists(pdf_path):
-                process_all_pdfs(pdf_path, guideline_collection, REFERENCE_DATA_METADATA_FILE)
+                process_all_pdfs(pdf_path, guideline_collection, GUIDELINE_DATA_METADATA_FILE)
             else:
                 print(f"File not found: {pdf_path}")
 
@@ -930,6 +953,8 @@ def embed_guideline_documents():
 
 @app.route('/summarize_requirements', methods=['POST'])
 def summarize_requirements_api():
+    if req_collection is None:
+        return jsonify({"error": "Requirements collection is not initialized. Please embed the Requirement documents first."}), 400
     data = request.json
     feature_query = data.get('feature_query', '')
     requirements_summary = summarize_requirements(feature_query, req_collection)
@@ -937,6 +962,8 @@ def summarize_requirements_api():
 
 @app.route('/extract_design_information', methods=['POST'])
 def extract_design_information_api():
+    if ref_collection is None:
+        return jsonify({"error": "Reference collection is not initialized. Please embed the Reference documents first."}), 400
     data = request.json
     requirements_summary = data.get('requirements_summary', '')
     design_info = extract_design_information(requirements_summary, ref_collection)
@@ -944,6 +971,8 @@ def extract_design_information_api():
 
 @app.route('/extract_code_information', methods=['POST'])
 def extract_code_information_api():
+    if code_collection is None:
+        return jsonify({"error": "Code collection is not initialized. Please embed the source first."}), 400
     data = request.json
     requirements_summary = data.get('requirements_summary', '')
     code_design_info = extract_code_information(requirements_summary, code_collection)
@@ -951,6 +980,8 @@ def extract_code_information_api():
 
 @app.route('/create_uml_design', methods=['POST'])
 def create_uml_design_api():
+    if guideline_collection is None:
+        return jsonify({"error": "Guideline collection is not initialized. Please embed the Guideline documents first."}), 400
     data = request.json
     design_info = data.get('design_info', '')
     code_design_info = data.get('code_design_info', '')
