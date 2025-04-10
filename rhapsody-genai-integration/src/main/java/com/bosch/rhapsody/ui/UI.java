@@ -1,13 +1,10 @@
 package com.bosch.rhapsody.ui;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -20,7 +17,6 @@ import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -33,6 +29,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.constants.ProcessingException;
+import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
@@ -43,8 +41,10 @@ import com.telelogic.rhapsody.core.RhapsodyAppServer;
 public class UI {
 
   GenAiHandler genAiHandler = null;
+  String startPythonBackend;
 
-  public UI(GenAiHandler genAiHandler) {
+  public UI(GenAiHandler genAiHandler, String startPythonBackend) {
+    this.startPythonBackend = startPythonBackend;
     this.genAiHandler = genAiHandler;
   }
 
@@ -52,10 +52,11 @@ public class UI {
   public static void main(String[] args) {
     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
     GenAiHandler aiHandler = new GenAiHandler(app);
-    UI ui = new UI(aiHandler);
+//    String startPythonBackend2 = aiHandler.startPythonBackend();
+
+    UI ui = new UI(aiHandler, "abc");
     ui.createUI();
   }
-
 
   /**
    * @param shell   - shell input
@@ -94,8 +95,6 @@ public class UI {
     shell.setText("UML diagram generator");
     shell.setSize(800, 600);
     shell.setLayout(new GridLayout(1, false));
-
-    // URL fullPathString = getClass().getResource("/resources/getstarted.gif");
 
     // Image icon = new Image(display,
     // "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhaosody_pluggin_GenAI\\rhapsody-genai-integration\\src\\main\\resources\\getstarted.gif");
@@ -182,13 +181,6 @@ public class UI {
     buttonRow1.setLayout(buttonRowLayout1);
     buttonRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-
-    // Add a status text box below the file list
-    Text statusTextBoxTab1 = new Text(tab1Composite, SWT.BORDER | SWT.READ_ONLY | SWT.WRAP);
-    statusTextBoxTab1.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false));
-    statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
-    statusTextBoxTab1.setText("Status: Ready");
-
     // Add "Remove Selected File" button
     Button removeFileButton = new Button(buttonRow1, SWT.PUSH);
     removeFileButton.setText("Remove Selected File");
@@ -207,11 +199,24 @@ public class UI {
     submitButtonData.widthHint = 120; // Increased width
     submitButtonData.heightHint = 40; // Increased height
     uploadTextButton.setLayoutData(submitButtonData);
-
-// Add style
+    // Add style
     uploadTextButton.setFont(new Font(display, "Arial", 12, SWT.BOLD)); // Bold font
     uploadTextButton.setBackground(display.getSystemColor(SWT.COLOR_BLUE)); // Blue background
     uploadTextButton.setForeground(display.getSystemColor(SWT.COLOR_WHITE)); // White text
+
+    // Add a status text box below the file list
+    Text statusTextBoxTab1 = new Text(tab1Composite, SWT.BORDER | SWT.READ_ONLY | SWT.WRAP);
+    statusTextBoxTab1.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false));
+
+    if (!startPythonBackend.contains("error")) {
+      statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
+      statusTextBoxTab1.setText("Status: Ready " + startPythonBackend);
+    }
+    else {
+      statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
+      statusTextBoxTab1.setText("Status: Server not ready. " + startPythonBackend);
+      uploadTextButton.setEnabled(false);
+    }
 
     // Add a listener to handle selection events
     dropdownCombo.addListener(SWT.Selection, e -> {
@@ -286,6 +291,10 @@ public class UI {
         messageBox.open();
         return; // Stop further execution
       }
+
+      ProcessFiles fileHandler = new ProcessFiles();
+      fileHandler.copyPdfFile(Constants.ROOTDIR, dropdownCombo.getText(), fileList);
+
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
       statusTextBoxTab1.setText("Status: Uploading documents, please wait...");
       statusTextBoxTab1.update();
@@ -296,7 +305,7 @@ public class UI {
       }
       else {
         statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
-        statusTextBoxTab1.setText("Status: Failed to upload PDF file.");
+        statusTextBoxTab1.setText("Status: Failed to upload PDF file. " + responseCode);
       }
     });
 
@@ -338,10 +347,13 @@ public class UI {
     tab2Composite.setLayout(new GridLayout(1, false));
     tab2.setControl(tab2Composite);
 
-    Canvas chatDisplay = new Canvas(tab2Composite, SWT.BORDER | SWT.V_SCROLL);
+    Text chatDisplay = new Text(tab2Composite, SWT.BORDER | SWT.WRAP | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+
+//    Canvas chatDisplay = new Canvas(tab2Composite, SWT.BORDER | SWT.V_SCROLL);
     GridData chatDisplayLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
     chatDisplayLayoutData.heightHint = 300; // Set a minimum height for the chat display
     chatDisplay.setLayoutData(chatDisplayLayoutData);
+    chatDisplay.setEditable(false);
 
     // Add a scroll bar to the Canvas
     ScrollBar verticalBar = chatDisplay.getVerticalBar();
@@ -370,13 +382,15 @@ public class UI {
         LinkedList<String> lines = new LinkedList<>();
 
         for (String word : words) {
-          Point textSize = gc.textExtent(line + word + " ");
-          if (textSize.x > canvasWidth) {
-            lines.add(line.toString());
-            line = new StringBuilder(word + " ");
-          }
-          else {
-            line.append(word).append(" ");
+          if (!word.equals("You:") && !word.equals("Bot:")) {
+            Point textSize = gc.textExtent(line + word + " ");
+            if (textSize.x > canvasWidth) {
+              lines.add(line.toString());
+              line = new StringBuilder(word + " ");
+            }
+            else {
+              line.append(word).append(" ");
+            }
           }
         }
         if (!line.toString().isEmpty()) {
@@ -387,14 +401,14 @@ public class UI {
         int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
 
         // Set background color based on the message type
-        if (message.startsWith("You:")) {
-          gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
-        }
-        else {
-          // Clipboard clipboard = new Clipboard(display);
-          // clipboard.setContents(new Object[] {message}, new Transfer[] { TextTransfer.getInstance() });
-          gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
-        }
+//        if (message.startsWith("You:")) {
+//          gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
+//        }
+//        else {
+//          // Clipboard clipboard = new Clipboard(display);
+//          // clipboard.setContents(new Object[] {message}, new Transfer[] { TextTransfer.getInstance() });
+//          gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
+//        }
 
         // Adjust the y-coordinate based on the scroll offset
         int adjustedY = y - scrollOffset;
@@ -423,6 +437,18 @@ public class UI {
       verticalBar.setPageIncrement(clientArea.height); // Set the page increment
       verticalBar.setIncrement(20); // Set the line increment
     });
+
+    Composite inputRow1= new Composite(tab2Composite, SWT.NONE);
+    inputRow1.setLayout(new GridLayout(2, false));
+    inputRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    Combo dropdown = new Combo(inputRow1, SWT.DROP_DOWN | SWT.READ_ONLY);
+    dropdown.setItems(Constants.requestType); // Add your options here
+    dropdown.select(0); // Select the first entry by default
+    
+    // Set layout data for the dropdown to position it above the userInput text field
+    dropdown.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    
 
     // User input area
     Composite inputRow = new Composite(tab2Composite, SWT.NONE);
@@ -460,7 +486,7 @@ public class UI {
         addChatMessage(chatDisplay, verticalBar, chatMessages, "You: " + userMessage);
 
         // Simulate chatbot response
-        String botResponse = generateBotResponse(userMessage);
+        String botResponse = generateBotResponse(dropdown.getText(),userMessage);
         addChatMessage(chatDisplay, verticalBar, chatMessages, "Bot: " + botResponse);
 
         // Redraw the Canvas with updated messages
@@ -513,24 +539,33 @@ public class UI {
   }
 
   // Simulated bot response generation
-  private String generateBotResponse(String userMessage) {
-    // Replace this with actual chatbot logic
-    return userMessage;
+  private String generateBotResponse(String requestType, String userMessage) {
+    try {
+      return genAiHandler.sendRequestToBackend(requestType,userMessage);
+    }
+    catch (ProcessingException e) {
+      e.getMessage();
+    }
+   return "couldn't fetch data";
   }
 
 
   private int uploadDoc(String docType, List fileList) {
     StringBuilder filePaths = new StringBuilder();
     for (String filePath : fileList.getItems()) {
-      filePaths.append(filePath).append(";");
+      filePaths.append(filePath).append(",");
     }
-
-    return genAiHandler.sendRequestToBackend(docType, filePaths);
-
+    try {
+      return genAiHandler.uploadDocToBackend(docType, filePaths);
+    }
+    catch (ProcessingException e) {
+      e.printStackTrace();
+    }
+    return 0;
   }
 
   // Function to add a new message and scroll to the latest message
-  private void addChatMessage(Canvas chatDisplay, ScrollBar verticalBar, LinkedList<String> chatMessages,
+  private void addChatMessage(Text chatDisplay, ScrollBar verticalBar, LinkedList<String> chatMessages,
       String message) {
     // Add the new message to the list
     chatMessages.add(message);
