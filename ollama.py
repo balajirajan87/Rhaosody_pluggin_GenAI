@@ -23,10 +23,11 @@ REFERENCE_DATA_METADATA_FILE = "Reference_pdf_metadata.json"
 GUIDELINE_DATA_METADATA_FILE = "Guideline_pdf_metadata.json"
 REFERENCE_CODE_METADATA_FILE = "Reference_Code_metadata.json"
 
-# req_collection = None
-# ref_collection = None
-# code_collection = None
-# guideline_collection = None
+app = Flask(__name__)
+CORS(app)  # Enable CORS for cross-origin requests
+
+# In-memory storage for chat contexts
+chat_contexts = {}
 
 print(f"Current working directory: {os.getcwd()}")
 
@@ -836,9 +837,6 @@ def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry,
     uml_design = prompt_model(messages)
     return uml_design
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for cross-origin requests
-
 @app.errorhandler(Exception)
 def handle_exception(e):
     response = {
@@ -957,8 +955,22 @@ def summarize_requirements_api():
         return jsonify({"error": "Requirements collection is not initialized. Please embed the Requirement documents first."}), 400
     data = request.json
     feature_query = data.get('feature_query', '')
+    session_id = data.get('session_id', '')
+
+    # Retrieve or initialize the session context
+    if session_id not in chat_contexts:
+        chat_contexts[session_id] = []
+    
+    # Add the feature query to the session context
+    chat_contexts[session_id].append({"role": "user", "content": feature_query})
+
+    # Generate the requirements summary
     requirements_summary = summarize_requirements(feature_query, req_collection)
-    return jsonify({"requirements_summary": requirements_summary})
+
+    # Add the response to the session context
+    chat_contexts[session_id].append({"role": "assistant", "content": requirements_summary})
+
+    return jsonify({"requirements_summary": requirements_summary, "session_id": session_id})
 
 @app.route('/extract_design_information', methods=['POST'])
 def extract_design_information_api():
