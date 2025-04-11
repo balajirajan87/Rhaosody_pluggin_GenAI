@@ -20,6 +20,7 @@ import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -321,13 +322,13 @@ public class UI {
     tab2Composite.setLayout(new GridLayout(1, false));
     tab2.setControl(tab2Composite);
 
-    Text chatDisplay = new Text(tab2Composite, SWT.BORDER | SWT.WRAP | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+    // Text chatDisplay = new Text(tab2Composite, SWT.BORDER | SWT.WRAP | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
 
-//    Canvas chatDisplay = new Canvas(tab2Composite, SWT.BORDER | SWT.V_SCROLL);
+   Canvas chatDisplay = new Canvas(tab2Composite, SWT.BORDER | SWT.V_SCROLL);
     GridData chatDisplayLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
     chatDisplayLayoutData.heightHint = 300; // Set a minimum height for the chat display
     chatDisplay.setLayoutData(chatDisplayLayoutData);
-    chatDisplay.setEditable(false);
+    // chatDisplay.setEditable(false);
 
     // Add a scroll bar to the Canvas
     ScrollBar verticalBar = chatDisplay.getVerticalBar();
@@ -555,7 +556,7 @@ public class UI {
   }
 
   // Function to add a new message and scroll to the latest message
-  private void addChatMessage(Text chatDisplay, ScrollBar verticalBar, LinkedList<String> chatMessages,
+  private void addChatMessage(Canvas chatDisplay, ScrollBar verticalBar, LinkedList<String> chatMessages,
       String message) {
     // Add the new message to the list
     chatMessages.add(message);
@@ -565,6 +566,9 @@ public class UI {
     GC gc = new GC(chatDisplay);
     int padding = 10;
     int canvasWidth = chatDisplay.getClientArea().width - 20;
+
+       // Track the vertical position for each message
+       int y = 10; // Initial vertical position for the first message
 
     for (String msg : chatMessages) {
       String[] words = msg.split(" ");
@@ -585,16 +589,25 @@ public class UI {
         lines.add(line.toString());
       }
 
-      int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
-      totalHeight += rectHeight + 10; // Add spacing between messages
+       // Calculate the height of the rectangle for this message
+       int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
+
+       // Increment the total height and vertical position
+       totalHeight += rectHeight + 10; // Add spacing between messages
+       y += rectHeight + 10; // Update the vertical position for the next message
     }
     gc.dispose();
 
-    // Update the scroll bar and scroll to the bottom
+    // Update the scroll bar properties
     verticalBar.setMaximum(totalHeight);
     verticalBar.setThumb(Math.min(totalHeight, chatDisplay.getClientArea().height));
-    verticalBar.setSelection(totalHeight - chatDisplay.getClientArea().height);
+    verticalBar.setPageIncrement(chatDisplay.getClientArea().height);
+    verticalBar.setIncrement(20);
+
+    // Scroll to the bottom
+    verticalBar.setSelection(Math.max(0, totalHeight - chatDisplay.getClientArea().height));
     chatDisplay.redraw();
+    chatDisplay.update();
   }
 
 }

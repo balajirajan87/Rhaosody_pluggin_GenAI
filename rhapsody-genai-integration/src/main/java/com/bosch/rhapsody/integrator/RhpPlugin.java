@@ -83,12 +83,12 @@ public class RhpPlugin extends RPUserPlugin {
       try {
         genAiHandler = new GenAiHandler(rhapsodyApp);
         // String startPythonBackend = genAiHandler.startPythonBackend();
-        String  response="";
-        try{
-          response= genAiHandler.checkConnection();
-        }catch(Exception e){
-          response = e.getMessage();
-        }
+        String  response="Server running...";
+        // try{
+        //   response= genAiHandler.checkConnection();
+        // }catch(Exception e){
+        //   response = e.getMessage();
+        // }
         UI ui = new UI(genAiHandler, response);
         try {
           ui.createUI();

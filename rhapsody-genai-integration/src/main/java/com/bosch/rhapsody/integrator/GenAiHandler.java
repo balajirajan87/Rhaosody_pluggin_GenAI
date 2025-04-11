@@ -155,7 +155,7 @@ public class GenAiHandler {
     try {
       HttpURLConnection connection = (HttpURLConnection) new URL(Constants.urlTemp).openConnection();
       connection.setRequestMethod("GET");
-      connection.setConnectTimeout(5000); // 5 seconds timeout
+      connection.setConnectTimeout(10000); // 5 seconds timeout
       connection.connect();
 
       // Get the response code
