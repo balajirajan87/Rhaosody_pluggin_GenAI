@@ -18,5 +18,6 @@ public class Constants {
   public static String DECRYPT_SCRIPT_PATH = "";
   public static String BACKEND_SCRIPT_PATH = "";
   public static String SECRET_KEY_FILE_PATH = "";
+  public static String CHAT_LOG_FILE_PATH ="";
 
 }

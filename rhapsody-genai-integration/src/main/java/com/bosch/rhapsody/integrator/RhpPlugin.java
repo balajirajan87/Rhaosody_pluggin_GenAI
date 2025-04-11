@@ -22,7 +22,7 @@ public class RhpPlugin extends RPUserPlugin {
   public static void main(String[] args) {
     RhpPlugin plugin = new RhpPlugin();
     plugin.RhpPluginInit(RhapsodyAppServer.getActiveRhapsodyApplication());
-    plugin.OnMenuItemSelect("Generate UML Design");
+    plugin.OnMenuItemSelect("Rhapsody GenAI");
 
   }
 
@@ -32,21 +32,45 @@ public class RhpPlugin extends RPUserPlugin {
     Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
     Constants.API_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "api.key";
     Constants.DECRYPT_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "decrypt.exe";
-    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator +"ollama.py";
+    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "ollama.py";
     Constants.SECRET_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "secret.key";
-
+    Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "chat_log.txt";
     // Validate paths
     // if (!new File(Constants.DECRYPT_SCRIPT_PATH).exists()) {
-    //     LoggerUtil.error("Decrypt script not found at: " + Constants.DECRYPT_SCRIPT_PATH);
+    // LoggerUtil.error("Decrypt script not found at: " + Constants.DECRYPT_SCRIPT_PATH);
     // }
     // if (!new File(Constants.BACKEND_SCRIPT_PATH).exists()) {
-    //     LoggerUtil.error("Backend script not found at: " + Constants.BACKEND_SCRIPT_PATH);
+    // LoggerUtil.error("Backend script not found at: " + Constants.BACKEND_SCRIPT_PATH);
     // }
 
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
+    getChatLogFile();
     LoggerUtil.info("GenAI Plugin initialized. Use the menu to generate UML diagrams.");
-}
+  }
+
+  private void getChatLogFile() {
+    File chatLogFile = new File(Constants.CHAT_LOG_FILE_PATH);
+    if (chatLogFile.exists()) {
+      try (java.io.PrintWriter writer = new java.io.PrintWriter(chatLogFile)) {
+        writer.print("");
+        LoggerUtil.info("Chat log file content cleared: " + Constants.CHAT_LOG_FILE_PATH);
+      }
+      catch (Exception e) {
+        LoggerUtil.error("Failed to clear the chat log file content: " + e.getMessage());
+      }
+    }else{
+      try {
+        if (chatLogFile.createNewFile()) {
+          LoggerUtil.info("Chat log file created: " + Constants.CHAT_LOG_FILE_PATH);
+        } else {
+          LoggerUtil.error("Failed to create chat log file: " + Constants.CHAT_LOG_FILE_PATH);
+        }
+      } catch (Exception e) {
+        LoggerUtil.error("Error while creating chat log file: " + e.getMessage());
+      }
+    }
+  }
 
   @Override
   public void RhpPluginInvokeItem() {
@@ -55,12 +79,17 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public void OnMenuItemSelect(String menuItem) {
-    if (menuItem.equals("Generate UML Design")) {
+    if (menuItem.equals("Rhapsody GenAI")) {
       try {
         genAiHandler = new GenAiHandler(rhapsodyApp);
         // String startPythonBackend = genAiHandler.startPythonBackend();
-        String startPythonBackend = "Already server is running";
-        UI ui = new UI(genAiHandler, startPythonBackend);
+        String  response="";
+        try{
+          response= genAiHandler.checkConnection();
+        }catch(Exception e){
+          response = e.getMessage();
+        }
+        UI ui = new UI(genAiHandler, response);
         try {
           ui.createUI();
         }

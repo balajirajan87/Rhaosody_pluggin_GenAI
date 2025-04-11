@@ -1,5 +1,8 @@
 package com.bosch.rhapsody.ui;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +32,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
@@ -151,17 +155,6 @@ public class UI {
     dragDropAreaData.heightHint = 80; // Decreased height to 100 pixels
     dragDropArea.setLayout(new GridLayout(2, false)); // Set layout with 2 columns
 
-    // Drag-and-Drop Text
-    // Label dragDropText = new Label(dragDropArea, SWT.CENTER);
-    // dragDropText.setText("Drag files here");
-    // dragDropText.setFont(new Font(display, "Arial", 14, SWT.BOLD)); // Bold font
-    // dragDropText.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
-    // dragDropText.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
-    // dragDropText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-
-    // DropTarget dropTarget = new DropTarget(dragDropArea, DND.DROP_COPY | DND.DROP_MOVE);
-    // dropTarget.setTransfer(new Transfer[] { FileTransfer.getInstance() });
 
     Label fileListLabel = new Label(tab1Composite, SWT.NONE);
     fileListLabel.setText("Selected Files:");
@@ -210,7 +203,7 @@ public class UI {
 
     if (!startPythonBackend.contains("error")) {
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
-      statusTextBoxTab1.setText("Status: Ready " + startPythonBackend);
+      statusTextBoxTab1.setText("Status: " + startPythonBackend);
     }
     else {
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
@@ -298,40 +291,21 @@ public class UI {
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
       statusTextBoxTab1.setText("Status: Uploading documents, please wait...");
       statusTextBoxTab1.update();
-      int responseCode = uploadDoc(dropdownCombo.getText(), fileList);
-      if (responseCode == HttpURLConnection.HTTP_OK) {
+      String response = uploadDoc(dropdownCombo.getText(), fileList);
+      String[] responseParts = response.split(":");
+
+      String responseCode = responseParts[0];
+      String responseMessage = responseParts[1];
+
+      if (Integer.valueOf(responseCode) == HttpURLConnection.HTTP_OK) {
         statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-        statusTextBoxTab1.setText("Status: PDF file uploaded successfully.");
+        statusTextBoxTab1.setText("Status: PDF file uploaded successfully." + responseMessage);
       }
       else {
         statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
-        statusTextBoxTab1.setText("Status: Failed to upload PDF file. " + responseCode);
+        statusTextBoxTab1.setText("Status: Failed to upload PDF file. " + responseMessage);
       }
     });
-
-
-    // dropTarget.addDropListener(new DropTargetAdapter() {
-
-    // @Override
-    // public void drop(DropTargetEvent event) {
-    // if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
-    // String[] files = (String[]) event.data;
-    // for (String file : files) {
-    // if (file.toLowerCase().endsWith(".pdf")) { // Allow only PDF files
-    // fileList.add(file);
-    // String fileName = new java.io.File(file).getName();
-    // statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-    // statusTextBoxTab1.setText("Status: Selected file " + fileName);
-    // }
-    // else {
-    // MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-    // messageBox.setMessage("Only PDF files are allowed.");
-    // messageBox.open();
-    // }
-    // }
-    // }
-    // }
-    // });
 
     // Add padding and spacing for better layout
     GridLayout layout = new GridLayout(1, false);
@@ -375,7 +349,25 @@ public class UI {
       // Get the scroll offset from the vertical bar
       int scrollOffset = verticalBar.getSelection();
 
+      File chatLogFile = new File(Constants.CHAT_LOG_FILE_PATH);
+
+      // Clear the content of the chat log file
+      try (FileWriter writer = new FileWriter(chatLogFile, false)) { // Overwrite mode
+        writer.write(""); // Write an empty string to clear the file
+      }
+      catch (IOException ex) {
+        LoggerUtil.error("Error clearing chat log file: " + ex.getMessage());
+      }
+
       for (String message : chatMessages) {
+        // Write the message to the text file
+        try (FileWriter writer = new FileWriter(chatLogFile, true)) { // Append mode
+          writer.write(message + System.lineSeparator());
+        }
+        catch (IOException ex) {
+          LoggerUtil.error("Error writing to chat log file: " + ex.getMessage());
+        }
+
         // Split the message into lines based on the available width
         String[] words = message.split(" ");
         StringBuilder line = new StringBuilder();
@@ -401,14 +393,12 @@ public class UI {
         int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
 
         // Set background color based on the message type
-//        if (message.startsWith("You:")) {
-//          gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
-//        }
-//        else {
-//          // Clipboard clipboard = new Clipboard(display);
-//          // clipboard.setContents(new Object[] {message}, new Transfer[] { TextTransfer.getInstance() });
-//          gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
-//        }
+        if (message.startsWith("You:")) {
+          gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
+        }
+        else {
+          gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
+        }
 
         // Adjust the y-coordinate based on the scroll offset
         int adjustedY = y - scrollOffset;
@@ -438,17 +428,17 @@ public class UI {
       verticalBar.setIncrement(20); // Set the line increment
     });
 
-    Composite inputRow1= new Composite(tab2Composite, SWT.NONE);
+    Composite inputRow1 = new Composite(tab2Composite, SWT.NONE);
     inputRow1.setLayout(new GridLayout(2, false));
     inputRow1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
     Combo dropdown = new Combo(inputRow1, SWT.DROP_DOWN | SWT.READ_ONLY);
     dropdown.setItems(Constants.requestType); // Add your options here
     dropdown.select(0); // Select the first entry by default
-    
+
     // Set layout data for the dropdown to position it above the userInput text field
     dropdown.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-    
+
 
     // User input area
     Composite inputRow = new Composite(tab2Composite, SWT.NONE);
@@ -486,7 +476,7 @@ public class UI {
         addChatMessage(chatDisplay, verticalBar, chatMessages, "You: " + userMessage);
 
         // Simulate chatbot response
-        String botResponse = generateBotResponse(dropdown.getText(),userMessage);
+        String botResponse = generateBotResponse(dropdown.getText(), userMessage);
         addChatMessage(chatDisplay, verticalBar, chatMessages, "Bot: " + botResponse);
 
         // Redraw the Canvas with updated messages
@@ -541,16 +531,16 @@ public class UI {
   // Simulated bot response generation
   private String generateBotResponse(String requestType, String userMessage) {
     try {
-      return genAiHandler.sendRequestToBackend(requestType,userMessage);
+      return genAiHandler.sendRequestToBackend(requestType, userMessage);
     }
     catch (ProcessingException e) {
-      e.getMessage();
+      LoggerUtil.error("Error: " + e.getMessage());
     }
-   return "couldn't fetch data";
+    return "couldn't fetch data";
   }
 
 
-  private int uploadDoc(String docType, List fileList) {
+  private String uploadDoc(String docType, List fileList) {
     StringBuilder filePaths = new StringBuilder();
     for (String filePath : fileList.getItems()) {
       filePaths.append(filePath).append(",");
@@ -559,9 +549,9 @@ public class UI {
       return genAiHandler.uploadDocToBackend(docType, filePaths);
     }
     catch (ProcessingException e) {
-      e.printStackTrace();
+      LoggerUtil.error("Error: " + e.getMessage());
     }
-    return 0;
+    return "00: Error uploading doc";
   }
 
   // Function to add a new message and scroll to the latest message

@@ -2,7 +2,6 @@ package com.bosch.rhapsody.integrator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -11,7 +10,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
@@ -134,7 +132,7 @@ public class GenAiHandler {
         throw new ProcessingException("API key is missing or invalid.");
       }
 
-      ProcessBuilder processBuilder = new ProcessBuilder("python",Constants.BACKEND_SCRIPT_PATH);
+      ProcessBuilder processBuilder = new ProcessBuilder("python", Constants.BACKEND_SCRIPT_PATH);
       processBuilder.redirectErrorStream(true);
 
       // Set environment variables
@@ -152,7 +150,7 @@ public class GenAiHandler {
     }
   }
 
-  private String checkConnection() throws ProcessingException {
+  String checkConnection() throws ProcessingException {
 
     try {
       HttpURLConnection connection = (HttpURLConnection) new URL(Constants.urlTemp).openConnection();
@@ -194,34 +192,36 @@ public class GenAiHandler {
    */
   private void logBackendOutput(Process process) {
     try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
 
-        String line;
+      String line;
 
-        // Read standard output
-        while ((line = outputReader.readLine()) != null) {
-            LoggerUtil.info("[Python Backend] " + line);
-        }
+      // Read standard output
+      while ((line = outputReader.readLine()) != null) {
+        LoggerUtil.info("[Python Backend] " + line);
+      }
 
-        // Read error output
-        while ((line = errorReader.readLine()) != null) {
-            LoggerUtil.error("[Python Backend Error] " + line);
-        }
+      // Read error output
+      while ((line = errorReader.readLine()) != null) {
+        LoggerUtil.error("[Python Backend Error] " + line);
+      }
 
-              // Wait for the process to complete with a timeout of 10 seconds
-              boolean completed = process.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
-              if (completed) {
-                  int exitCode = process.exitValue();
-                  LoggerUtil.info("Process exited with code: " + exitCode);
-              } 
+      // Wait for the process to complete with a timeout of 10 seconds
+      boolean completed = process.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
+      if (completed) {
+        int exitCode = process.exitValue();
+        LoggerUtil.info("Process exited with code: " + exitCode);
+      }
 
-    } catch (IOException e) {
-        LoggerUtil.error("Error reading backend output: " + e.getMessage());
-    } catch (InterruptedException e) {
+    }
+    catch (IOException e) {
+      LoggerUtil.error("Error reading backend output: " + e.getMessage());
+    }
+    catch (InterruptedException e) {
       LoggerUtil.error("Process was interrupted: " + e.getMessage());
       Thread.currentThread().interrupt(); // Restore interrupted status
+    }
   }
-}
 
 
   /**
@@ -230,7 +230,7 @@ public class GenAiHandler {
    * @return int
    * @throws ProcessingException
    */
-  public int uploadDocToBackend(String docType, StringBuilder filePaths) throws ProcessingException {
+  public String uploadDocToBackend(String docType, StringBuilder filePaths) throws ProcessingException {
     try {
       String docTypeApi = "";
       String jsonInputString = "";
@@ -246,7 +246,7 @@ public class GenAiHandler {
           break;
         default:
           LoggerUtil.error("Invalid docType: " + docType);
-          return 400; // Bad Request
+          return "00: Invalid document type"; // Bad Request
       }
 
       // Construct JSON payload
@@ -281,25 +281,31 @@ public class GenAiHandler {
       // Attempt connection
       int responseCode = connection.getResponseCode();
 
+      StringBuilder response = new StringBuilder();
+
       if (responseCode == HttpURLConnection.HTTP_OK) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            response.append(line);
+          }
+        }
         LoggerUtil.info("Upload successful.");
       }
       else {
-        InputStream errorStream = connection.getErrorStream();
-        if (errorStream != null) {
-          String errorResponse = "";
-          try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
-            errorResponse = reader.lines().collect(Collectors.joining("\n"));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), "utf-8"))) {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            response.append(line);
           }
-          LoggerUtil.error("Error Response: " + errorResponse);
         }
-        LoggerUtil.error("HTTP Error Code: " + responseCode);
+        LoggerUtil.info("Upload unsuccessful.");
       }
 
       // Close the connection
       connection.disconnect();
 
-      return responseCode;
+      return responseCode + ": " + response.toString().trim();
     }
     catch (SocketTimeoutException e) {
       throw new ProcessingException("Connection timed out: " + e.getMessage());
@@ -313,20 +319,20 @@ public class GenAiHandler {
   public String sendRequestToBackend(String docType, String message) throws ProcessingException {
     try {
 
-      String docTypeApi = "";
       String jsonInputString = "";
+      String queryKey = "";
       switch (docType) {
         case "summarize_requirements":
-          docTypeApi = "summarize_requirements_api()";
+          queryKey = "feature_query";
           break;
         case "extract_design_information":
-          docTypeApi = "extract_design_information_api";
+          queryKey = "requirements_summary";
           break;
         case "extract_code_information":
-          docTypeApi = "extract_code_information_api";
+          queryKey = "requirements_summary";
           break;
         case "create_uml_design":
-          docTypeApi = "create_uml_design_api";
+          queryKey = "requirements_summary";
           break;
         default:
           LoggerUtil.error("Invalid docType: " + docType);
@@ -336,9 +342,10 @@ public class GenAiHandler {
       // Construct JSON payload
       // jsonInputString = String.format("{\"docType\": \"%s\", \"filePaths\": [%s]}", docType, filePaths.toString());
 
-      jsonInputString = "{\"feature_query\": \"" + message + "\"}";
 
-      String urlFinal = Constants.urlTemp + docTypeApi;
+      jsonInputString = "{\"" + queryKey + "\": \"" + message + "\"}";
+
+      String urlFinal = Constants.urlTemp + docType;
       LoggerUtil.info("API URL: " + urlFinal);
 
       // URL of the API endpoint
@@ -359,20 +366,39 @@ public class GenAiHandler {
         os.write(input, 0, input.length);
       }
 
-      connection.setConnectTimeout(60000); // Set connection timeout to 60 seconds
-      connection.setReadTimeout(60000);
+      connection.setConnectTimeout(40000); // Set connection timeout to 40 seconds
+      connection.setReadTimeout(40000);
 
       // Attempt connection
       int responseCode = connection.getResponseCode();
 
       if (responseCode == HttpURLConnection.HTTP_OK) {
-       return connection.getResponseMessage();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+          StringBuilder response = new StringBuilder();
+          String line;
+          while ((line = reader.readLine()) != null) {
+            response.append(line);
+          }
+          String responseBody = response.toString();
+          try {
+            // Check if the response is in JSON format
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper =
+                new com.fasterxml.jackson.databind.ObjectMapper();
+            Object json = objectMapper.readValue(responseBody, Object.class);
+            // Format the JSON response
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+          }
+          catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            LoggerUtil.error("Response is not in valid JSON format: " + e.getMessage());
+            return responseBody; // Return the raw response if not JSON
+          }
+        }
       }
-       // Close the connection
-       connection.disconnect();
-      
-       return "couldn't fetch data";
 
+      // Close the connection
+      connection.disconnect();
+
+      return "couldn't fetch related data";
     }
     catch (SocketTimeoutException e) {
       throw new ProcessingException("Connection timed out: " + e.getMessage());
