@@ -255,7 +255,7 @@ public class GenAiHandler {
       jsonInputString = "[\"" + docType + "\"]";
 
       String urlFinal = Constants.urlTemp + docTypeApi;
-      LoggerUtil.info("API URL: " + urlFinal);
+      // LoggerUtil.info("API URL: " + urlFinal);
 
       // URL of the API endpoint
       URL url = new URL(urlFinal);
@@ -346,7 +346,7 @@ public class GenAiHandler {
       jsonInputString = "{\"" + queryKey + "\": \"" + message + "\"}";
 
       String urlFinal = Constants.urlTemp + docType;
-      LoggerUtil.info("API URL: " + urlFinal);
+      // LoggerUtil.info("API URL: " + urlFinal);
 
       // URL of the API endpoint
       URL url = new URL(urlFinal);

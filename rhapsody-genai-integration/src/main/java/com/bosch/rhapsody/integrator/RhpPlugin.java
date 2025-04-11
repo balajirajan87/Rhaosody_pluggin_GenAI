@@ -46,7 +46,7 @@ public class RhpPlugin extends RPUserPlugin {
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
     getChatLogFile();
-    LoggerUtil.info("GenAI Plugin initialized. Use the menu to generate UML diagrams.");
+    LoggerUtil.info("GenAI Plugin loaded v1.0.0_2025-11-04. Use the menu to \"Rhapsody GenAI\".");
   }
 
   private void getChatLogFile() {
