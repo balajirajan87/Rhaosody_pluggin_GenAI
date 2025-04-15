@@ -39,6 +39,16 @@
         "request": "attach",
         "hostName": "remote-server",
         "port": 6743
+      },
+      {
+        "name": "Python: Debug ollama.py",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/ollama.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "env": {},
+        "args": []
       }
     ]
   }

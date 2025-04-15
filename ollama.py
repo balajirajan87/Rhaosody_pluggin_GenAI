@@ -700,7 +700,13 @@ def prompt_model(messages, stream_value:bool = False, model: str = CHAT_MODEL, m
             print(f"KeyError in response: {e}")
             return None
     
-def summarize_requirements(feature_query, collection):
+def summarize_requirements(messages, collection):
+    # Extract the feature query from the first dictionary
+    feature_query = messages[0].get("content")
+
+    if feature_query is None:
+        raise ValueError("Feature query not found in messages.")
+    
     relevant_chunks = find_relevant_chunk(feature_query, collection)
     if not relevant_chunks:
         print("No relevant requirements found.")
@@ -730,21 +736,29 @@ def summarize_requirements(feature_query, collection):
     summary = prompt_model(messages)
     return summary
 
-def extract_design_information(requirements_summary, collection):
+def extract_design_information(messages, collection):
+    requirements_summary = messages[1].get("content")
+    if not requirements_summary:
+        raise ValueError("Summarized requirements not found in the second dictionary of messages.")
+    
     relevant_chunks = find_relevant_chunk(requirements_summary, collection)
     if not relevant_chunks:
         print("No relevant design information found.")
         return None
     
+    # Extract the task from the third dictionary
+    task = messages[2].get("content")
+    if not task:
+        raise ValueError("Task not found in the third dictionary of messages.")
+
     # Define the system and user messages
     messages = [
         {
             "role": "system",
-            "content": """
-            You are a highly skilled AI assistant specializing in understanding design information. You are provided with Requirements and Design Information delimited by tripple backticks.
-            Your task is to:
-            1. Identify relevant API functions, parameters, protocols, and constraints from the Design Information.
-            2. Map the extracted design information with the requirements.
+            "content": f"""
+            You are a highly skilled AI assistant specializing in understanding software architechture / reference Design informations. You are provided with Requirements and Reference Design Information delimited by tripple backticks and task delimited by Angle brackets.
+            Your task is:
+            <{task}>
             """
         },
         {
@@ -752,7 +766,7 @@ def extract_design_information(requirements_summary, collection):
             "content": f"""
             Requirements:
             ```{requirements_summary}```
-            Design Information:
+            Reference Design Information:
             ```{relevant_chunks}```
             """
         }
@@ -802,12 +816,18 @@ def extract_code_information(requirements_summary, reference_code_collection):
     code_design_info = prompt_model(messages)
     return code_design_info
 
-def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry, uml_guidelines_collection):
+def create_uml_design(messages, uml_guidelines_collection):
+    UML_Diagram = messages[4].get("content")
+    design_querry = f"Extract the guidelines related to {UML_Diagram}"
     uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
     if not uml_guidelines:
         print("No UML design guidelines found.")
         return None
     
+    design_info = messages[3].get("content")
+    if not design_info:
+        raise ValueError("Design Information not found in the third dictionary of messages.")
+
     # Define the system and user messages
     messages = [
         {
@@ -815,10 +835,12 @@ def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry,
             "content": f"""
             You are a highly skilled AI assistant specializing in creating Software UML designs.
             Your task is to:
-            1. Create the requested UML designs ({UML_Diagram}) based on the Design information, Code Information and UML design guidelines delimited by tripple backticks.
-            2. Make sure all the identified API Functions, from the Design Information and the Code Information are included in the UML Design.
-            3. Provide PlantUML codes for each UML diagram.
-            4. Provide a detailed explanation of the requested PlantUML diagrams.
+            1. Understand the provided Design Information delimited by tripple backticks.
+            2. Create the requested ({UML_Diagram}) based on your understanding of the Design information.
+            3. Make sure all the identified API Functions, from the Design Information are included in the UML Design.
+            4. Make sure that you generate UML Diagram based on the provided UML design guidelines delimited by tripple backticks.
+            5. Provide PlantUML codes for the requested ({UML_Diagram}).
+            6. Provide a detailed explanation of the requested PlantUML diagrams.
             """
         },
         {
@@ -826,8 +848,6 @@ def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry,
             "content": f"""
             Design Information:
             ```{design_info}```
-            Code Information:
-            ```{code_design_info}```
             UML Design Guidelines:
             ```{uml_guidelines}```
             """
@@ -961,14 +981,16 @@ def summarize_requirements_api():
     if session_id not in chat_contexts:
         chat_contexts[session_id] = []
     
+    messages = chat_contexts[session_id]
+
     # Add the feature query to the session context
-    chat_contexts[session_id].append({"role": "user", "content": feature_query})
+    messages.append({"role": "user", "content": feature_query})
 
     # Generate the requirements summary
-    requirements_summary = summarize_requirements(feature_query, req_collection)
+    requirements_summary = summarize_requirements(messages, req_collection)
 
     # Add the response to the session context
-    chat_contexts[session_id].append({"role": "assistant", "content": requirements_summary})
+    messages.append({"role": "assistant", "content": requirements_summary})
 
     return jsonify({"requirements_summary": requirements_summary, "session_id": session_id})
 
@@ -977,30 +999,75 @@ def extract_design_information_api():
     if ref_collection is None:
         return jsonify({"error": "Reference collection is not initialized. Please embed the Reference documents first."}), 400
     data = request.json
-    requirements_summary = data.get('requirements_summary', '')
-    design_info = extract_design_information(requirements_summary, ref_collection)
-    return jsonify({"design_info": design_info})
+    session_id = data.get('session_id', '')
+    task_input = data.get('task_input', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+    
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": task_input})
+
+    design_info = extract_design_information(messages, ref_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": design_info})
+
+    return jsonify({"design_info": design_info, "session_id": session_id})
 
 @app.route('/extract_code_information', methods=['POST'])
 def extract_code_information_api():
     if code_collection is None:
         return jsonify({"error": "Code collection is not initialized. Please embed the source first."}), 400
     data = request.json
-    requirements_summary = data.get('requirements_summary', '')
-    code_design_info = extract_code_information(requirements_summary, code_collection)
-    return jsonify({"code_design_info": code_design_info})
+    session_id = data.get('session_id', '')
+    task_input = data.get('task_input', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+    
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": task_input})
+
+    code_design_info = extract_code_information(messages, code_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": code_design_info})
+
+    return jsonify({"code_design_info": code_design_info, "session_id": session_id})
 
 @app.route('/create_uml_design', methods=['POST'])
 def create_uml_design_api():
     if guideline_collection is None:
         return jsonify({"error": "Guideline collection is not initialized. Please embed the Guideline documents first."}), 400
     data = request.json
-    design_info = data.get('design_info', '')
-    code_design_info = data.get('code_design_info', '')
-    UML_Diagram = data.get('design_query', '')
-    design_query = f"Extract the guidelines related to {UML_Diagram}"
-    uml_design = create_uml_design(UML_Diagram, design_info, code_design_info, design_query, guideline_collection)
-    return jsonify({"uml_design": uml_design})
+    session_id = data.get('session_id', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # design_info = data.get('design_info', '')
+    # code_design_info = data.get('code_design_info', '')
+    UML_Diagram = data.get('task_input', '')
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": UML_Diagram})
+
+    uml_design = create_uml_design(messages, guideline_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": uml_design})
+
+    return jsonify({"uml_design": uml_design, "session_id": session_id})
 
 if __name__ == "__main__":
     # Start Flask server
