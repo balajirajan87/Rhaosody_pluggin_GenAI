@@ -15,7 +15,7 @@ from flask_cors import CORS
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "bge-m3"
 IMAGE_EMBEDDING_MODEL = "bge-m3"
-CHAT_MODEL = "llama3.2"
+CHAT_MODEL = "deepseek-r1:8b"
 OLLAMA_API_URL = 'http://localhost:11434/api'
 
 REQUIREMENT_METADATA_FILE = "Requirement_pdf_metadata.json"
@@ -818,11 +818,11 @@ def extract_code_information(requirements_summary, reference_code_collection):
 
 def create_uml_design(messages, uml_guidelines_collection):
     UML_Diagram = messages[4].get("content")
-    design_querry = f"Extract the guidelines related to {UML_Diagram}"
-    uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
-    if not uml_guidelines:
-        print("No UML design guidelines found.")
-        return None
+    # design_querry = f"Extract the guidelines related to {UML_Diagram}"
+    # uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
+    # if not uml_guidelines:
+    #     print("No UML design guidelines found.")
+    #     return None
     
     design_info = messages[3].get("content")
     if not design_info:
@@ -838,9 +838,8 @@ def create_uml_design(messages, uml_guidelines_collection):
             1. Understand the provided Design Information delimited by tripple backticks.
             2. Create the requested ({UML_Diagram}) based on your understanding of the Design information.
             3. Make sure all the identified API Functions, from the Design Information are included in the UML Design.
-            4. Make sure that you generate UML Diagram based on the provided UML design guidelines delimited by tripple backticks.
-            5. Provide PlantUML codes for the requested ({UML_Diagram}).
-            6. Provide a detailed explanation of the requested PlantUML diagrams.
+            4. Provide PlantUML codes for the requested ({UML_Diagram}).
+            5. Provide a detailed explanation of the requested PlantUML diagrams.
             """
         },
         {
@@ -848,8 +847,6 @@ def create_uml_design(messages, uml_guidelines_collection):
             "content": f"""
             Design Information:
             ```{design_info}```
-            UML Design Guidelines:
-            ```{uml_guidelines}```
             """
         }
     ]

@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.UUID;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
@@ -24,7 +25,7 @@ public class GenAiHandler {
 
 
   private Process pythonBackendProcess;
-
+  private String sessionId = null; // Store the session ID
   private IRPApplication rhapsodyApp;
 
   public static void main(String[] args) {
@@ -315,10 +316,19 @@ public class GenAiHandler {
     }
   }
 
+  // Method to generate a new session ID
+  private void generateSessionId(boolean reset) {
+      if (reset || sessionId == null) {
+          sessionId = UUID.randomUUID().toString(); // Generate a unique session ID
+          LoggerUtil.info("Generated new session ID: " + sessionId);
+      }
+  }
 
   public String sendRequestToBackend(String docType, String message) throws ProcessingException {
     try {
-
+      // Reset session ID only for summarize_requirements
+      boolean resetSession = "summarize_requirements".equals(docType);
+      generateSessionId(resetSession); // Generate a new session ID if needed
       String jsonInputString = "";
       String queryKey = "";
       switch (docType) {
@@ -343,7 +353,7 @@ public class GenAiHandler {
       // jsonInputString = String.format("{\"docType\": \"%s\", \"filePaths\": [%s]}", docType, filePaths.toString());
 
 
-      jsonInputString = "{\"" + queryKey + "\": \"" + message + "\"}";
+      jsonInputString = "{\"" + queryKey + "\": \"" + message + "\", \"session_id\": \"" + sessionId + "\"}";
 
       String urlFinal = Constants.urlTemp + docType;
       // LoggerUtil.info("API URL: " + urlFinal);
