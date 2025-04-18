@@ -169,6 +169,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
         data = {
             'model': TEXT_EMBEDDING_MODEL,
             'input': batch_data,  # Sending a list of inputs for batch processing
+            'dimensions': 1024
         }
         
         for attempt in range(self.max_retries):
@@ -214,6 +215,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
         data = {
             'model': IMAGE_EMBEDDING_MODEL,
             'input': image_data,
+            'dimensions': 1024
         }
         for attempt in range(self.max_retries):
             try:
@@ -270,6 +272,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
         data = {
             'model': TEXT_EMBEDDING_MODEL,
             'input': user_querry,
+            'dimensions': 1024
         }
         
         for attempt in range(self.max_retries):
