@@ -39,6 +39,28 @@
         "request": "attach",
         "hostName": "remote-server",
         "port": 6743
+      },
+      {
+        "name": "Python: Debug ollama.py",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/ollama.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "env": {},
+        "args": []
+      },
+      {
+        "name": "Python: Debug openai.py",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/openai.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "env": {
+            "OPENAI_API_KEY": ""
+        },
+        "args": []
       }
     ]
   }
