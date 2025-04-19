@@ -508,13 +508,9 @@ def process_reference_code(directory, collection, metadata_file):
     """
     metadata = load_metadata(metadata_file)
     
-    # Define subdirectories for header and source files
-    inc_dir = os.path.join(directory, "inc")
-    src_dir = os.path.join(directory, "src")
-    
-    # List all header and source files
-    header_files = [os.path.join(inc_dir, f) for f in os.listdir(inc_dir) if f.endswith('.h')]
-    source_files = [os.path.join(src_dir, f) for f in os.listdir(src_dir) if f.endswith('.c')]
+    # List all header and source files in the directory
+    header_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.h')]
+    source_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.c')]
     
     # Combine all files to process
     all_files = header_files + source_files
@@ -850,7 +846,7 @@ def extract_design_information(messages, collection):
     design_info = prompt_model(messages)
     return design_info
 
-def extract_code_information(requirements_summary, reference_code_collection):
+def extract_code_information(messages, collection):
     """
     Extract relevant code information from the reference code collection based on the requirements summary.
 
@@ -861,20 +857,28 @@ def extract_code_information(requirements_summary, reference_code_collection):
     Returns:
         str: Relevant code information as a string, or None if no relevant code is found.
     """
-    relevant_chunks = find_relevant_chunk(requirements_summary, reference_code_collection)
+    requirements_summary = messages[1].get("content")
+    if not requirements_summary:
+        raise ValueError("Summarized requirements not found in the second dictionary of messages.")
+    
+    relevant_chunks = find_relevant_chunk(requirements_summary, collection)
     if not relevant_chunks:
         print("No relevant code information found.")
         return None
+    
+    # Extract the task from the third dictionary
+    task = messages[4].get("content")
+    if not task:
+        raise ValueError("Task not found in the fourth dictionary of messages.")
 
     # Define the system and user messages
     messages = [
         {
             "role": "system",
             "content": """
-            You are a highly skilled AI assistant specializing in understanding Code information. You are provided with Requirements and its associated Code Information delimited by tripple backticks.
-            Your task is to:
-            1. Identify relevant API functions, parameters, protocols, and constraints from the Code Information.
-            2. Bring out an understanding of the Code information and map them with the requirements.
+            You are a highly skilled AI assistant specializing in understanding Code information. You are provided with Requirements and its associated Code Information delimited by tripple backticks and task delimited by Angle brackets.
+            Your task is:
+            <{task}>
             """
         },
         {
@@ -914,7 +918,7 @@ def create_uml_design(messages, uml_guidelines_collection):
         - The function uses an external `find_relevant_chunk` function to search for guidelines.
         - The `prompt_model` function is used to interact with the AI model for generating the UML design.
     """
-    UML_Diagram = messages[4].get("content")
+    UML_Diagram = messages[6].get("content")
     design_querry = f"Extract the guidelines related to {UML_Diagram}"
     uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
     if not uml_guidelines:
@@ -924,6 +928,10 @@ def create_uml_design(messages, uml_guidelines_collection):
     design_info = messages[3].get("content")
     if not design_info:
         raise ValueError("Design Information not found in the third dictionary of messages.")
+    
+    Code_design_info = messages[5].get("content")
+    if not design_info:
+        raise ValueError("Code Information not found in the fifth dictionary of messages.")
 
     # Define the system and user messages
     messages = [
@@ -932,9 +940,9 @@ def create_uml_design(messages, uml_guidelines_collection):
             "content": f"""
             You are a highly skilled AI assistant specializing in creating Software UML designs.
             Your task is to:
-            1. Understand the provided Design Information delimited by tripple backticks.
-            2. Create the requested ({UML_Diagram}) based on your understanding of the Design information.
-            3. Make sure all the identified API Functions, from the Design Information are included in the UML Design.
+            1. Understand the provided Design Information and Code Design Information delimited by tripple backticks.
+            2. Create the requested ({UML_Diagram}) based on your understanding of the Design information and Code Design Information.
+            3. Make sure all the identified API Functions, from the Design Information & Code Design Information are included in the UML Design.
             4. Provide PlantUML codes for the requested ({UML_Diagram}).
             5. Provide a detailed explanation of the requested PlantUML diagrams.
             """
@@ -944,6 +952,8 @@ def create_uml_design(messages, uml_guidelines_collection):
             "content": f"""
             Design Information:
             ```{design_info}```
+            Code Design Information:
+            ```{Code_design_info}```
             UML Design Guidelines:
             ```{uml_guidelines}```
             """
@@ -1160,7 +1170,7 @@ def embed_guideline_documents():
             else:
                 print(f"File not found: {pdf_path}")
 
-        return jsonify({"message": "Requirement Documents embedded successfully."}), 200
+        return jsonify({"message": "UML guideline Documents embedded successfully."}), 200
     except Exception as e:
         print(f"Error embedding documents: {e}")
         return jsonify({"error": str(e)}), 500
