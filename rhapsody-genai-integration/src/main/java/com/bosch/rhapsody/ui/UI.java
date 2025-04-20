@@ -287,7 +287,12 @@ public class UI {
       }
 
       ProcessFiles fileHandler = new ProcessFiles();
-      fileHandler.copyPdfFile(Constants.ROOTDIR, dropdownCombo.getText(), fileList);
+      String selectedOption = dropdownCombo.getText();
+      if ("ReferenceCode_Docs".equals(selectedOption)) {
+          fileHandler.copyFiles("ReferenceCode_Docs", selectedOption, fileList); // Place in ReferenceCode_Docs
+      } else {
+          fileHandler.copyPdfFile(Constants.ROOTDIR, selectedOption, fileList);
+      }
 
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
       statusTextBoxTab1.setText("Status: Uploading documents, please wait...");

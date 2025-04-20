@@ -897,70 +897,98 @@ def extract_code_information(messages, collection):
 
 def create_uml_design(messages, uml_guidelines_collection):
     """
-    Generates a UML design based on provided design information and UML guidelines.
+    Generates a UML design based on the provided messages and UML guidelines.
+    This function extracts the UML diagram type and design information from the 
+    `messages` parameter, retrieves relevant UML guidelines from the 
+    `uml_guidelines_collection`, and constructs a prompt to generate the UML 
+    design using a model. The generated UML design includes PlantUML code and 
+    a detailed explanation.
     Args:
         messages (list): A list of dictionaries containing message data. 
-                         - The 4th dictionary (index 3) should contain the design information in the "content" key.
-                         - The 5th dictionary (index 4) should specify the type of UML diagram to create in the "content" key.
-        uml_guidelines_collection (list): A collection of UML design guidelines to extract relevant guidelines from.
+            - The last dictionary in the list should contain the UML diagram type 
+              in the "content" key.
+            - The fourth dictionary should contain the design information in the 
+              "content" key.
+            - Optionally, the sixth dictionary may contain code design information 
+              in the "content" key.
+        uml_guidelines_collection (list): A collection of UML guidelines to extract 
+            relevant guidelines for the requested UML diagram.
     Returns:
-        str: The generated UML design in PlantUML format, along with a detailed explanation.
-             Returns None if no relevant UML guidelines are found.
+        str or None: The generated UML design as a string, including PlantUML code 
+        and an explanation. Returns `None` if no UML guidelines are found.
     Raises:
-        ValueError: If the design information is not found in the 4th dictionary of the `messages` list.
-    Process:
-        1. Extracts the UML diagram type from the 5th dictionary in `messages`.
-        2. Searches for relevant UML guidelines based on the diagram type.
-        3. Validates the presence of design information in the 4th dictionary of `messages`.
-        4. Constructs a prompt for an AI model to generate the UML design.
-        5. Returns the generated UML design and its explanation.
-    Note:
-        - The function uses an external `find_relevant_chunk` function to search for guidelines.
-        - The `prompt_model` function is used to interact with the AI model for generating the UML design.
+        ValueError: If the design information is not found in the fourth dictionary 
+        of the `messages` list.
+    Notes:
+        - The function dynamically adjusts the prompt based on the availability of 
+          code design information in the `messages` list.
+        - The `prompt_model` function is used to generate the UML design based on 
+          the constructed prompt.
     """
-    UML_Diagram = messages[6].get("content")
-    design_querry = f"Extract the guidelines related to {UML_Diagram}"
-    uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
+    UML_Diagram = messages[-1].get("content")  # The last message contains the UML diagram type
+    design_query = f"Extract the guidelines related to {UML_Diagram}"
+    uml_guidelines = find_relevant_chunk(design_query, uml_guidelines_collection)
     if not uml_guidelines:
         print("No UML design guidelines found.")
         return None
-    
+
     design_info = messages[3].get("content")
     if not design_info:
-        raise ValueError("Design Information not found in the third dictionary of messages.")
-    
-    Code_design_info = messages[5].get("content")
-    if not design_info:
-        raise ValueError("Code Information not found in the fifth dictionary of messages.")
+        raise ValueError("Design Information not found in the fourth dictionary of messages.")
 
-    # Define the system and user messages
-    messages = [
-        {
-            "role": "system",
-            "content": f"""
-            You are a highly skilled AI assistant specializing in creating Software UML designs.
-            Your task is to:
-            1. Understand the provided Design Information and Code Design Information delimited by tripple backticks.
-            2. Create the requested ({UML_Diagram}) based on your understanding of the Design information and Code Design Information.
-            3. Make sure all the identified API Functions, from the Design Information & Code Design Information are included in the UML Design.
-            4. Provide PlantUML codes for the requested ({UML_Diagram}).
-            5. Provide a detailed explanation of the requested PlantUML diagrams.
-            """
-        },
-        {
-            "role": "user",
-            "content": f"""
-            Design Information:
-            ```{design_info}```
-            Code Design Information:
-            ```{Code_design_info}```
-            UML Design Guidelines:
-            ```{uml_guidelines}```
-            """
-        }
+    # Check if code design information is available
+    Code_design_info = None
+    if len(messages) > 5 and "content" in messages[5]:
+        Code_design_info = messages[5].get("content")
+
+    # Define system and user messages based on the availability of code design information
+    if Code_design_info:
+        # System message when code design information is available
+        system_message = f"""
+        You are a highly skilled AI assistant specializing in creating Software UML designs.
+        Your task is to:
+        1. Understand the provided Design Information and Code Design Information delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information and Code Design Information.
+        3. Make sure all the identified API Functions from the Design Information and Code Design Information are included in the UML Design.
+        4. Provide PlantUML codes for the requested ({UML_Diagram}).
+        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        """
+        # User message when code design information is available
+        user_message = f"""
+        Design Information:
+        ```{design_info}```
+        Code Design Information:
+        ```{Code_design_info}```
+        UML Design Guidelines:
+        ```{uml_guidelines}```
+        """
+    else:
+        # System message when code design information is not available
+        system_message = f"""
+        You are a highly skilled AI assistant specializing in creating Software UML designs.
+        Your task is to:
+        1. Understand the provided Design Information delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information.
+        3. Make sure all the identified API Functions from the Design Information are included in the UML Design.
+        4. Provide PlantUML codes for the requested ({UML_Diagram}).
+        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        """
+        # User message when code design information is not available
+        user_message = f"""
+        Design Information:
+        ```{design_info}```
+        UML Design Guidelines:
+        ```{uml_guidelines}```
+        """
+
+    # Construct the messages for the prompt
+    prompt_messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message}
     ]
-    
-    uml_design = prompt_model(messages)
+
+    # Call the prompt_model function
+    uml_design = prompt_model(prompt_messages)
     return uml_design
 
 

@@ -6,7 +6,7 @@ package com.bosch.rhapsody.constants;
  */
 public class Constants {
 
-  public static String[] options = new String[] { "Requirement_Docs", "Reference_Docs", "Guideline_Docs" };
+  public static String[] options = new String[] { "Requirement_Docs", "Reference_Docs", "ReferenceCode_Docs", "Guideline_Docs" };
 
   public static String[] requestType = new String[] { "summarize_requirements", "extract_design_information", "extract_code_information", "create_uml_design" };
 

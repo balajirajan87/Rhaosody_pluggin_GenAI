@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-
+import org.eclipse.swt.widgets.List;
 import com.bosch.rhapsody.constants.LoggerUtil;
 
 public class ProcessFiles {
@@ -58,6 +58,35 @@ public class ProcessFiles {
         e.printStackTrace();
         LoggerUtil.error("Failed to copy file: " + sourceFile.getName());
       }
+    }
+  }
+
+  /**
+   * Copies files to the specified target directory.
+   *
+   * @param targetDir   The directory where files should be copied.
+   * @param docType     The type of document being uploaded.
+   * @param fileList    The list of files selected by the user.
+   */
+  public void copyFiles(String targetDir, String docType, List fileList) {
+    // Ensure the target directory exists
+    File targetDirectory = new File(targetDir);
+    if (!targetDirectory.exists()) {
+        targetDirectory.mkdirs(); // Create the directory if it doesn't exist
+    }
+
+    // Iterate through the selected files and copy them
+    for (String filePath : fileList.getItems()) {
+        File sourceFile = new File(filePath);
+        File destinationFile = new File(targetDirectory, sourceFile.getName());
+
+        try {
+            // Copy the file to the target directory
+            Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LoggerUtil.info("File copied: " + sourceFile.getName() + " to " + targetDir);
+        } catch (IOException e) {
+            LoggerUtil.error("Failed to copy file: " + sourceFile.getName() + ". Error: " + e.getMessage());
+        }
     }
   }
 

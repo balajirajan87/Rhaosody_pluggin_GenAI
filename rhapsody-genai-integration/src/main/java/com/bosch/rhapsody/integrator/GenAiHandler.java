@@ -242,6 +242,9 @@ public class GenAiHandler {
         case "Reference_Docs":
           docTypeApi = "embed_reference_documents";
           break;
+        case "ReferenceCode_Docs": // New case for code files
+          docTypeApi = "embed_code_documents";
+          break;
         case "Guideline_Docs":
           docTypeApi = "embed_guideline_documents";
           break;
@@ -336,13 +339,13 @@ public class GenAiHandler {
           queryKey = "feature_query";
           break;
         case "extract_design_information":
-          queryKey = "requirements_summary";
+          queryKey = "task_input";
           break;
         case "extract_code_information":
-          queryKey = "requirements_summary";
+          queryKey = "task_input";
           break;
         case "create_uml_design":
-          queryKey = "requirements_summary";
+          queryKey = "task_input";
           break;
         default:
           LoggerUtil.error("Invalid docType: " + docType);
