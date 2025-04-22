@@ -15,7 +15,7 @@ from flask_cors import CORS
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "text-embedding-3-small"
 IMAGE_EMBEDDING_MODEL = "image-embedding-1"
-CHAT_MODEL = "gpt-4o"
+CHAT_MODEL = "gpt-4.1"
 API_URL = 'https://openaichatgpt-ms-epb1-xc.openai.azure.com/openai/deployments'
 API_KEY = os.getenv('OPENAI_API_KEY')  # Read API key from environment variable
 CHAT_API_VERSION = "2025-01-01-preview"

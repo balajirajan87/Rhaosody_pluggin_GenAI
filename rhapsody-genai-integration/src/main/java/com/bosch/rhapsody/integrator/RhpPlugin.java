@@ -32,7 +32,7 @@ public class RhpPlugin extends RPUserPlugin {
     Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
     Constants.API_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "api.key";
     Constants.DECRYPT_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "decrypt.exe";
-    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "ollama.py";
+    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "openai.py";
     Constants.SECRET_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "secret.key";
     Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "chat_log.txt";
     // Validate paths
