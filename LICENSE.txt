@@ -1,0 +1,38 @@
+Bosch InnerSource License (BISL) 1.0
+
+1. Definitions
+
+- InnerSource Work = all software and other copyrighted works licensed under the
+  BISL-1.0.
+- BISL Group = The BISL Group consists of the Robert Bosch GmbH, TOGEs and RGs.
+- modified copy = a copy of the InnerSource Work with changes ranging from small
+  to large, also including derivative works.
+
+2. Grant of Rights for BISL Group-Internal use
+
+Each member of the BISL Group may use, modify, reproduce and copy the
+InnerSource Work free of charge and distribute the InnerSource Work as well as
+unmodified and modified copies within the BISL Group under the BISL-1.0.
+
+3. Grant of Rights to Distribute under a Non-BISL License
+
+Any member of the BISL Group may license unmodified and modified copies of an
+InnerSource Work to any natural and legal person under any non-exclusive terms.
+However, for distribution outside the BISL Group, the unmodified or modified
+copies of an InnerSource Work have to be distributed under a non-BISL, 
+non-exclusive license.
+
+4. Obligations
+
+Author attributions must be preserved in each file, even when relicensing 
+unmodified/modified copies.
+
+5. Warranty and Liability
+
+The InnerSource Work is not product-ready software and provided 'as is', 
+without warranties of any kind, including without limitation merchantability, 
+fitness for a particular purpose, and absence of defects. The authors and
+members of the BISL Group assume no liability for damages, except in cases of 
+gross negligence and/or intent. The limitations of liability do not apply in
+cases of liability for damages under any applicable and mandatory product
+liability regulation.
