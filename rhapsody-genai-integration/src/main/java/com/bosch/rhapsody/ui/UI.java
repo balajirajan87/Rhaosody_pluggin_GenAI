@@ -1,26 +1,18 @@
 package com.bosch.rhapsody.ui;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -28,7 +20,6 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -37,6 +28,7 @@ import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
 
@@ -48,16 +40,17 @@ public class UI {
   GenAiHandler genAiHandler = null;
   String startPythonBackend;
 
+  private Text chatArea;
+
   public UI(GenAiHandler genAiHandler, String startPythonBackend) {
     this.startPythonBackend = startPythonBackend;
     this.genAiHandler = genAiHandler;
   }
 
-
   public static void main(String[] args) {
     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
     GenAiHandler aiHandler = new GenAiHandler(app);
-//    String startPythonBackend2 = aiHandler.startPythonBackend();
+    // String startPythonBackend2 = aiHandler.startPythonBackend();
 
     UI ui = new UI(aiHandler, "abc");
     ui.createUI();
@@ -74,7 +67,6 @@ public class UI {
     OS.SetWindowPos(handle, isOnTop ? OS.HWND_TOPMOST : OS.HWND_NOTOPMOST, location.x, location.y, dimension.x,
         dimension.y, 0);
   }
-
 
   /**
    * @param display - display input
@@ -98,12 +90,9 @@ public class UI {
     toggleAlwaysOnTop(shell, true);
 
     shell.setText("UML diagram generator");
-    shell.setSize(800, 600);
+    shell.setSize(1000, 700);
     shell.setLayout(new GridLayout(1, false));
 
-    // Image icon = new Image(display,
-    // "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhaosody_pluggin_GenAI\\rhapsody-genai-integration\\src\\main\\resources\\getstarted.gif");
-    // shell.setImage(icon);
 
     CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
     tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -151,11 +140,9 @@ public class UI {
     selectFileButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
     selectFileButton.setEnabled(false);
 
-
     GridData dragDropAreaData = new GridData(SWT.FILL, SWT.FILL, true, false);
     dragDropAreaData.heightHint = 80; // Decreased height to 100 pixels
     dragDropArea.setLayout(new GridLayout(2, false)); // Set layout with 2 columns
-
 
     Label fileListLabel = new Label(tab1Composite, SWT.NONE);
     fileListLabel.setText("Selected Files:");
@@ -168,7 +155,6 @@ public class UI {
     fileList.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
     fileList.setForeground(display.getSystemColor(SWT.COLOR_BLACK));
     fileList.setFont(new Font(display, "Courier New", 12, SWT.NORMAL));
-
 
     Composite buttonRow1 = new Composite(tab1Composite, SWT.NONE);
     GridLayout buttonRowLayout1 = new GridLayout(2, true); // Two columns for two buttons
@@ -185,7 +171,7 @@ public class UI {
     goToOutputButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
     goToOutputButton.addListener(SWT.Selection, event -> tabFolder.setSelection(1));
 
-// Move "Submit Text" button to the bottom middle
+    // Move "Submit Text" button to the bottom middle
     Button uploadTextButton = new Button(tab1Composite, SWT.PUSH);
     uploadTextButton.setText("Upload files");
     uploadTextButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -205,8 +191,7 @@ public class UI {
     if (!startPythonBackend.contains("error")) {
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_BLUE));
       statusTextBoxTab1.setText("Status: " + startPythonBackend);
-    }
-    else {
+    } else {
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
       statusTextBoxTab1.setText("Status: Server not ready. " + startPythonBackend);
       uploadTextButton.setEnabled(false);
@@ -235,8 +220,7 @@ public class UI {
           MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
           messageBox.setMessage("Please select an option from the dropdown before selecting a file.");
           messageBox.open();
-        }
-        else {
+        } else {
           fileList.add(selectedFile);
           dropdownFileMapping.get(selectedOption).add(selectedFile);
           String fileName = new java.io.File(selectedFile).getName();
@@ -266,12 +250,10 @@ public class UI {
         // Highlight the immediate next item if any
         if (selectedIndex < fileList.getItemCount()) {
           fileList.select(selectedIndex); // Select the next item
-        }
-        else if (fileList.getItemCount() > 0) {
+        } else if (fileList.getItemCount() > 0) {
           fileList.select(fileList.getItemCount() - 1); // Select the last item if no next item
         }
-      }
-      else {
+      } else {
         MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
         messageBox.setMessage("No file selected to remove.");
         messageBox.open();
@@ -289,27 +271,44 @@ public class UI {
       ProcessFiles fileHandler = new ProcessFiles();
       String selectedOption = dropdownCombo.getText();
       if ("ReferenceCode_Docs".equals(selectedOption)) {
-          fileHandler.copyFiles("ReferenceCode_Docs", selectedOption, fileList); // Place in ReferenceCode_Docs
+        fileHandler.copyFiles("ReferenceCode_Docs", selectedOption, fileList); // Place in ReferenceCode_Docs
       } else {
-          fileHandler.copyPdfFile(Constants.ROOTDIR, selectedOption, fileList);
+        fileHandler.copyPdfFile(Constants.ROOTDIR, selectedOption, fileList);
       }
 
       statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
       statusTextBoxTab1.setText("Status: Uploading documents, please wait...");
       statusTextBoxTab1.update();
       String response = uploadDoc(dropdownCombo.getText(), fileList);
-      String[] responseParts = response.split(":");
+
+      String[] responseParts = response.split(":", 2);
 
       String responseCode = responseParts[0];
-      String responseMessage = responseParts[1];
+      String responseMessage = "";
 
-      if (Integer.valueOf(responseCode) == HttpURLConnection.HTTP_OK) {
-        statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-        statusTextBoxTab1.setText("Status: PDF file uploaded successfully." + responseMessage);
-      }
-      else {
+      try {
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode jsonResponse = objectMapper.readTree(responseParts[1]);
+        JsonNode node = jsonResponse.get("message");
+        if (null != node) {
+          responseMessage = node.textValue();
+        } else {
+          responseMessage = responseParts[1];
+        }
+        if (Integer.valueOf(responseCode) == HttpURLConnection.HTTP_OK) {
+          statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+          statusTextBoxTab1.setText("Status: " + responseMessage);
+          LoggerUtil.info(responseMessage);
+        } else {
+          statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
+          statusTextBoxTab1.setText("Status: " + responseMessage);
+          LoggerUtil.error(responseMessage);
+        }
+
+      } catch (Exception e1) {
         statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_RED));
-        statusTextBoxTab1.setText("Status: Failed to upload PDF file. " + responseMessage);
+        statusTextBoxTab1.setText("Status: Error parsing server response.");
+        LoggerUtil.error("JSON Parsing Error: " + e1.getMessage());
       }
     });
 
@@ -327,112 +326,15 @@ public class UI {
     tab2Composite.setLayout(new GridLayout(1, false));
     tab2.setControl(tab2Composite);
 
-    // Text chatDisplay = new Text(tab2Composite, SWT.BORDER | SWT.WRAP | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+    // Font for chat area and input field
+    Font font = new Font(display, "Arial", 12, SWT.NORMAL); // Adjust font size as needed
 
-   Canvas chatDisplay = new Canvas(tab2Composite, SWT.BORDER | SWT.V_SCROLL);
-    GridData chatDisplayLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-    chatDisplayLayoutData.heightHint = 300; // Set a minimum height for the chat display
-    chatDisplay.setLayoutData(chatDisplayLayoutData);
-    // chatDisplay.setEditable(false);
-
-    // Add a scroll bar to the Canvas
-    ScrollBar verticalBar = chatDisplay.getVerticalBar();
-    verticalBar.addListener(SWT.Selection, e -> {
-      chatDisplay.redraw(); // Redraw the canvas when the scroll bar is moved
-    });
-
-    // List to store chat messages
-    LinkedList<String> chatMessages = new LinkedList<>();
-
-    // Draw chat messages
-    chatDisplay.addPaintListener(e -> {
-      GC gc = e.gc;
-      int y = 10; // Initial vertical position for drawing messages
-      int padding = 10; // Padding around the text inside the rectangle
-      int canvasWidth = chatDisplay.getClientArea().width - 20; // Available width for the message (with margin)
-      int totalHeight = 0; // Track the total height of all messages
-
-      // Get the scroll offset from the vertical bar
-      int scrollOffset = verticalBar.getSelection();
-
-      File chatLogFile = new File(Constants.CHAT_LOG_FILE_PATH);
-
-      // Clear the content of the chat log file
-      try (FileWriter writer = new FileWriter(chatLogFile, false)) { // Overwrite mode
-        writer.write(""); // Write an empty string to clear the file
-      }
-      catch (IOException ex) {
-        LoggerUtil.error("Error clearing chat log file: " + ex.getMessage());
-      }
-
-      for (String message : chatMessages) {
-        // Write the message to the text file
-        try (FileWriter writer = new FileWriter(chatLogFile, true)) { // Append mode
-          writer.write(message + System.lineSeparator());
-        }
-        catch (IOException ex) {
-          LoggerUtil.error("Error writing to chat log file: " + ex.getMessage());
-        }
-
-        // Split the message into lines based on the available width
-        String[] words = message.split(" ");
-        StringBuilder line = new StringBuilder();
-        LinkedList<String> lines = new LinkedList<>();
-
-        for (String word : words) {
-          if (!word.equals("You:") && !word.equals("Bot:")) {
-            Point textSize = gc.textExtent(line + word + " ");
-            if (textSize.x > canvasWidth) {
-              lines.add(line.toString());
-              line = new StringBuilder(word + " ");
-            }
-            else {
-              line.append(word).append(" ");
-            }
-          }
-        }
-        if (!line.toString().isEmpty()) {
-          lines.add(line.toString());
-        }
-
-        // Calculate the height of the rectangle based on the number of lines
-        int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
-
-        // Set background color based on the message type
-        if (message.startsWith("You:")) {
-          gc.setBackground(display.getSystemColor(SWT.COLOR_DARK_GRAY)); // User message background
-        }
-        else {
-          gc.setBackground(display.getSystemColor(SWT.COLOR_GRAY)); // Bot message background
-        }
-
-        // Adjust the y-coordinate based on the scroll offset
-        int adjustedY = y - scrollOffset;
-
-        // Draw the rounded rectangle only if it is visible in the current viewport
-        if (adjustedY + rectHeight > 0 && adjustedY < chatDisplay.getClientArea().height) {
-          gc.fillRoundRectangle(10, adjustedY, canvasWidth, rectHeight, 10, 10);
-
-          // Draw each line of text inside the rectangle
-          int textY = adjustedY + padding;
-          for (String msgLine : lines) {
-            gc.drawText(msgLine.trim(), 15, textY);
-            textY += gc.textExtent(msgLine).y;
-          }
-        }
-
-        // Move to the next message position
-        y += rectHeight + 10; // Add spacing between messages
-        totalHeight += rectHeight + 10; // Update total height
-      }
-
-      // Update the scroll bar properties
-      Rectangle clientArea = chatDisplay.getClientArea();
-      verticalBar.setMaximum(totalHeight); // Set the maximum scrollable height
-      verticalBar.setThumb(Math.min(totalHeight, clientArea.height)); // Set the thumb size
-      verticalBar.setPageIncrement(clientArea.height); // Set the page increment
-      verticalBar.setIncrement(20); // Set the line increment
-    });
+    // Chat area with vertical scrollbar occupying top 3/4 of the UI
+    chatArea = new Text(tab2Composite, SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI);
+    chatArea.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+    chatArea.setFont(font);
+    GridData chatAreaData = new GridData(SWT.FILL, SWT.FILL, true, true);
+    chatArea.setLayoutData(chatAreaData);
 
     Composite inputRow1 = new Composite(tab2Composite, SWT.NONE);
     inputRow1.setLayout(new GridLayout(2, false));
@@ -442,9 +344,9 @@ public class UI {
     dropdown.setItems(Constants.requestType); // Add your options here
     dropdown.select(0); // Select the first entry by default
 
-    // Set layout data for the dropdown to position it above the userInput text field
+    // Set layout data for the dropdown to position it above the userInput text
+    // field
     dropdown.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
 
     // User input area
     Composite inputRow = new Composite(tab2Composite, SWT.NONE);
@@ -458,6 +360,8 @@ public class UI {
     userInputLayoutData.heightHint = 60; // Increase height
     userInput.setLayoutData(userInputLayoutData);
     userInput.setFont(new Font(display, "Arial", 11, SWT.NORMAL)); // Slightly larger font
+
+    userInput.setFocus();
 
     // Send button
     Button sendButton = new Button(inputRow, SWT.PUSH);
@@ -478,16 +382,7 @@ public class UI {
     sendButton.addListener(SWT.Selection, event -> {
       String userMessage = userInput.getText();
       if (!userMessage.isEmpty()) {
-        // Add user message to the list
-        addChatMessage(chatDisplay, verticalBar, chatMessages, "You: " + userMessage);
-
-        // Simulate chatbot response
-        String botResponse = generateBotResponse(dropdown.getText(), userMessage);
-        addChatMessage(chatDisplay, verticalBar, chatMessages, "Bot: " + botResponse);
-
-        // Redraw the Canvas with updated messages
-        chatDisplay.redraw();
-
+        sendMessage(dropdown.getText(), userInput);
         // Clear user input
         userInput.setText("");
       }
@@ -514,14 +409,7 @@ public class UI {
     // Add functionality to clear chat messages
     clearChatButton.addListener(SWT.Selection, event -> {
       // Clear the chat messages list
-      chatMessages.clear();
-
-      // Reset the scroll bar
-      verticalBar.setMaximum(0);
-      verticalBar.setSelection(0);
-
-      // Redraw the chat display to remove all messages
-      chatDisplay.redraw();
+      chatArea.setText("");
     });
 
     // Open the Shell
@@ -535,16 +423,14 @@ public class UI {
   }
 
   // Simulated bot response generation
-  private String generateBotResponse(String requestType, String userMessage) {
+  private String generateBotResponse(String userMessage, String requestType) {
     try {
       return genAiHandler.sendRequestToBackend(requestType, userMessage);
-    }
-    catch (ProcessingException e) {
+    } catch (ProcessingException e) {
       LoggerUtil.error("Error: " + e.getMessage());
     }
-    return "couldn't fetch data";
+    return userMessage;
   }
-
 
   private String uploadDoc(String docType, List fileList) {
     StringBuilder filePaths = new StringBuilder();
@@ -553,66 +439,33 @@ public class UI {
     }
     try {
       return genAiHandler.uploadDocToBackend(docType, filePaths);
-    }
-    catch (ProcessingException e) {
+    } catch (ProcessingException e) {
       LoggerUtil.error("Error: " + e.getMessage());
     }
     return "00: Error uploading doc";
   }
 
-  // Function to add a new message and scroll to the latest message
-  private void addChatMessage(Canvas chatDisplay, ScrollBar verticalBar, LinkedList<String> chatMessages,
-      String message) {
-    // Add the new message to the list
-    chatMessages.add(message);
+  private void sendMessage(String requestType, Text userInput) {
+    String userMessage = userInput.getText().trim();
+    if (!userMessage.isEmpty()) {
+      // Display user message with distinct formatting
+      chatArea.append("User Request: \n" + userMessage + "\n" +
+          "***********************************************************************************\n\n");
 
-    // Calculate the total height of all messages
-    int totalHeight = 0;
-    GC gc = new GC(chatDisplay);
-    int padding = 10;
-    int canvasWidth = chatDisplay.getClientArea().width - 20;
+      // Get the bot response
+      String botResponse = generateBotResponse(userMessage, requestType);
 
-       // Track the vertical position for each message
-       int y = 10; // Initial vertical position for the first message
+      // Append bot response with distinct formatting
+      chatArea.append("Response: \n" + botResponse + "\n\n" +
+          "***********************************************************************************\n\n");
 
-    for (String msg : chatMessages) {
-      String[] words = msg.split(" ");
-      StringBuilder line = new StringBuilder();
-      LinkedList<String> lines = new LinkedList<>();
+      // Clear input field
+      userInput.setText("");
 
-      for (String word : words) {
-        Point textSize = gc.textExtent(line + word + " ");
-        if (textSize.x > canvasWidth) {
-          lines.add(line.toString());
-          line = new StringBuilder(word + " ");
-        }
-        else {
-          line.append(word).append(" ");
-        }
-      }
-      if (!line.toString().isEmpty()) {
-        lines.add(line.toString());
-      }
-
-       // Calculate the height of the rectangle for this message
-       int rectHeight = lines.size() * gc.textExtent("Sample").y + 2 * padding;
-
-       // Increment the total height and vertical position
-       totalHeight += rectHeight + 10; // Add spacing between messages
-       y += rectHeight + 10; // Update the vertical position for the next message
+      // Scroll to the bottom
+      chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
-    gc.dispose();
-
-    // Update the scroll bar properties
-    verticalBar.setMaximum(totalHeight);
-    verticalBar.setThumb(Math.min(totalHeight, chatDisplay.getClientArea().height));
-    verticalBar.setPageIncrement(chatDisplay.getClientArea().height);
-    verticalBar.setIncrement(20);
-
-    // Scroll to the bottom
-    verticalBar.setSelection(Math.max(0, totalHeight - chatDisplay.getClientArea().height));
-    chatDisplay.redraw();
-    chatDisplay.update();
   }
+
 
 }

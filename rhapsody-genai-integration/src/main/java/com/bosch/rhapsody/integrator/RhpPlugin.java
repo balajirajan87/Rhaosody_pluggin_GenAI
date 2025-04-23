@@ -32,21 +32,21 @@ public class RhpPlugin extends RPUserPlugin {
     Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
     Constants.API_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "api.key";
     Constants.DECRYPT_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "decrypt.exe";
-    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "openai.py";
+    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator  + "openai.py";
     Constants.SECRET_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "secret.key";
     Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "chat_log.txt";
     // Validate paths
     // if (!new File(Constants.DECRYPT_SCRIPT_PATH).exists()) {
     // LoggerUtil.error("Decrypt script not found at: " + Constants.DECRYPT_SCRIPT_PATH);
     // }
-    // if (!new File(Constants.BACKEND_SCRIPT_PATH).exists()) {
-    // LoggerUtil.error("Backend script not found at: " + Constants.BACKEND_SCRIPT_PATH);
-    // }
+    if (!new File(Constants.BACKEND_SCRIPT_PATH).exists()) {
+    LoggerUtil.error("Backend script not found at: " + Constants.BACKEND_SCRIPT_PATH);
+    }
 
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
     getChatLogFile();
-    LoggerUtil.info("GenAI Plugin loaded v1.0.0_2025-11-04. Use the menu to \"Rhapsody GenAI\".");
+    LoggerUtil.info("GenAI Plugin loaded v1.1.0_2025-04-23. Use the menu to \"Rhapsody GenAI\".");
   }
 
   private void getChatLogFile() {
@@ -81,9 +81,9 @@ public class RhpPlugin extends RPUserPlugin {
   public void OnMenuItemSelect(String menuItem) {
     if (menuItem.equals("Rhapsody GenAI")) {
       try {
+        LoggerUtil.info("Running GenAI...");
         genAiHandler = new GenAiHandler(rhapsodyApp);
-        // String startPythonBackend = genAiHandler.startPythonBackend();
-        String  response="Server running...";
+        String  response=genAiHandler.startPythonBackend();
         // try{
         //   response= genAiHandler.checkConnection();
         // }catch(Exception e){
