@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -143,33 +142,33 @@ public class GenAiHandler {
 
       // Wait for a few seconds to allow the backend to initialize
       try {
-        Thread.sleep(2000); // Wait for 2 seconds
+        Thread.sleep(1000); // Wait for 2 seconds
       } catch (InterruptedException e) {
         LoggerUtil.error("Thread interrupted while waiting for backend initialization: " + e.getMessage());
         Thread.currentThread().interrupt(); // Restore the interrupted status
       }
 
-      new Thread(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getInputStream()))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            LoggerUtil.info("[Python Backend] " + line);
-          }
-        } catch (IOException e) {
-          LoggerUtil.error(e.getMessage());
-        }
-      }).start();
+      // new Thread(() -> {
+      //   try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getInputStream()))) {
+      //     String line;
+      //     while ((line = reader.readLine()) != null) {
+      //       LoggerUtil.info("[Python Backend] " + line);
+      //     }
+      //   } catch (IOException e) {
+      //     LoggerUtil.error(e.getMessage());
+      //   }
+      // }).start();
 
-      new Thread(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getErrorStream()))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            LoggerUtil.error("[Python Backend] " + line);
-          }
-        } catch (IOException e) {
-          LoggerUtil.error(e.getMessage());
-        }
-      }).start();
+      // new Thread(() -> {
+      //   try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getErrorStream()))) {
+      //     String line;
+      //     while ((line = reader.readLine()) != null) {
+      //       LoggerUtil.error("[Python Backend] " + line);
+      //     }
+      //   } catch (IOException e) {
+      //     LoggerUtil.error(e.getMessage());
+      //   }
+      // }).start();
 
       return "Background process started";
     } catch (IOException e) {
@@ -249,6 +248,8 @@ public class GenAiHandler {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
       // Set request method to POST
+      connection.setConnectTimeout(1200000); // Set connection timeout to 60 seconds
+      connection.setReadTimeout(1200000); // Set read timeout to 60 seconds
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json");
       connection.setRequestProperty("Accept", "application/json");
@@ -259,9 +260,6 @@ public class GenAiHandler {
         byte[] input = jsonInputString.getBytes("utf-8");
         os.write(input, 0, input.length);
       }
-
-      connection.setConnectTimeout(60000); // Set connection timeout to 60 seconds
-      connection.setReadTimeout(60000);
 
       // Attempt connection
       int responseCode = connection.getResponseCode();
@@ -299,7 +297,7 @@ public class GenAiHandler {
   private void generateSessionId(boolean reset) {
     if (reset || sessionId == null) {
       sessionId = UUID.randomUUID().toString(); // Generate a unique session ID
-      // LoggerUtil.info("Generated new session ID: " + sessionId);
+      LoggerUtil.info("Generated new session ID: " + sessionId);
     }
   }
 
@@ -310,18 +308,23 @@ public class GenAiHandler {
       generateSessionId(resetSession); // Generate a new session ID if needed
       String jsonInputString = "";
       String queryKey = "";
+      String messageKey = "";
       switch (docType) {
         case "summarize_requirements":
           queryKey = "feature_query";
+          messageKey="requirements_summary";
           break;
         case "extract_design_information":
           queryKey = "task_input";
+          messageKey="design_info";
           break;
         case "extract_code_information":
           queryKey = "task_input";
+          messageKey="code_design_info";
           break;
         case "create_uml_design":
           queryKey = "task_input";
+          messageKey="uml_design";
           break;
         default:
           LoggerUtil.error("Invalid docType: " + docType);
@@ -331,7 +334,6 @@ public class GenAiHandler {
       jsonInputString = "{\"" + queryKey + "\": \"" + message + "\", \"session_id\": \"" + sessionId + "\"}";
 
       String urlFinal = Constants.urlTemp + docType;
-      // LoggerUtil.info("API URL: " + urlFinal);
 
       // URL of the API endpoint
       URL url = new URL(urlFinal);
@@ -340,6 +342,8 @@ public class GenAiHandler {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
       // Set request method to POST
+      connection.setConnectTimeout(60000); // Set connection timeout to 40 seconds
+      connection.setReadTimeout(60000);
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json");
       connection.setRequestProperty("Accept", "application/json");
@@ -351,8 +355,6 @@ public class GenAiHandler {
         os.write(input, 0, input.length);
       }
 
-      connection.setConnectTimeout(40000); // Set connection timeout to 40 seconds
-      connection.setReadTimeout(40000);
 
       // Attempt connection
       int responseCode = connection.getResponseCode();
@@ -366,13 +368,14 @@ public class GenAiHandler {
           }
           String responseBody = response.toString();
           try {
+
             // Check if the response is in JSON format
             ObjectMapper objectMapper = new ObjectMapper();
 
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
             // Extract the "message" field
-            String res = jsonNode.get("requirements_summary").asText();
+            String res = jsonNode.get(messageKey).asText();
             if (res == null || res.isEmpty()) {
               return responseBody;
             }
@@ -387,7 +390,7 @@ public class GenAiHandler {
       // Close the connection
       connection.disconnect();
 
-      return "couldn't fetch related data";
+      return "Couldn't fetch related data. Please re-upload all the files and try again.";
       
     } catch (SocketTimeoutException e) {
       throw new ProcessingException("Connection timed out: " + e.getMessage());
@@ -405,6 +408,30 @@ public class GenAiHandler {
       pythonBackendProcess.destroy();
       LoggerUtil.info("Python backend stopped.");
     }
+  }
+
+  public boolean isPythonCommandAccessible() {
+    try {
+      // Run the "python --version" command to check if Python is accessible
+      Process process = new ProcessBuilder("python", "--version").start();
+
+      // Read the output or error stream
+      BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+      // Check if there's any output (indicating Python is accessible)
+      String output = reader.readLine();
+      String errorOutput = errorReader.readLine();
+
+      // Wait for the process to complete
+      int exitCode = process.waitFor();
+
+      // If the exit code is 0 and there's output, Python is accessible
+      return exitCode == 0 && (output != null || errorOutput != null);
+  } catch (Exception e) {
+      // If an exception occurs, Python is not accessible
+      return false;
+  }
   }
 
 }

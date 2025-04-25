@@ -1,8 +1,6 @@
 package com.bosch.rhapsody.constants;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -14,21 +12,21 @@ public class LoggerUtil {
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private static IRPApplication rhapsodyApp;
-    private static String path;
-  
-  
-    /**
-     * @param rhapsodyApp the rhapsodyApp to set
-     */
-    public static void setRhapsodyApp(IRPApplication rhapsodyApp) {
-      LoggerUtil.rhapsodyApp = rhapsodyApp;
-    }
-  
-      /**
-     * @param rhapsodyApp the rhapsodyApp to set
-     */
-    public static void setRootDir(String path) {
-      LoggerUtil.path = path;
+  private static String path;
+
+
+  /**
+   * @param rhapsodyApp the rhapsodyApp to set
+   */
+  public static void setRhapsodyApp(IRPApplication rhapsodyApp) {
+    LoggerUtil.rhapsodyApp = rhapsodyApp;
+  }
+
+  /**
+   * @param rhapsodyApp the rhapsodyApp to set
+   */
+  public static void setRootDir(String path) {
+    LoggerUtil.path = path;
   }
 
   /**
@@ -73,7 +71,7 @@ public class LoggerUtil {
     // }
   }
 
-    private static  void getLogFile(String string) {
+  private static void getLogFile(String string) {
     File chatLogFile = new File(string);
     if (chatLogFile.exists()) {
       try (java.io.PrintWriter writer = new java.io.PrintWriter(chatLogFile)) {
@@ -83,14 +81,17 @@ public class LoggerUtil {
       catch (Exception e) {
         LoggerUtil.error("Failed to clear the chat log file content: " + e.getMessage());
       }
-    }else{
+    }
+    else {
       try {
         if (chatLogFile.createNewFile()) {
           LoggerUtil.info("Chat log file created: " + string);
-        } else {
+        }
+        else {
           LoggerUtil.error("Failed to create chat log file: " + string);
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LoggerUtil.error("Error while creating chat log file: " + e.getMessage());
       }
     }

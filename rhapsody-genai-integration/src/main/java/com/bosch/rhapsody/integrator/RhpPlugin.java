@@ -1,7 +1,11 @@
 package com.bosch.rhapsody.integrator;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
@@ -16,10 +20,13 @@ import com.telelogic.rhapsody.core.RhapsodyAppServer;
  */
 public class RhpPlugin extends RPUserPlugin {
 
+  private static boolean isStandalone = false;
+  ProcessFiles fileHandler = null;
   private IRPApplication rhapsodyApp;
   GenAiHandler genAiHandler = null;
 
   public static void main(String[] args) {
+    isStandalone = true;
     RhpPlugin plugin = new RhpPlugin();
     plugin.RhpPluginInit(RhapsodyAppServer.getActiveRhapsodyApplication());
     plugin.OnMenuItemSelect("Rhapsody GenAI");
@@ -28,46 +35,55 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public void RhpPluginInit(IRPApplication rpyApplication) {
-    String temp = getJarPath();
-    Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
-    Constants.API_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "api.key";
-    Constants.DECRYPT_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "dist" + File.separator + "decrypt.exe";
-    Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator  + "openai.py";
-    Constants.SECRET_KEY_FILE_PATH = Constants.ROOTDIR + File.separator + "secret.key";
-    Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "chat_log.txt";
-    // Validate paths
-    // if (!new File(Constants.DECRYPT_SCRIPT_PATH).exists()) {
-    // LoggerUtil.error("Decrypt script not found at: " + Constants.DECRYPT_SCRIPT_PATH);
-    // }
-    if (!new File(Constants.BACKEND_SCRIPT_PATH).exists()) {
-    LoggerUtil.error("Backend script not found at: " + Constants.BACKEND_SCRIPT_PATH);
-    }
-
+    fileHandler = new ProcessFiles();
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
-    getChatLogFile();
-    LoggerUtil.info("GenAI Plugin loaded v1.1.0_2025-04-23. Use the menu to \"Rhapsody GenAI\".");
+    String temp = fileHandler.getJarPath();
+
+    if (RhpPlugin.isStandalone) {
+      Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
+      Constants.PROFILEPATH = Constants.ROOTDIR + File.separator
+          + "rhapsody-genai-integration\\src\\main\\resources";
+      Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
+      Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
+    } else {
+      Constants.PROFILEPATH = temp;
+      Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
+      Constants.BACKEND_SCRIPT_PATH = Constants.PROFILEPATH + File.separator + "openai.py";
+      Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
+    }
+
+    fileHandler.getChatLogFile();
+
+    LoggerUtil.info("GenAI Plugin loaded " + Constants.VERSION + ". Use the menu to \"Rhapsody GenAI\".");
   }
 
-  private void getChatLogFile() {
-    File chatLogFile = new File(Constants.CHAT_LOG_FILE_PATH);
-    if (chatLogFile.exists()) {
-      try (java.io.PrintWriter writer = new java.io.PrintWriter(chatLogFile)) {
-        writer.print("");
-        LoggerUtil.info("Chat log file content cleared: " + Constants.CHAT_LOG_FILE_PATH);
-      }
-      catch (Exception e) {
-        LoggerUtil.error("Failed to clear the chat log file content: " + e.getMessage());
-      }
-    }else{
-      try {
-        if (chatLogFile.createNewFile()) {
-          LoggerUtil.info("Chat log file created: " + Constants.CHAT_LOG_FILE_PATH);
-        } else {
-          LoggerUtil.error("Failed to create chat log file: " + Constants.CHAT_LOG_FILE_PATH);
+  @Override
+  public void OnMenuItemSelect(String menuItem) {
+    if (menuItem.equals("Rhapsody GenAI")) {
+      if (fileHandler.validatePaths()) {
+        try {
+          LoggerUtil.info("Running GenAI...");
+          genAiHandler = new GenAiHandler(rhapsodyApp);
+          if (!genAiHandler.isPythonCommandAccessible()) {
+            LoggerUtil.error(
+                "Python command is not accessible. Please ensure Python is installed and added to the system PATH.");
+            return;
+          }
+          String response = genAiHandler.startPythonBackend();
+
+          UI ui = new UI(genAiHandler, response);
+          try {
+            ui.createUI();
+          } catch (Exception e) {
+            LoggerUtil.error(e.getMessage());
+          }
+          genAiHandler.shutdown();
+          // files.deleteDirectories();
+
+        } catch (Exception e) {
+          LoggerUtil.error(e.getMessage());
         }
-      } catch (Exception e) {
-        LoggerUtil.error("Error while creating chat log file: " + e.getMessage());
       }
     }
   }
@@ -76,55 +92,6 @@ public class RhpPlugin extends RPUserPlugin {
   public void RhpPluginInvokeItem() {
     throw new UnsupportedOperationException("Unimplemented method 'RhpPluginInvokeItem'");
   }
-
-  @Override
-  public void OnMenuItemSelect(String menuItem) {
-    if (menuItem.equals("Rhapsody GenAI")) {
-      try {
-        LoggerUtil.info("Running GenAI...");
-        genAiHandler = new GenAiHandler(rhapsodyApp);
-        String  response=genAiHandler.startPythonBackend();
-        // try{
-        //   response= genAiHandler.checkConnection();
-        // }catch(Exception e){
-        //   response = e.getMessage();
-        // }
-        UI ui = new UI(genAiHandler, response);
-        try {
-          ui.createUI();
-        }
-        catch (Exception e) {
-          LoggerUtil.error(e.getMessage());
-        }
-        genAiHandler.shutdown();
-        ProcessFiles files = new ProcessFiles();
-        // files.deleteDirectories();
-
-      }
-      catch (Exception e) {
-        LoggerUtil.error(e.getMessage());
-      }
-    }
-  }
-
-
-  /**
-   * @return String
-   */
-  public static String getJarPath() {
-    try {
-      // Get the location of the JAR file
-      File jarFile = new File(RhpPlugin.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-
-      // Return the absolute path of the JAR file
-      return jarFile.getParent();
-    }
-    catch (URISyntaxException e) {
-      LoggerUtil.error(e.getMessage());
-      return null;
-    }
-  }
-
 
   @Override
   public void OnTrigger(String trigger) {

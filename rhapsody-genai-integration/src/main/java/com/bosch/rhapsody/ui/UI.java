@@ -1,5 +1,6 @@
 package com.bosch.rhapsody.ui;
 
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +10,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -93,7 +95,12 @@ public class UI {
     shell.setSize(1000, 700);
     shell.setLayout(new GridLayout(1, false));
 
-
+    File iconFile = new File(Constants.PROFILEPATH + File.separator + "getstarted.gif");
+    if (iconFile.exists()) {
+      Image icon = new Image(display, iconFile.getAbsolutePath());
+      shell.setImage(icon);
+    }
+   
     CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
     tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     tabFolder.setSimple(false);
@@ -466,6 +473,5 @@ public class UI {
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
   }
-
 
 }
