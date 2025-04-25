@@ -190,7 +190,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
                 data_ = response.json()
                 
                 # Debugging: Print the response for troubleshooting
-                print("API Response:", data_)
+                # print("API Response:", data_)
 
                 # Extract embeddings if present
                 if 'data' in data_:
@@ -715,7 +715,7 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
             data_ = response.json()
             
             # Debugging: Print the response for troubleshooting
-            print("API Response:", data_)
+            # print("API Response:", data_)
 
             if 'choices' in data_ and len(data_['choices']) > 0:
                 return data_['choices'][0]['message']['content']
