@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>Rhapsody</groupId>
+  <artifactId>com.bosch.rph.Configurations</artifactId>
+  <version>0.1</version>
+  <name>com.bosch.rph.Configurations</name>
+  <description>All generic configurations for rhapsody plugin projects</description>
+  <packaging>pom</packaging>
+  
+  
+  <properties>
+    <RHAPSODY_VERSION>9.0.1</RHAPSODY_VERSION>
+    <RHAPSODY_JAVA_API_LOCATION>C:\Program Files\IBM\Rhapsody\9.0.1\Share\JavaAPI</RHAPSODY_JAVA_API_LOCATION>
+    <RHAPSODY_INTERNAL_ARTEFACT_STORE>https://rb-airbag-artifactory.de.bosch.com/artifactory/ab12_tools/Rhapsody/</RHAPSODY_INTERNAL_ARTEFACT_STORE>
+  </properties>
+  
+  <repositories>
+    <repository>
+        <id>Rhapsody-Internal-Repo</id>
+        <url>${RHAPSODY_INTERNAL_ARTEFACT_STORE}</url>
+    </repository>
+    <repository>
+        <id>ThirdParty</id>
+        <url>http://nexus.emt.cdg-smt.de.bosch.com:8280/nexus/content/repositories/ThirdParty/</url>
+    </repository>
+        <repository>
+            <id>bbm_releng</id>
+            <url>http://nexus.emt.cdg-smt.de.bosch.com:8280/nexus/content/repositories/bbm_releng/</url>
+    </repository>
+  </repositories>
+  
+  <build>
+    <pluginManagement>
+        <plugins>               
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+                <version>3.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>            
+                <configuration>
+                    <argLine>-Djava.library.path=${RHAPSODY_JAVA_API_LOCATION}</argLine>
+                </configuration>
+            </plugin>        
+        </plugins>
+    </pluginManagement>
+  </build>  
+</project>

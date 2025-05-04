@@ -15,9 +15,11 @@ from flask_cors import CORS
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "text-embedding-3-small"
 IMAGE_EMBEDDING_MODEL = "image-embedding-1"
-CHAT_MODEL = "gpt-4o"
-API_URL = 'https://api.openai.com/v1'
+CHAT_MODEL = "gpt-4.1"
+API_URL = 'https://openaichatgpt-ms-epb1-xc.openai.azure.com/openai/deployments'
 API_KEY = os.getenv('OPENAI_API_KEY')  # Read API key from environment variable
+CHAT_API_VERSION = "2025-01-01-preview"
+EMBEDDING_API_VERSION = "2024-02-01"
 
 if not API_KEY:
     raise ValueError("API key not found. Please set the OPENAI_API_KEY environment variable.")
@@ -31,10 +33,11 @@ REFERENCE_DATA_METADATA_FILE = "Reference_pdf_metadata.json"
 GUIDELINE_DATA_METADATA_FILE = "Guideline_pdf_metadata.json"
 REFERENCE_CODE_METADATA_FILE = "Reference_Code_metadata.json"
 
-req_collection = None
-ref_collection = None
-code_collection = None
-guideline_collection = None
+app = Flask(__name__)
+CORS(app)  # Enable CORS for cross-origin requests
+
+# In-memory storage for chat contexts
+chat_contexts = {}
 
 print(f"Current working directory: {os.getcwd()}")
 
@@ -82,6 +85,16 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 def read_source_code(file_path):
+    """
+    Reads the content of a source code file and returns it as a string.
+    Args:
+        file_path (str): The path to the file to be read.
+    Returns:
+        str: The content of the file as a string.
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        IOError: If there is an error reading the file.
+    """
     with open(file_path, 'r', encoding='utf-8') as f:
         return f.read()
 
@@ -166,18 +179,18 @@ class MyEmbeddingFunction(EmbeddingFunction):
             list: A list of embeddings if successful, otherwise None.
         """
         data = {
-            'model': TEXT_EMBEDDING_MODEL,
             'input': batch_data,  # Sending a list of inputs for batch processing
+            'dimensions': 1024
         }
         
         for attempt in range(self.max_retries):
             try:
-                response = requests.post(f'{API_URL}/embeddings', headers=HEADERS, json=data)
+                response = requests.post(f'{API_URL}/{TEXT_EMBEDDING_MODEL}/embeddings?api-version={EMBEDDING_API_VERSION}', headers=HEADERS, json=data)
                 response.raise_for_status()  # Raises an HTTPError if the response was unsuccessful
                 data_ = response.json()
                 
                 # Debugging: Print the response for troubleshooting
-                print("API Response:", data_)
+                # print("API Response:", data_)
 
                 # Extract embeddings if present
                 if 'data' in data_:
@@ -211,12 +224,12 @@ class MyEmbeddingFunction(EmbeddingFunction):
         """
         image_data = [image.tobytes() for image in images]
         data = {
-            'model': IMAGE_EMBEDDING_MODEL,
             'input': image_data,
+            'dimensions': 1024
         }
         for attempt in range(self.max_retries):
             try:
-                response = requests.post(f'{API_URL}/embeddings', headers=HEADERS, json=data)
+                response = requests.post(f'{API_URL}/{IMAGE_EMBEDDING_MODEL}/embeddings?api-version={EMBEDDING_API_VERSION}', headers=HEADERS, json=data)
                 response.raise_for_status()
                 data_ = response.json()
                 if 'data' in data_:
@@ -267,13 +280,13 @@ class MyEmbeddingFunction(EmbeddingFunction):
             list: The embedding for the user query as a list of floats, or None if unsuccessful.
         """
         data = {
-            'model': TEXT_EMBEDDING_MODEL,
             'input': user_querry,
+            'dimensions': 1024
         }
         
         for attempt in range(self.max_retries):
             try:
-                response = requests.post(f'{API_URL}/embeddings', headers=HEADERS, json=data)
+                response = requests.post(f'{API_URL}/{TEXT_EMBEDDING_MODEL}/embeddings?api-version={EMBEDDING_API_VERSION}', headers=HEADERS, json=data)
                 response.raise_for_status()
                 data_ = response.json()
                 if 'data' in data_ and len(data_['data']) > 0 and 'embedding' in data_['data'][0]:
@@ -460,15 +473,44 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
 
 # Function to process header and source files
 def process_reference_code(directory, collection, metadata_file):
+    """
+    Processes reference code files in a given directory by generating embeddings for their content
+    and storing the embeddings in a specified collection.
+    Args:
+        directory (str): The root directory containing the 'inc' and 'src' subdirectories 
+                         with header (.h) and source (.c) files respectively.
+        collection (object): The collection object where embeddings will be stored. 
+                             It should support the `add` method for adding documents, metadata, and embeddings.
+        metadata_file (str): The path to the metadata file used to track processed files and their hashes.
+    Workflow:
+        1. Load metadata from the specified metadata file.
+        2. Identify all header (.h) and source (.c) files in the 'inc' and 'src' subdirectories.
+        3. Calculate a hash for each file to determine if it has been processed before.
+        4. Skip processing for files that are unchanged based on their hash.
+        5. For each unprocessed file:
+            - Read the file content and split it into chunks.
+            - Generate embeddings for each chunk using a custom embedding function.
+            - Add the embeddings, along with metadata, to the specified collection.
+        6. Update the metadata file with the hash and path of the processed file.
+    Notes:
+        - The function assumes the existence of helper functions such as `load_metadata`, 
+          `calculate_pdf_hash`, `check_document_in_chroma_metadata`, `split_text_into_chunks`, 
+          `MyEmbeddingFunction`, and `save_metadata`.
+        - The `chunk_size` for splitting text and `batch_size` for embedding generation are hardcoded.
+    Raises:
+        FileNotFoundError: If the specified metadata file or any required subdirectory/file is not found.
+        Exception: For any other errors encountered during file processing or embedding generation.
+    Example:
+        process_reference_code(
+            directory="/path/to/codebase",
+            collection=my_collection,
+            metadata_file="/path/to/metadata.json"
+    """
     metadata = load_metadata(metadata_file)
     
-    # Define subdirectories for header and source files
-    inc_dir = os.path.join(directory, "inc")
-    src_dir = os.path.join(directory, "src")
-    
-    # List all header and source files
-    header_files = [os.path.join(inc_dir, f) for f in os.listdir(inc_dir) if f.endswith('.h')]
-    source_files = [os.path.join(src_dir, f) for f in os.listdir(src_dir) if f.endswith('.c')]
+    # List all header and source files in the directory
+    header_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.h')]
+    source_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.c')]
     
     # Combine all files to process
     all_files = header_files + source_files
@@ -539,7 +581,10 @@ def remove_deleted_pdfs_from_chroma(directory, collection, metadata, metadata_fi
     - The "docs" directory should contain only the PDF files that are currently in use.
     """
     existing_files = {f for f in os.listdir(directory) if f.endswith(".pdf")}
-    hashes_to_remove = [pdf_hash for pdf_hash, info in metadata.items() if info['path'].split('/')[-1] not in existing_files]
+    hashes_to_remove = [
+        pdf_hash for pdf_hash, info in metadata.items()
+        if os.path.basename(info['path']) not in existing_files
+    ]
 
     for pdf_hash in hashes_to_remove:
         print(f"Removing deleted document with hash: {pdf_hash}")
@@ -658,7 +703,6 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
     - The model parameter should be a valid model identifier recognized by the API.
     """
     data = {
-        'model': model,
         'messages': messages,
         'max_tokens': max_tokens,
         'temperature': temperature,
@@ -666,12 +710,12 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
     }
     for attempt in range(max_retries):
         try:
-            response = requests.post(f'{API_URL}/chat/completions', headers=HEADERS, json=data)
+            response = requests.post(f'{API_URL}/{CHAT_MODEL}/chat/completions?api-version={CHAT_API_VERSION}', headers=HEADERS, json=data)
             response.raise_for_status()  # Raises an HTTPError if the response was unsuccessful
             data_ = response.json()
             
             # Debugging: Print the response for troubleshooting
-            print("API Response:", data_)
+            # print("API Response:", data_)
 
             if 'choices' in data_ and len(data_['choices']) > 0:
                 return data_['choices'][0]['message']['content']
@@ -688,7 +732,31 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
             print(f"KeyError in response: {e}")
             return None
     
-def summarize_requirements(feature_query, collection):
+def summarize_requirements(messages, collection):
+    """
+    Summarizes technical requirements based on provided messages and a collection of requirement chunks.
+    Args:
+        messages (list): A list of dictionaries representing messages. The first dictionary should contain 
+                         a "content" key with the feature query as its value.
+        collection (iterable): A collection of requirement chunks to search for relevant information.
+    Returns:
+        str or None: A summarized string of categorized requirements if relevant chunks are found, 
+                     otherwise None.
+    Raises:
+        ValueError: If the feature query is not found in the provided messages.
+    Functionality:
+        1. Extracts the feature query from the first message in the `messages` list.
+        2. Searches for relevant requirement chunks in the `collection` based on the feature query.
+        3. If relevant chunks are found, constructs a prompt for an AI model to summarize the requirements.
+        4. The AI model categorizes functional and non-functional requirements, highlights constraints, 
+           dependencies, and assumptions, and ignores unrelated or ambiguous information.
+    """
+    # Extract the feature query from the first dictionary
+    feature_query = messages[0].get("content")
+
+    if feature_query is None:
+        raise ValueError("Feature query not found in messages.")
+    
     relevant_chunks = find_relevant_chunk(feature_query, collection)
     if not relevant_chunks:
         print("No relevant requirements found.")
@@ -718,21 +786,50 @@ def summarize_requirements(feature_query, collection):
     summary = prompt_model(messages)
     return summary
 
-def extract_design_information(requirements_summary, collection):
+def extract_design_information(messages, collection):
+    """
+    Extracts design information based on summarized requirements and a reference design collection.
+    This function processes a list of message dictionaries to extract summarized requirements 
+    and a task description. It then identifies relevant reference design chunks from the provided 
+    collection and uses these inputs to generate design information via a model prompt.
+    Args:
+        messages (list): A list of dictionaries containing message data. 
+                         - The second dictionary should contain the summarized requirements under the "content" key.
+                         - The third dictionary should contain the task description under the "content" key.
+        collection (list): A collection of reference design information to search for relevant chunks.
+    Returns:
+        str or None: The generated design information as a string if successful, or None if no relevant 
+                     design information is found.
+    Raises:
+        ValueError: If the summarized requirements are not found in the second dictionary of `messages`.
+        ValueError: If the task description is not found in the third dictionary of `messages`.
+    Notes:
+        - The function assumes the input `messages` list contains at least three dictionaries.
+        - The `prompt_model` function is used to generate the design information based on the system 
+          and user messages.
+    """
+    requirements_summary = messages[1].get("content")
+    if not requirements_summary:
+        raise ValueError("Summarized requirements not found in the second dictionary of messages.")
+    
     relevant_chunks = find_relevant_chunk(requirements_summary, collection)
     if not relevant_chunks:
         print("No relevant design information found.")
         return None
     
+    # Extract the task from the third dictionary
+    task = messages[2].get("content")
+    if not task:
+        raise ValueError("Task not found in the third dictionary of messages.")
+
     # Define the system and user messages
     messages = [
         {
             "role": "system",
-            "content": """
-            You are a highly skilled AI assistant specializing in understanding design information. You are provided with Requirements and Design Information delimited by tripple backticks.
-            Your task is to:
-            1. Identify relevant API functions, parameters, protocols, and constraints from the Design Information.
-            2. Map the extracted design information with the requirements.
+            "content": f"""
+            You are a highly skilled AI assistant specializing in understanding software architechture / reference Design informations. You are provided with Requirements and Reference Design Information delimited by tripple backticks and task delimited by Angle brackets.
+            Your task is:
+            <{task}>
             """
         },
         {
@@ -740,7 +837,7 @@ def extract_design_information(requirements_summary, collection):
             "content": f"""
             Requirements:
             ```{requirements_summary}```
-            Design Information:
+            Reference Design Information:
             ```{relevant_chunks}```
             """
         }
@@ -749,7 +846,7 @@ def extract_design_information(requirements_summary, collection):
     design_info = prompt_model(messages)
     return design_info
 
-def extract_code_information(requirements_summary, reference_code_collection):
+def extract_code_information(messages, collection):
     """
     Extract relevant code information from the reference code collection based on the requirements summary.
 
@@ -760,20 +857,28 @@ def extract_code_information(requirements_summary, reference_code_collection):
     Returns:
         str: Relevant code information as a string, or None if no relevant code is found.
     """
-    relevant_chunks = find_relevant_chunk(requirements_summary, reference_code_collection)
+    requirements_summary = messages[1].get("content")
+    if not requirements_summary:
+        raise ValueError("Summarized requirements not found in the second dictionary of messages.")
+    
+    relevant_chunks = find_relevant_chunk(requirements_summary, collection)
     if not relevant_chunks:
         print("No relevant code information found.")
         return None
+    
+    # Extract the task from the third dictionary
+    task = messages[4].get("content")
+    if not task:
+        raise ValueError("Task not found in the fourth dictionary of messages.")
 
     # Define the system and user messages
     messages = [
         {
             "role": "system",
             "content": """
-            You are a highly skilled AI assistant specializing in understanding Code information. You are provided with Requirements and its associated Code Information delimited by tripple backticks.
-            Your task is to:
-            1. Identify relevant API functions, parameters, protocols, and constraints from the Code Information.
-            2. Bring out an understanding of the Code information and map them with the requirements.
+            You are a highly skilled AI assistant specializing in understanding Code information. You are provided with Requirements and its associated Code Information delimited by tripple backticks and task delimited by Angle brackets.
+            Your task is:
+            <{task}>
             """
         },
         {
@@ -790,46 +895,113 @@ def extract_code_information(requirements_summary, reference_code_collection):
     code_design_info = prompt_model(messages)
     return code_design_info
 
-def create_uml_design(UML_Diagram, design_info, code_design_info, design_querry, uml_guidelines_collection):
-    uml_guidelines = find_relevant_chunk(design_querry, uml_guidelines_collection)
+def create_uml_design(messages, uml_guidelines_collection):
+    """
+    Generates a UML design based on the provided messages and UML guidelines.
+    This function extracts the UML diagram type and design information from the 
+    `messages` parameter, retrieves relevant UML guidelines from the 
+    `uml_guidelines_collection`, and constructs a prompt to generate the UML 
+    design using a model. The generated UML design includes PlantUML code and 
+    a detailed explanation.
+    Args:
+        messages (list): A list of dictionaries containing message data. 
+            - The last dictionary in the list should contain the UML diagram type 
+              in the "content" key.
+            - The fourth dictionary should contain the design information in the 
+              "content" key.
+            - Optionally, the sixth dictionary may contain code design information 
+              in the "content" key.
+        uml_guidelines_collection (list): A collection of UML guidelines to extract 
+            relevant guidelines for the requested UML diagram.
+    Returns:
+        str or None: The generated UML design as a string, including PlantUML code 
+        and an explanation. Returns `None` if no UML guidelines are found.
+    Raises:
+        ValueError: If the design information is not found in the fourth dictionary 
+        of the `messages` list.
+    Notes:
+        - The function dynamically adjusts the prompt based on the availability of 
+          code design information in the `messages` list.
+        - The `prompt_model` function is used to generate the UML design based on 
+          the constructed prompt.
+    """
+    UML_Diagram = messages[-1].get("content")  # The last message contains the UML diagram type
+    design_query = f"Extract the guidelines related to {UML_Diagram}"
+    uml_guidelines = find_relevant_chunk(design_query, uml_guidelines_collection)
     if not uml_guidelines:
         print("No UML design guidelines found.")
         return None
-    
-    # Define the system and user messages
-    messages = [
-        {
-            "role": "system",
-            "content": f"""
-            You are a highly skilled AI assistant specializing in creating Software UML designs.
-            Your task is to:
-            1. Create the requested UML designs ({UML_Diagram}) based on the Design information, Code Information and UML design guidelines delimited by tripple backticks.
-            2. Make sure all the identified API Functions, from the Design Information and the Code Information are included in the UML Design.
-            3. Provide PlantUML codes for each UML diagram.
-            4. Provide a detailed explanation of the requested PlantUML diagrams.
-            """
-        },
-        {
-            "role": "user",
-            "content": f"""
-            Design Information:
-            ```{design_info}```
-            Code Information:
-            ```{code_design_info}```
-            UML Design Guidelines:
-            ```{uml_guidelines}```
-            """
-        }
+
+    design_info = messages[3].get("content")
+    if not design_info:
+        raise ValueError("Design Information not found in the fourth dictionary of messages.")
+
+    # Check if code design information is available
+    Code_design_info = None
+    if len(messages) > 5 and "content" in messages[5]:
+        Code_design_info = messages[5].get("content")
+
+    # Define system and user messages based on the availability of code design information
+    if Code_design_info:
+        # System message when code design information is available
+        system_message = f"""
+        You are a highly skilled AI assistant specializing in creating Software UML designs.
+        Your task is to:
+        1. Understand the provided Design Information and Code Design Information delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information and Code Design Information.
+        3. Make sure all the identified API Functions from the Design Information and Code Design Information are included in the UML Design.
+        4. Provide PlantUML codes for the requested ({UML_Diagram}).
+        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        """
+        # User message when code design information is available
+        user_message = f"""
+        Design Information:
+        ```{design_info}```
+        Code Design Information:
+        ```{Code_design_info}```
+        UML Design Guidelines:
+        ```{uml_guidelines}```
+        """
+    else:
+        # System message when code design information is not available
+        system_message = f"""
+        You are a highly skilled AI assistant specializing in creating Software UML designs.
+        Your task is to:
+        1. Understand the provided Design Information delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information.
+        3. Make sure all the identified API Functions from the Design Information are included in the UML Design.
+        4. Provide PlantUML codes for the requested ({UML_Diagram}).
+        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        """
+        # User message when code design information is not available
+        user_message = f"""
+        Design Information:
+        ```{design_info}```
+        UML Design Guidelines:
+        ```{uml_guidelines}```
+        """
+
+    # Construct the messages for the prompt
+    prompt_messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message}
     ]
-    
-    uml_design = prompt_model(messages)
+
+    # Call the prompt_model function
+    uml_design = prompt_model(prompt_messages)
     return uml_design
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for cross-origin requests
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    """
+    Handles exceptions by returning a JSON response with error details.
+    Args:
+        e (Exception): The exception object that was raised.
+    Returns:
+        tuple: A tuple containing a JSON response with the error details and 
+               an HTTP status code of 500.
+    """
     response = {
         "error": str(e),
         "message": "An error occurred while processing your request."
@@ -839,8 +1011,32 @@ def handle_exception(e):
 @app.route('/embed_requirement_documents', methods=['POST'])
 def embed_requirement_documents():
     """
-    API endpoint to receive Requirement document paths and embed them.
+    Embeds requirement documents into a Chroma collection.
+    This function processes a list of file paths provided in a JSON payload,
+    validates their existence, and embeds the content of the files into a 
+    Chroma collection for further use. It uses a global variable `req_collection` 
+    to store the collection reference.
+    Returns:
+        Response: A JSON response indicating success or failure of the operation.
+    Raises:
+        Exception: If any error occurs during the embedding process.
+    JSON Payload:
+        - Expected: A list of file paths (strings).
+        - Example: ["path/to/file1.pdf", "path/to/file2.pdf"]
+    Workflow:
+        1. Parse the JSON payload from the request.
+        2. Validate that the payload is a list of file paths.
+        3. Initialize the Chroma client and collection.
+        4. Process each file path:
+            - Check if the file exists.
+            - Embed the file content into the Chroma collection.
+        5. Return a success message if all files are processed successfully.
+        6. Handle and log any exceptions, returning an error response.
+    Notes:
+        - The collection name is set to "reqs" by default but can be adjusted.
+        - Missing files are logged but do not interrupt the process.
     """
+    global req_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -864,8 +1060,35 @@ def embed_requirement_documents():
 @app.route('/embed_reference_documents', methods=['POST'])
 def embed_reference_documents():
     """
-    API endpoint to receive Reference Data document paths and embed them.
+    Embeds reference documents into a Chroma collection for later use.
+    This function processes a list of file paths provided in the JSON payload of an HTTP request.
+    It initializes a Chroma client, validates the file paths, and processes each PDF file to embed
+    its content into the specified Chroma collection.
+    Global Variables:
+        ref_collection: A global variable that holds the reference collection object.
+    Returns:
+        Response: A JSON response indicating the success or failure of the operation.
+                  - On success: {"message": "Reference Documents embedded successfully."}, HTTP 200
+                  - On failure: {"error": "Error message"}, HTTP 400 or 500
+    Raises:
+        Exception: If an error occurs during the embedding process, it is caught and logged.
+    Notes:
+        - The input JSON payload must be a list of file paths.
+        - Each file path is validated to ensure the file exists before processing.
+        - The function relies on external helper functions such as `init_chroma_client` and
+          `process_all_pdfs`, as well as a metadata file defined by `REFERENCE_DATA_METADATA_FILE`.
+    Example:
+        Input JSON payload:
+        [
+            "/path/to/document1.pdf",
+            "/path/to/document2.pdf"
+        ]
+        Response on success:
+        {
+            "message": "Reference Documents embedded successfully."
+        }
     """
+    global ref_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -889,8 +1112,31 @@ def embed_reference_documents():
 @app.route('/embed_code_documents', methods=['POST'])
 def embed_code_documents():
     """
-    API endpoint to receive Reference Data document paths and embed them.
+    Embeds source code documents into a Chroma collection for reference.
+    This function processes a list of file paths provided in the JSON payload of an HTTP request.
+    It initializes a Chroma client, validates the file paths, and processes each file to embed
+    its content into a specified Chroma collection.
+    Returns:
+        Response: A JSON response indicating success or failure of the operation.
+    Raises:
+        Exception: If an error occurs during the embedding process.
+    HTTP Request:
+        - Input: JSON payload containing a list of file paths.
+        - Output: JSON response with a success message or an error message.
+    Notes:
+        - The collection name is set to "code" by default but can be adjusted as needed.
+        - Files that do not exist are skipped, and a message is printed to the console.
+        - Errors during processing are logged and returned in the response.
+    Example JSON Input:
+        [
+            "/path/to/file1.py",
+            "/path/to/file2.py"
+        ]
+    Example JSON Response:
+        Success: {"message": "Source Code embedded successfully."}
+        Failure: {"error": "Error message describing the issue."}
     """
+    global code_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -914,8 +1160,29 @@ def embed_code_documents():
 @app.route('/embed_guideline_documents', methods=['POST'])
 def embed_guideline_documents():
     """
-    API endpoint to receive Design Guidelines Data document paths and embed them.
+    Embeds guideline documents into a Chroma collection.
+    This function processes a list of file paths provided in the JSON payload of an HTTP request.
+    It initializes a Chroma client, validates the file paths, and embeds the content of the PDF
+    files into a specified Chroma collection.
+    Returns:
+        Response: A JSON response indicating success or failure of the operation.
+                  - On success: {"message": "Requirement Documents embedded successfully."}, HTTP 200
+                  - On failure: {"error": "<error_message>"}, HTTP 400 or 500
+    Raises:
+        Exception: If an error occurs during the embedding process.
+    Notes:
+        - The JSON payload must contain a list of file paths.
+        - The function checks if each file path exists before processing.
+        - The collection name is set to "UML" by default but can be adjusted as needed.
+    Global Variables:
+        guideline_collection: A global variable to store the Chroma collection instance.
+    Example JSON Payload:
+        [
+            "/path/to/document1.pdf",
+            "/path/to/document2.pdf"
+        ]
     """
+    global guideline_collection
     try:
         # Parse the JSON payload
         data = request.get_json()
@@ -927,45 +1194,212 @@ def embed_guideline_documents():
         guidelineclient, guideline_collection = init_chroma_client(collection_name)
         for pdf_path in data:
             if os.path.exists(pdf_path):
-                process_all_pdfs(pdf_path, guideline_collection, REFERENCE_DATA_METADATA_FILE)
+                process_all_pdfs(pdf_path, guideline_collection, GUIDELINE_DATA_METADATA_FILE)
             else:
                 print(f"File not found: {pdf_path}")
 
-        return jsonify({"message": "Requirement Documents embedded successfully."}), 200
+        return jsonify({"message": "UML guideline Documents embedded successfully."}), 200
     except Exception as e:
         print(f"Error embedding documents: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/summarize_requirements', methods=['POST'])
 def summarize_requirements_api():
+    """
+    API endpoint to summarize requirements based on a feature query.
+    This function handles a POST request containing a feature query and a session ID.
+    It retrieves or initializes the session context, processes the feature query, and
+    generates a summarized response of the requirements. The session context is updated
+    with the user query and the assistant's response.
+    Returns:
+        Response: A JSON response containing the summarized requirements and the session ID.
+                  If the requirements collection is not initialized, returns an error message
+                  with a 400 status code.
+    Request Body:
+        - feature_query (str): The feature query provided by the user.
+        - session_id (str): The session identifier for maintaining context.
+    Response JSON:
+        - requirements_summary (str): The summarized requirements generated by the assistant.
+        - session_id (str): The session identifier for maintaining context.
+    Error Response:
+        - error (str): Error message indicating that the requirements collection is not initialized.
+    """
+    if req_collection is None:
+        return jsonify({"error": "Requirements collection is not initialized. Please embed the Requirement documents first."}), 400
     data = request.json
     feature_query = data.get('feature_query', '')
-    requirements_summary = summarize_requirements(feature_query, req_collection)
-    return jsonify({"requirements_summary": requirements_summary})
+    session_id = data.get('session_id', '')
+
+    # Retrieve or initialize the session context
+    if session_id not in chat_contexts:
+        chat_contexts[session_id] = []
+    
+    messages = chat_contexts[session_id]
+
+    # Add the feature query to the session context
+    messages.append({"role": "user", "content": feature_query})
+
+    # Generate the requirements summary
+    requirements_summary = summarize_requirements(messages, req_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": requirements_summary})
+
+    return jsonify({"requirements_summary": requirements_summary, "session_id": session_id})
 
 @app.route('/extract_design_information', methods=['POST'])
 def extract_design_information_api():
+    """
+    Extracts design information based on user input and a reference collection.
+    This API endpoint processes a user's request to extract design-related 
+    information by utilizing a session-based chat context and a reference 
+    document collection. It validates the session ID, updates the chat context 
+    with the user's input, and generates a response containing the extracted 
+    design information.
+    Returns:
+        Response: A JSON response containing the extracted design information 
+        and the session ID, or an error message with an appropriate HTTP status 
+        code if the request is invalid.
+    Error Responses:
+        - 400: If the reference collection is not initialized.
+        - 400: If the session ID is invalid or missing.
+    JSON Input:
+        {
+            "session_id": str,  # The unique identifier for the user's session.
+            "task_input": str   # The user's input or task description.
+        }
+    JSON Output:
+        Success:
+        {
+            "design_info": str,  # The extracted design information.
+            "session_id": str    # The session ID associated with the request.
+        }
+        Error:
+        {
+            "error": str  # Description of the error.
+        }
+    """
+    if ref_collection is None:
+        return jsonify({"error": "Reference collection is not initialized. Please embed the Reference documents first."}), 400
     data = request.json
-    requirements_summary = data.get('requirements_summary', '')
-    design_info = extract_design_information(requirements_summary, ref_collection)
-    return jsonify({"design_info": design_info})
+    session_id = data.get('session_id', '')
+    task_input = data.get('task_input', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+    
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": task_input})
+
+    design_info = extract_design_information(messages, ref_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": design_info})
+
+    return jsonify({"design_info": design_info, "session_id": session_id})
 
 @app.route('/extract_code_information', methods=['POST'])
 def extract_code_information_api():
+    """
+    Handles an API request to extract code design information based on user input and session context.
+    This function processes a JSON request containing a session ID and task input, validates the session,
+    retrieves the chat context for the session, and uses the provided input to extract code design information.
+    The extracted information is then added to the session context and returned as a JSON response.
+    Returns:
+        Response: A Flask JSON response containing the extracted code design information and session ID,
+                  or an error message with an appropriate HTTP status code if the request is invalid.
+    Raises:
+        KeyError: If the session ID is not found in the chat contexts.
+        TypeError: If the input data is not in the expected format.
+    JSON Request Parameters:
+        - session_id (str): The unique identifier for the user's session.
+        - task_input (str): The user's input describing the task or code to analyze.
+    JSON Response:
+        - code_design_info (str): The extracted code design information.
+        - session_id (str): The session ID associated with the request.
+    Error Responses:
+        - 400 Bad Request: If the session ID is invalid or missing, or if the code collection is not initialized.
+    """
+    if code_collection is None:
+        return jsonify({"error": "Code collection is not initialized. Please embed the source first."}), 400
     data = request.json
-    requirements_summary = data.get('requirements_summary', '')
-    code_design_info = extract_code_information(requirements_summary, code_collection)
-    return jsonify({"code_design_info": code_design_info})
+    session_id = data.get('session_id', '')
+    task_input = data.get('task_input', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+    
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": task_input})
+
+    code_design_info = extract_code_information(messages, code_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": code_design_info})
+
+    return jsonify({"code_design_info": code_design_info, "session_id": session_id})
 
 @app.route('/create_uml_design', methods=['POST'])
 def create_uml_design_api():
+    """
+    Handles the creation of a UML design based on user input and session context.
+    This API endpoint processes a request to generate a UML design by utilizing
+    a chat-based context and a pre-initialized guideline collection. It validates
+    the session ID, retrieves the chat context, and appends the user's input to
+    the session messages. The UML design is then generated and added to the session
+    context before being returned in the response.
+    Returns:
+        Response: A JSON response containing the generated UML design and the session ID.
+                  If an error occurs, an appropriate error message and status code are returned.
+    Raises:
+        400 Bad Request: If the guideline collection is not initialized, the session ID is
+                         invalid or missing, or other required data is not provided.
+    Request JSON Structure:
+        {
+            "session_id": str,  # The unique identifier for the session.
+            "task_input": str   # The UML diagram input provided by the user.
+        }
+    Response JSON Structure:
+        Success:
+        {
+            "uml_design": str,  # The generated UML design.
+            "session_id": str   # The session ID associated with the request.
+        }
+        Error:
+        {
+            "error": str  # Description of the error.
+        }
+    """
+    if guideline_collection is None:
+        return jsonify({"error": "Guideline collection is not initialized. Please embed the Guideline documents first."}), 400
     data = request.json
-    design_info = data.get('design_info', '')
-    code_design_info = data.get('code_design_info', '')
-    UML_Diagram = data.get('design_query', '')
-    design_query = f"Extract the guidelines related to {UML_Diagram}"
-    uml_design = create_uml_design(UML_Diagram, design_info, code_design_info, design_query, guideline_collection)
-    return jsonify({"uml_design": uml_design})
+    session_id = data.get('session_id', '')
+
+    if not session_id or session_id not in chat_contexts:
+        return jsonify({"error": "Invalid or missing session ID."}), 400
+
+    # Retrieve the chat context for the session
+    messages = chat_contexts[session_id]
+
+    # design_info = data.get('design_info', '')
+    # code_design_info = data.get('code_design_info', '')
+    UML_Diagram = data.get('task_input', '')
+
+    # Add the new user message to the context
+    messages.append({"role": "user", "content": UML_Diagram})
+
+    uml_design = create_uml_design(messages, guideline_collection)
+
+    # Add the response to the session context
+    messages.append({"role": "assistant", "content": uml_design})
+
+    return jsonify({"uml_design": uml_design, "session_id": session_id})
 
 if __name__ == "__main__":
     # Start Flask server

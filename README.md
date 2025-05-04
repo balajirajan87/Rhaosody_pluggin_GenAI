@@ -1,6 +1,6 @@
 # Rhapsody plugin for GenAI
 
-This Project demonstrates the plugin for Rhapsody that can offer Generative AI Support.
+This Project demonstrates the plugin for Rhapsody that can offer Generative AI Support via a python Backend.
 
 # Plugin Architechture
 
@@ -87,24 +87,42 @@ Update the Rhapsody configuration to load the plugin. Open rhapsody.ini (usually
 ```
 AddIns=rhapsody-plugin-1.0-SNAPSHOT.jar
 ```
-# Steps for Python Backend Execution.
+# Steps for Python Backend Execution in Windows
 Step1:
-Export the "OPENAI_API_KEY" in Windows System Environment Variables.
-![alt text](images/OPENAI_KEY.png)
- Or alternatively use the below launch.json to execute the python file in Debug mode
+Download Ollama for Windows:
+https://ollama.com/download
+
+Step2:
+Configure your Windows proxy by following this:
+https://inside-docupedia.bosch.com/confluence/display/DEVCORNER/Local+Proxy
+
+Step3:
+Start the Ollama Server: The below command would start the ollama server in your [localhost:11434](http://localhost:11434/)
+```
+ollama serve
+```
+Step4:
+download the below Chat Model and Embedding Model from Ollama:
+```
+Chat model: llama3.2
+Embedding Model: bge-m3
+```
+Step5:
+Execute the Python file:
+```
+python .\ollama.py
+```
+Or alternatively use the below launch.json to execute the python file in Debug mode
 ```
 {
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug openai.py",
+            "name": "Python: Debug ollama.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/openai.py",
+            "program": "${workspaceFolder}/ollama.py",
             "console": "integratedTerminal",
-            "env": {
-                "OPENAI_API_KEY": "<Your API Key>"
-            },
             "args": [],
             "justMyCode": true
         }
