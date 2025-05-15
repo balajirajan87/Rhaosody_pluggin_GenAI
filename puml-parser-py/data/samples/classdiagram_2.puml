@@ -1,0 +1,89 @@
+@startuml
+
+title Power Supply Monitoring & Fault Management - Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+
+package "Hardware Interfaces" {
+    interface cl_Dio {
+        + Dio_ReadChannel(pin: int): int
+    }
+
+    interface cl_Communication {
+        + Write_Com_SafetyInterbladeSignal(signal_id: int, value: int, blade_type: int): void
+        + Get_Com_SafetyInterBlade_Signal(): SafetyInterBladeSignal
+    }
+
+    class SafetyInterBladeSignal {
+        + slot_id: int
+        + blade_type: int
+        + auth_status: string
+    }
+}
+
+package "Software Components" {
+    class rbsfty_BladeDiscovery {
+        + readSlotId(): int
+        + validateSlotId(read_id: int, actual_id: int): bool
+        + performDiscovery(): bool
+        + sendDiscoveryResult(valid: bool): void
+    }
+
+    class rbsfty_BldAuthenticate {
+        + authenticateAtPowerOn(): bool
+    }
+
+    class rbsfty_BldAuthenticate_Init {
+        + initAuthentication(): void
+    }
+
+    class rbSfty_Update_BladeAuthInfo {
+        + updateAuthInfo(slot_id: int, blade_type: int, crc32: int): void
+        + storeBladeInfo(): void
+    }
+}
+
+package "Diagnostics" {
+    interface DCM_IF {
+        + storeDTC(event_id: int, event_state: int): void
+        + requestRelearning(): void
+    }
+
+    class rbMonReact_ReportEvent {
+        + reportEvent(event_id: int, event_state: int): void
+    }
+}
+
+' Relationships
+rbsfty_BladeDiscovery ..> cl_Dio : uses
+rbsfty_BladeDiscovery ..> cl_Communication : uses
+rbsfty_BladeDiscovery ..> rbMonReact_ReportEvent : triggers
+rbsfty_BladeDiscovery ..> DCM_IF : stores DTC
+
+rbsfty_BladeDiscovery ..> rbsfty_BldAuthenticate : authenticates
+rbsfty_BldAuthenticate ..> rbSfty_Update_BladeAuthInfo : updates info
+
+rbSfty_Update_BladeAuthInfo ..> DCM_IF : stores info
+
+cl_Communication ..> SafetyInterBladeSignal : returns
+
+note right of rbsfty_BladeDiscovery
+- Reads Slot ID from GPIO (cl_Dio)
+- Validates Slot ID
+- Sends/receives Slot ID & Blade Type via CAN-FD (cl_Communication)
+- Triggers DTC on failure (rbMonReact_ReportEvent, DCM_IF)
+end note
+
+note right of rbsfty_BldAuthenticate
+- Performs blade authentication at power on
+end note
+
+note right of rbSfty_Update_BladeAuthInfo
+- Updates and stores blade authentication info (incl. CRC32)
+- Supports re-learning via DCM_IF
+end note
+
+@enduml

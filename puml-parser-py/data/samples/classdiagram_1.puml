@@ -1,0 +1,77 @@
+@startuml
+title Power Supply Monitoring & Fault Management - Class Diagram
+
+' ========== ADC Driver Layer ==========
+class AdcDriver {
+    + Adc_StartGroupConversion(groupId: int): void
+    + Adc_GetGroupStatus(groupId: int): AdcGroupStatus
+    + Adc_ReadGroup(groupId: int, buffer: VoltageBuffer): void
+}
+
+enum AdcGroupStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+class VoltageBuffer {
+    + getVoltage(signal: String): float
+    + setVoltage(signal: String, value: float): void
+}
+
+' ========== Voltage Monitoring ==========
+class VoltageMonitor {
+    - adcDriver: AdcDriver
+    - buffer: VoltageBuffer
+    - cycleCounter: int
+    + monitorVoltages(): void
+    + checkThresholds(): void
+    + injectFault(signal: String, value: float): void
+}
+
+class VoltageSignal {
+    + name: String
+    + groupId: int
+    + channelId: int
+    + uvThreshold: float
+    + ovThreshold: float
+}
+
+' ========== Fault Injection ==========
+class FaultInjectionStub {
+    + injectFault(signal: String, value: float): void
+    + clearFault(signal: String): void
+    + getInjectedVoltage(signal: String): float
+}
+
+' ========== Error Management & DTC ==========
+class ErrorManager {
+    + rbsfty_ErrMgt_ReportError(ErrInfo_u16: int, Add_info_u32: int, Dem_status: int): void
+    + rbsfty_ErrMgt_Process_info(): void
+}
+
+class DTCManager {
+    + reportDTC(dtcName: String): void
+}
+
+enum DTC {
+    BOSCH_SECPOWERSUPPLY_FAILURE
+}
+
+' ========== OS Task Layer ==========
+class RTAOSTask10ms {
+    - voltageMonitor: VoltageMonitor
+    + run(): void
+}
+
+' ========== Relationships ==========
+VoltageMonitor o-- VoltageSignal : "monitors"
+VoltageMonitor *-- VoltageBuffer : "uses"
+VoltageMonitor *-- AdcDriver : "uses"
+VoltageMonitor o-- FaultInjectionStub : "uses for fault injection"
+VoltageMonitor *-- ErrorManager : "reports errors"
+ErrorManager *-- DTCManager : "forwards DTC"
+RTAOSTask10ms *-- VoltageMonitor : "executes"
+
+@enduml
