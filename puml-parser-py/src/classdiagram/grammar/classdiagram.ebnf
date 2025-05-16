@@ -1,6 +1,6 @@
 start: "@startuml" (title | skinparam | package | class | enum | interface | relationship | note)* "@enduml"
 
-title: "title" title_description
+title: "title" description
 
 skinparam: "skinparam" sparam svalue
 
@@ -12,11 +12,14 @@ enum: "enum" enum_name "{" enum_value+ "}"
 
 interface: "interface" interface_name "{" method* "}"
 
-relationship: CNAME relation_type CNAME (":" title_description)?
+relationship: relation_source relation_type relation_target (":" description)?
 
-note: "note" note_position "of" note_target note_content "end" "note"
+note: "note" note_position? "of"? note_target note_content "end" "note"
 
-note_position: "left" | "right" | "top" | "bottom"
+note_position: "left"  -> left
+             | "right"  -> right
+             | "top"  -> top
+             | "bottom" -> bottom
 
 note_content: (NOTE_LINE)+
 
@@ -25,16 +28,12 @@ stereotype: "<<" stereotype_name ">>"
 // Variables
 variable: var ":" type
 
-text_field: "{field}" field_text
-
 attribute: att_scope? visibility? variable
          | visibility? att_scope? variable
 
 param_list: [variable ("," variable)*]
 
 function: method_name "("param_list")" ":" type
-
-text_method: "{method}" method_text
 
 method: att_scope? visibility? function
       | visibility? att_scope? function
@@ -43,7 +42,13 @@ method: att_scope? visibility? function
 att_scope: "{static}" -> static
          | "{abstract}" -> abstract
 
-relation_type: "..>" | "-->" | "*--" | "o--" | "<.." | "<--" | "<*--" | "<o--"
+relation_type: "--|>" -> inheritance
+             | "--" -> association
+             | "*--" -> composition
+             | "o--" -> aggregation
+             | "..>" -> dotted_dependency
+             | "-->" -> dependency
+             | "..|>" -> realization
 
 // Variables and Methods visibility
 visibility: "+" -> public
@@ -51,18 +56,10 @@ visibility: "+" -> public
           | "#" -> protected
           | "~" -> package
 
-relationship_class: arrow_end_1 cardinality? arrow_head_1 arrow_body arrow_head_2 cardinality? arrow_end_2 [":" relation_text]
-
-arrow_head_1: "<" | "<|" | "*" | "o" | "+" | "#" | "x" | "}" | "^" | " "
-arrow_head_2: ">" | "|>" | "*" | "o" | "+" | "#" | "x" | "}" | "^" | " "
-
-arrow_body: "-" | "--" | "---" | "-left-" | "-up-" | "-right-" | "-down-" | "." | ".." | ".left." | ".up." | ".right." | ".down."
-
+description: /.+/
 hex_color: /#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/
-cardinality: ESCAPED_STRING
-SPECIAL_CHAR: "&" | "-" | "_" | ":" | "," | "." | "(" | ")" | "/" | "\\" | "'" | "\"" | "!" | "@" | "#" | "$" | "%" | "^" | "*" | "+" | "=" | "|" | "~" | "`" | "[" | "]" | "{" | "}"
-arrow_end_1: CNAME
-arrow_end_2: CNAME
+relation_source: CNAME
+relation_target: CNAME
 note_target:CNAME 
 type: CNAME
 var: CNAME
@@ -77,16 +74,8 @@ enum_name: CNAME
 package_name: ESCAPED_STRING
 stereotype_name: CNAME
 relation_text: (WORD|ESCAPED_STRING|DIGIT|">"|"<")*
-field_text: (WORD|ESCAPED_STRING|DIGIT)*
-method_text: (WORD|ESCAPED_STRING|DIGIT)*
-class_mem_text: (WORD|ESCAPED_STRING|DIGIT)*
-group_title: (WORD|ESCAPED_STRING|DIGIT)*
-title_description: /.+/  // Match the rest of the line as the description
-description: (WORD | ESCAPED_STRING | DIGIT | SPECIAL_CHAR)+
-CUSTOM: (/[a-zA-Z0-9&\-_:,.\(\)\/\\'"!@#$%^*+=|~`\[\]{}<>]/)+
 COMMENT: "'" /[^\n]*/
 NOTE_LINE: /-.+/
-NEWLINE: /\r?\n/
 
 %import common.CNAME
 %import common.ESCAPED_STRING

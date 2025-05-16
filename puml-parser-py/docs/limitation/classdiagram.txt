@@ -1,0 +1,4 @@
+cardinality
+struct
+abstract
+alias name

@@ -87,9 +87,9 @@ class ClassDiagramTransformer(Transformer):
     def relationship(self, source, relation_type, target, description=None):
         return {
             "relationship": {
-                "source": str(source),
-                "type": str(ParsingUtil.parse_tree(relation_type)),
-                "target": str(target),
+                "source": str(ParsingUtil.parse_tree(source)),
+                "type": str(relation_type.data),
+                "target": str(ParsingUtil.parse_tree(target)),
                 "description": str(ParsingUtil.parse_tree(description)).replace("\"", ""),
             }
         }
@@ -98,7 +98,7 @@ class ClassDiagramTransformer(Transformer):
     def note(self, position, target, description):
         return {
             "note": {
-                "position": str(ParsingUtil.parse_tree(position)),
+                "position": str(position.data),
                 "target": str(ParsingUtil.parse_tree(target)),
                 "description": str(ParsingUtil.parse_tree(description)).replace("\"", ""),
             }

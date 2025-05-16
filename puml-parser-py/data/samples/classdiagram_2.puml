@@ -1,7 +1,5 @@
 @startuml
 
-title Power Supply Monitoring & Fault Management - Class Diagram
-
 skinparam classAttributeIconSize 0
 skinparam classFontSize 14
 skinparam classAttributeFontSize 12
