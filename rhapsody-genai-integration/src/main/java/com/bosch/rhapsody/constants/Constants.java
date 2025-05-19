@@ -1,5 +1,6 @@
 package com.bosch.rhapsody.constants;
 
+import com.telelogic.rhapsody.core.IRPApplication;
 
 /**
  * @author DHP4COB
@@ -21,7 +22,12 @@ public class Constants {
   public static String BACKEND_SCRIPT_PATH = "";
   public static String SECRET_KEY_FILE_PATH = "";
   public static String CHAT_LOG_FILE_PATH ="";
-
+  public static String PUML_PARSER_PATH = "";
+  
   public static String PROFILEPATH;
+
+  public static String userMessageDiagramType;
+
+  public static IRPApplication rhapsodyApp;
 
 }

@@ -38,6 +38,7 @@ public class RhpPlugin extends RPUserPlugin {
     fileHandler = new ProcessFiles();
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
+    Constants.rhapsodyApp = rhapsodyApp;
     String temp = fileHandler.getJarPath();
 
     if (RhpPlugin.isStandalone) {
@@ -46,6 +47,8 @@ public class RhpPlugin extends RPUserPlugin {
           + "rhapsody-genai-integration\\src\\main\\resources";
       Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
+      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\src\\main.py"
+      
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();

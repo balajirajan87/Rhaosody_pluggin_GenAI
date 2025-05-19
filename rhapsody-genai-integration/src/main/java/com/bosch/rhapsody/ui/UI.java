@@ -33,6 +33,7 @@ import com.bosch.rhapsody.integrator.GenAiHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
+import com.bosch.rhapsody.genertator.ClassDiagram;
 
 /**
  * @author AI generated
@@ -51,6 +52,7 @@ public class UI {
 
   public static void main(String[] args) {
     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+    Constants.rhapsodyApp = app;
     GenAiHandler aiHandler = new GenAiHandler(app);
     // String startPythonBackend2 = aiHandler.startPythonBackend();
 
@@ -355,6 +357,11 @@ public class UI {
     // field
     dropdown.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+    Button generateButton = new Button(inputRow1, SWT.PUSH);
+    generateButton.setText("Generate Diagram");
+    generateButton.setEnabled(false);
+    generateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
     // User input area
     Composite inputRow = new Composite(tab2Composite, SWT.NONE);
     inputRow.setLayout(new GridLayout(2, false));
@@ -390,8 +397,25 @@ public class UI {
       String userMessage = userInput.getText();
       if (!userMessage.isEmpty()) {
         sendMessage(dropdown.getText(), userInput);
+        //chatArea.append("User Request: \n" + userMessage + "\n" +"***********************************************************************************\n\n@startuml ....@enduml ");
         // Clear user input
         userInput.setText("");
+        if(dropdown.getText().equals("create_uml_design")){
+            generateButton.setEnabled(true);
+            Constants.userMessageDiagramType = userMessage;
+        }
+      }
+    });
+
+     // Add functionality to generateButton
+     generateButton.addListener(SWT.Selection, event -> {
+      String chatContent = chatArea.getText();
+      if(!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")){
+          generateDiagram(Constants.userMessageDiagramType,chatContent);
+      }else{
+        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
+        messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
+        messageBox.open();
       }
     });
 
@@ -471,6 +495,16 @@ public class UI {
 
       // Scroll to the bottom
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
+    }
+  }
+
+  private void generateDiagram(String diagramType, String chatContent) {
+    diagramType = diagramType.replaceAll("\\s+", "").toLowerCase();
+    ClassDiagram diagramHandler = new ClassDiagram();
+    if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
+      diagramHandler.createClassDiagram(chatContent);
+
+      
     }
   }
 
