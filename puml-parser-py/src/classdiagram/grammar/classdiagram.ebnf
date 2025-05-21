@@ -58,13 +58,14 @@ visibility: "+" -> public
 
 description: /.+/
 hex_color: /#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/
+COLOR: /#[a-zA-Z0-9]+/
 relation_source: CNAME
 relation_target: CNAME
 note_target:CNAME 
-type: CNAME
+type: /.+/
 var: CNAME
 sparam: CNAME
-svalue: hex_color | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
+svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
 attribute_name: CNAME
 method_name: CNAME
 class_name: CNAME
