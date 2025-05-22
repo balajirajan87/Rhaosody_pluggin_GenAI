@@ -13,8 +13,7 @@ https://inside-docupedia.bosch.com/confluence/display/DEVCORNER/Px
 Step2: Subscribe to the OPENAI AZURE Instance as below:
 https://rb-xorder.bosch.com/o/xplatform-services/get-access-to-azure-openai. 
 
-OpenAI Instance Link: 
-<< to be updated>>
+OpenAI Instance Link: "MS-EPB1-XC OpenAI Instance"
 
 Step3: execute the provided bat script.
 ```
@@ -24,11 +23,14 @@ This script will install python and it will ask for OPENAI_API_KEY. Pass the OPE
 
 
 # Configuration in Rhapsody:
-Step1: First Download our Release and extract the same in the Folder of your choice.
-
-Step2: Create a New Rhapsody project or open an Existing Rhapsody Project.
+Step1: Create a New Rhapsody project or open an Existing Rhapsody Project.
 <div align="left">
   <img src="images/New_Rhp_Project.png" alt="New Rhapsody Project" />
+</div>
+
+Step2: Once you create this new project, in the File Explorer go to the path of your project. Within your project folder you will notice a folder with name: "<Project_name>_rpy" being created. Now download our Release and extract the contents within the above created folder.
+<div align="left">
+  <img src="images/Folder_Structure.png" alt="Folder Structure" />
 </div>
 
 Step3: Now you need to configure your project. For the created / available project go to file > Add to Model
