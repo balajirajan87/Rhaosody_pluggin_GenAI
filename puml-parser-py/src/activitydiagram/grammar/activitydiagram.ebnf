@@ -1,0 +1,55 @@
+start: "@startuml" (title | skinparam | section)* "@enduml"
+
+title: "title" description
+
+skinparam: "skinparam" sparam svalue
+
+section: swimlane? statement+
+
+swimlane: "|" COLOR? "|" IDENTIFIER "|"
+
+statement: start_activity
+         | action
+         | decision
+         | while_loop
+         | repeat_loop
+         | break_statement
+         | transition
+         | stop
+
+start_activity: "start"
+
+action: ":" action_statement ";"
+
+decision: "if" "(" condition ")" "then" "(" then_label ")" statement+ ("else" "(" else_label ")" statement+)? "endif"
+
+while_loop: "while" "(" condition ")" statement+ "endwhile"
+
+repeat_loop: "repeat" statement+ "repeat" "while" "(" condition ")" "is" "(" then_label ")" "not" "(" else_label ")"
+
+break_statement: "break"
+
+transition: "->" transition_label ";"
+
+stop: "stop" 
+
+end: "end"
+
+description: /.+/
+sparam: CNAME
+svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
+condition: /[^)]+/
+then_label:IDENTIFIER
+else_label:IDENTIFIER
+COLOR: /#[a-zA-Z0-9]+/
+IDENTIFIER: /[a-zA-Z0-9_]+/
+action_statement: /[^;]+/
+transition_label: /[^;]+/
+
+%import common.CNAME
+%import common.ESCAPED_STRING
+%import common.SIGNED_NUMBER
+%import common.WORD
+%import common.DIGIT
+%import common.WS
+%ignore WS
