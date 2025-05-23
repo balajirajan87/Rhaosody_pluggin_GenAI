@@ -36,7 +36,8 @@ public class ClassDiagram {
                 "python",
                 Constants.PUML_PARSER_PATH,
                 "-i", inputFile,
-                "-o", outputFile
+                "-o", outputFile,
+                "t","classdiagram"
             );
             processBuilder.redirectErrorStream(true);
             Process pythonBackendProcess = processBuilder.start();
