@@ -51,7 +51,7 @@ public class UI {
   }
 
   public static void main(String[] args) {
-    IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
     Constants.rhapsodyApp = app;
     GenAiHandler aiHandler = new GenAiHandler(app);
     // String startPythonBackend2 = aiHandler.startPythonBackend();
@@ -411,7 +411,7 @@ public class UI {
      generateButton.addListener(SWT.Selection, event -> {
       String chatContent = chatArea.getText();
       if(!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")){
-          generateDiagram(Constants.userMessageDiagramType,chatContent);
+          generateDiagram(Constants.userMessageDiagramType,chatContent,shell);
       }else{
         MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
         messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
@@ -497,15 +497,18 @@ public class UI {
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
   }
-
-  private void generateDiagram(String diagramType, String chatContent) {
+  
+private void generateDiagram(String diagramType, String chatContent, Shell parentShell) {
     diagramType = diagramType.replaceAll("\\s+", "").toLowerCase();
     ClassDiagram diagramHandler = new ClassDiagram();
     if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
-      diagramHandler.createClassDiagram(chatContent);
-
-      
+        try {
+            diagramHandler.createClassDiagram(chatContent, parentShell);
+        } catch (Exception e) {
+            // Print error to terminal
+            e.printStackTrace();
+        }
     }
-  }
+}
 
 }
