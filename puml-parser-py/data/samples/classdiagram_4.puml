@@ -1,0 +1,78 @@
+@startuml
+title Voltage Monitoring & Safety System - Class Diagram
+
+' ADC Peripheral and API
+class AdcDriver {
+    +Adc_Init()
+    +Adc_StartGroupConversion(groupId: int)
+    +Adc_GetGroupStatus(groupId: int): AdcStatus
+    +Adc_ReadGroup(groupId: int, buffer: int[])
+}
+
+enum AdcStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+' OS Task/Interrupt
+class cl_RTAOS_10ms {
+    +Run()
+}
+
+class cl_OsInterrupt {
+    +IsrAdc0()
+    +IsrAdc1()
+}
+
+' Voltage Monitoring Logic
+class cl_VoltMon {
+    -uvThresholds: map<string, float>
+    -ovThresholds: map<string, float>
+    -faultCounters: map<string, int>
+    -measurementBuffer: map<string, float[]>
+    +MonitorVoltages()
+    +CompareThresholds()
+    +InjectFault(signal: string, value: float)
+    +GetMeasurement(signal: string): float
+}
+
+' Error Management
+class cl_ErrMgmt {
+    +ReportError(errInfo: uint16, addInfo: uint32, demStatus: int)
+}
+
+class rbsfty_ErrMgt {
+    +rbsfty_ErrMgt_ReportError(errInfo: uint16, addInfo: uint32, demStatus: int)
+}
+
+' Diagnostic Trouble Code (DTC) Constants
+class DTC {
+    <<static>>
+    +BOSCH_SECPOWERSUPPLY_FAILURE: uint16
+}
+
+' Fault Injection Stub
+class FaultInjectionStub {
+    +Read(signal: string): float
+    +Write(signal: string, value: float)
+}
+
+' MPCI Safety Monitoring
+class MPCI_SafetyMonitor {
+    +CheckPreviousPowerOnFaults()
+    +BladeLevelSafetyCheck()
+}
+
+' Relationships
+cl_RTAOS_10ms --> cl_VoltMon : triggers MonitorVoltages()
+cl_VoltMon --> AdcDriver : uses
+cl_VoltMon --> FaultInjectionStub : uses for test
+cl_VoltMon --> cl_ErrMgmt : reports errors
+cl_ErrMgmt --> rbsfty_ErrMgt : logs DTC
+cl_OsInterrupt ..> AdcDriver : handles ADC interrupts
+cl_VoltMon --> DTC : uses DTC constants
+MPCI_SafetyMonitor --> cl_VoltMon : checks on init
+
+@enduml

@@ -16,12 +16,14 @@ enum AdcGroupStatus {
 }
 
 class VoltageBuffer {
+    - voltages: Map<String, float>
     + getVoltage(signal: String): float
     + setVoltage(signal: String, value: float): void
 }
 
 ' ========== Voltage Monitoring ==========
 class VoltageMonitor {
+    - monitoredSignals: List<VoltageSignal>
     - adcDriver: AdcDriver
     - buffer: VoltageBuffer
     - cycleCounter: int
@@ -40,6 +42,7 @@ class VoltageSignal {
 
 ' ========== Fault Injection ==========
 class FaultInjectionStub {
+    - injectedVoltages: Map<String, float>
     + injectFault(signal: String, value: float): void
     + clearFault(signal: String): void
     + getInjectedVoltage(signal: String): float
@@ -66,9 +69,9 @@ class RTAOSTask10ms {
 }
 
 ' ========== Relationships ==========
-VoltageMonitor o-- VoltageSignal : "monitors"
-VoltageMonitor *-- VoltageBuffer : "uses"
-VoltageMonitor *-- AdcDriver : "uses"
+VoltageMonitor ..> VoltageSignal : "monitors"
+VoltageMonitor ..> VoltageBuffer : "uses"
+VoltageMonitor ..> AdcDriver : "uses"
 VoltageMonitor o-- FaultInjectionStub : "uses for fault injection"
 VoltageMonitor *-- ErrorManager : "reports errors"
 ErrorManager *-- DTCManager : "forwards DTC"
