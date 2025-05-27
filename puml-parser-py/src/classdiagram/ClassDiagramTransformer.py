@@ -11,6 +11,7 @@ class ClassDiagramTransformer(Transformer):
             "packages": [],
             "classes": [],
             "interfaces": [],
+            "structs": [],
             "enums": [],
             "relationships": [],
             "notes": [],
@@ -45,7 +46,15 @@ class ClassDiagramTransformer(Transformer):
     @v_args(inline=True)
     def package(self, name, *contents):
         package_name = str(ParsingUtil.parse_tree(name)).replace("\"", "")
-        package_dict = {"name": package_name, "classes": [], "interfaces": [], "enums": [], "notes": []}
+        package_dict = {
+            "name": package_name,
+            "classes": [],
+            "interfaces": [], 
+            "structs": [],
+            "enums": [],
+            "notes": [],
+            "relationships": []
+            }
 
         for item in contents:
             if isinstance(item, Tree):
@@ -56,11 +65,14 @@ class ClassDiagramTransformer(Transformer):
         return {"package": package_dict}
 
     @v_args(inline=True)
-    def class_(self, name, stereotype=None, *members):
+    def class_(self, name, isAbstract=None,stereotype=None, class_extends=None, class_implements=None, *members):
         return {
             "class": {
                 "name": str(name),
+                "isAbstract": str(isAbstract),
                 "stereotype": str(stereotype) if stereotype else None,
+                "extends": ParsingUtil.parse_interface_extends(class_extends),
+                "implements": ParsingUtil.parse_interface_extends(class_implements),
                 "members": list(members),
             }
         }
@@ -76,10 +88,21 @@ class ClassDiagramTransformer(Transformer):
 
     @v_args(inline=True)
     def interface(self, name, *methods):
+        interface_data = ParsingUtil.parse_interface(methods)
         return {
             "interface": {
                 "name": str(ParsingUtil.parse_tree(name)),
-                "methods": list(methods),
+                "extends": interface_data["extends"],
+                "methods": interface_data["methods"]
+            }
+        }
+    
+    @v_args(inline=True)
+    def struct(self, name,  *attributes):
+        return {
+            "struct": {
+                "name": str(ParsingUtil.parse_tree(name)),
+                "attributes": list(attributes)
             }
         }
 
@@ -105,25 +128,64 @@ class ClassDiagramTransformer(Transformer):
         }
 
     @v_args(inline=True)
-    def attribute(self, visibility, name):
-        var_name, type_ = ParsingUtil.parse_attribute(name).split(":")
+    def attribute(self, first=None, second=None, third=None):
+        visibility = variable = None
+        isAbstract = isStatic = False
+
+        args = [first, second, third]
+        args = [a for a in args if a is not None]
+        for a in args:
+            if hasattr(a, "data"):
+                if a.data == "static":
+                    isStatic = True
+                elif a.data == "abstract":
+                    isAbstract = True
+                elif a.data in ("public", "private", "protected", "package"):
+                    visibility = a
+            else:
+                variable = a  # Should be the variable tree
+        if variable is None:
+            variable = args[-1]
+        var_name, type_ = ParsingUtil.parse_attribute(variable).split(":")
         return {
             "attribute": {
-                "visibility": str(visibility.data),
+                "isStatic": isStatic,
+                "isAbstract": isAbstract,
+                "visibility": str(visibility.data) if visibility else None,
                 "name": var_name.strip(),
                 "type": type_.strip(),
             }
         }
 
     @v_args(inline=True)
-    def method(self, visibility, name, params=None, return_type=None):
-        method = ParsingUtil.parse_method(name)
+    def method(self, first=None, second=None, third=None):
+
+        visibility = function = None
+        isAbstract = isStatic = False
+
+        args = [first, second, third]
+        args = [a for a in args if a is not None]
+        for a in args:
+            if hasattr(a, "data"):
+                if a.data == "static":
+                    isStatic = True
+                elif a.data == "abstract":
+                    isAbstract = True
+                elif a.data in ("public", "private", "protected", "package"):
+                    visibility = a
+            else:
+                function = a  # Should be the function tree
+        if function is None:
+            function = args[-1]
+        method_info = ParsingUtil.parse_method(function)
         return {
             "method": {
-                "visibility": str(visibility.data),
-                "name": str(method["name"]),
-                "params": method["params"],
-                "return_type": str(method["return_type"]),
+                "isStatic": isStatic,
+                "isAbstract": isAbstract,
+                "visibility": str(visibility.data) if visibility else None,
+                "name": method_info["name"],
+                "params": method_info["params"],
+                "return_type": method_info["return_type"],
             }
         }
 
@@ -150,7 +212,9 @@ class ClassDiagramTransformer(Transformer):
         elif "package" in item:
             result["packages"].append(item["package"])
         elif "class" in item:
-            result["classes"].append(item["class_"])
+            result["classes"].append(item["class"])
+        elif "struct" in item:
+            result["structs"].append(item["struct"])
         elif "interface" in item:
             result["interfaces"].append(item["interface"])
         elif "enum" in item:
@@ -166,6 +230,8 @@ class ClassDiagramTransformer(Transformer):
             result["classes"].append(self._parse_class_tree(item))
         elif rule == "interface":
             result["interfaces"].append(self._parse_interface_tree(item))
+        elif rule == "struct":
+            result["structs"].append(self._parse_struct_tree(item))
         elif rule == "enum":
             result["enums"].append(self._parse_enum_tree(item))
         elif rule == "note":
@@ -175,7 +241,10 @@ class ClassDiagramTransformer(Transformer):
         class_data = ParsingUtil.parse_class(item)
         return {
             "name": class_data["name"],
+            "isAbstract": class_data["isAbstract"],
             "stereotype": class_data["stereotype"],
+            "extends": class_data["extends"],
+            "implements": class_data["implements"],
             "attributes": class_data["attributes"],
             "methods": class_data["methods"],
         }
@@ -184,6 +253,12 @@ class ClassDiagramTransformer(Transformer):
         return {
             "name": str(item.children[0]),
             "methods": [str(child) for child in item.children[1:]] if len(item.children) > 1 else [],
+        }
+    
+    def _parse_struct_tree(self, item):
+        return {
+            "name": str(item.children[0]),
+            "attributes": [str(child) for child in item.children[1:]] if len(item.children) > 1 else [],
         }
 
     def _parse_enum_tree(self, item):
@@ -198,35 +273,3 @@ class ClassDiagramTransformer(Transformer):
             "target": str(item.children[1]),
             "description": str(item.children[2]) if len(item.children) > 2 else None,
         }
-
-     # Getter for title
-    def get_title(self):
-        return self.result_template["title"]
-
-    # Getter for skinparam
-    def get_skinparam(self):
-        return self.result_template["skinparam"]
-
-    # Getter for packages
-    def get_packages(self):
-        return self.result_template["packages"]
-
-    # Getter for classes
-    def get_classes(self):
-        return self.result_template["classes"]
-
-    # Getter for interfaces
-    def get_interfaces(self):
-        return self.result_template["interfaces"]
-
-    # Getter for enums
-    def get_enums(self):
-        return self.result_template["enums"]
-
-    # Getter for relationships
-    def get_relationships(self):
-        return self.result_template["relationships"]
-
-    # Getter for notes
-    def get_notes(self):
-        return self.result_template["notes"]

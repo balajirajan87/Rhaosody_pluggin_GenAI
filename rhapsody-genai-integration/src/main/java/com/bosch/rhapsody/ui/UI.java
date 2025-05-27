@@ -51,7 +51,7 @@ public class UI {
   }
 
   public static void main(String[] args) {
-     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+    IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
     Constants.rhapsodyApp = app;
     GenAiHandler aiHandler = new GenAiHandler(app);
     // String startPythonBackend2 = aiHandler.startPythonBackend();
@@ -102,7 +102,7 @@ public class UI {
       Image icon = new Image(display, iconFile.getAbsolutePath());
       shell.setImage(icon);
     }
-   
+
     CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
     tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     tabFolder.setSimple(false);
@@ -217,24 +217,42 @@ public class UI {
     });
 
     selectFileButton.addListener(SWT.Selection, e -> {
-      FileDialog fileDialog = new FileDialog(shell, SWT.OPEN);
+      FileDialog fileDialog = new FileDialog(shell, SWT.OPEN | SWT.MULTI);
       // Update the file selection logic
       fileDialog.setText("Select a File");
       fileDialog.setFilterPath(System.getProperty("user.home")); // Default to user's home directory
-      fileDialog.setFilterExtensions(new String[] { "*.pdf" }); // Restrict to PDF file type
+      // file type
+      String selectedOption = dropdownCombo.getText();
+      // Decide allowed extensions based on dropdown selection
+      if ("Requirement_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.reqExtension);
+      } else if ("Reference_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.refExtension);
+      } else if ("ReferenceCode_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.refCodeExtension);
+      } else if ("Guideline_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.guideExtension);
+      } else {
+        fileDialog.setFilterExtensions(new String[] { "*.*" }); // Allow all files if unknown
+      }
+
       String selectedFile = fileDialog.open();
       if (selectedFile != null) {
-        String selectedOption = dropdownCombo.getText();
         if (selectedOption.isEmpty()) {
           MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
           messageBox.setMessage("Please select an option from the dropdown before selecting a file.");
           messageBox.open();
         } else {
-          fileList.add(selectedFile);
-          dropdownFileMapping.get(selectedOption).add(selectedFile);
-          String fileName = new java.io.File(selectedFile).getName();
+          String[] selectedFiles = fileDialog.getFileNames();
+          String dir = fileDialog.getFilterPath();
+          for (String file : selectedFiles) {
+            String fullPath = dir + File.separator + file;
+            fileList.add(fullPath);
+            dropdownFileMapping.get(selectedOption).add(fullPath);
+          }
+          String fileNames = String.join(", ", selectedFiles);
           statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-          statusTextBoxTab1.setText("Status: Seleted file " + fileName);
+          statusTextBoxTab1.setText("Status: Selected file(s): " + fileNames);
         }
       }
     });
@@ -397,22 +415,24 @@ public class UI {
       String userMessage = userInput.getText();
       if (!userMessage.isEmpty()) {
         sendMessage(dropdown.getText(), userInput);
-        //chatArea.append("User Request: \n" + userMessage + "\n" +"***********************************************************************************\n\n@startuml ....@enduml ");
+        // chatArea.append("User Request: \n" + userMessage + "\n"
+        // +"***********************************************************************************\n\n@startuml
+        // ....@enduml ");
         // Clear user input
         userInput.setText("");
-        if(dropdown.getText().equals("create_uml_design")){
-            generateButton.setEnabled(true);
-            Constants.userMessageDiagramType = userMessage;
+        if (dropdown.getText().equals("create_uml_design")) {
+          generateButton.setEnabled(true);
+          Constants.userMessageDiagramType = userMessage;
         }
       }
     });
 
-     // Add functionality to generateButton
-     generateButton.addListener(SWT.Selection, event -> {
+    // Add functionality to generateButton
+    generateButton.addListener(SWT.Selection, event -> {
       String chatContent = chatArea.getText();
-      if(!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")){
-          generateDiagram(Constants.userMessageDiagramType,chatContent,shell);
-      }else{
+      if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
+        generateDiagram(Constants.userMessageDiagramType, chatContent, shell);
+      } else {
         MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
         messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
         messageBox.open();
@@ -497,18 +517,18 @@ public class UI {
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
   }
-  
-private void generateDiagram(String diagramType, String chatContent, Shell parentShell) {
+
+  private void generateDiagram(String diagramType, String chatContent, Shell parentShell) {
     diagramType = diagramType.replaceAll("\\s+", "").toLowerCase();
     ClassDiagram diagramHandler = new ClassDiagram();
     if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
-        try {
-            diagramHandler.createClassDiagram(chatContent, parentShell);
-        } catch (Exception e) {
-            // Print error to terminal
-            e.printStackTrace();
-        }
+      try {
+        diagramHandler.createClassDiagram(chatContent, parentShell);
+      } catch (Exception e) {
+        // Print error to terminal
+        e.printStackTrace();
+      }
     }
-}
+  }
 
 }

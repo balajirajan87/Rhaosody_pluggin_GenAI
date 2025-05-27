@@ -1,53 +1,64 @@
-start: "@startuml" (title | skinparam | package | class | enum | interface | relationship | note)* "@enduml"
+start: "@startuml" (title | skinparam | package | class | interface | struct| enum | relationship | note)* "@enduml"
 
 title: "title" description
 
 skinparam: "skinparam" sparam svalue
 
-package: "package" package_name "{" (class | interface | enum | relationship | note)* "}"
+package: "package" package_name "{" (class | interface | struct| enum | relationship | note)* "}"
 
-class: "class" class_name stereotype? ("{" (attribute | method)* "}" | ":" (attribute | method)?)?
+class: class_modifier? "class" class_name stereotype? class_extends? class_implements? ("{" (attribute | method)* "}")?
+
+interface: "interface" interface_name interface_extends? "{" method* "}"
+
+class_extends: "extends" class_name
+
+class_implements: "implements" interface_list
+
+interface_extends: "extends" interface_list
+
+interface_list: interface_name ("," interface_name)*
+
+struct: "struct" struct_name ("{" (attribute)* "}")
 
 enum: "enum" enum_name "{" enum_value+ "}"
 
-interface: "interface" interface_name "{" method* "}"
-
 relationship: relation_source relation_type relation_target (":" description)?
 
-note: "note" note_position? "of"? note_target note_content "end" "note"
+note: "note" note_position? "of"? note_target note_content "end note"
 
 note_position: "left"  -> left
              | "right"  -> right
              | "top"  -> top
              | "bottom" -> bottom
 
-note_content: (NOTE_LINE)+
+class_modifier: "abstract" -> abstract
 
 stereotype: "<<" stereotype_name ">>"
 
 // Variables
-variable: var ":" type
+variable: var ":" varaible_type
 
-attribute: att_scope? visibility? variable
-         | visibility? att_scope? variable
+attribute: modifier? visibility? variable
+         | visibility? modifier? variable
 
-param_list: [variable ("," variable)*]
+param:  var ":" param_type
 
-function: method_name "("param_list")" ":" type
+param_list: [param ("," param)*]
 
-method: att_scope? visibility? function
-      | visibility? att_scope? function
+function: method_name "("param_list?")" (":" return_type)?
+
+method: modifier? visibility? function
+      | visibility? modifier? function
 
 // Attribute Scope
-att_scope: "{static}" -> static
+modifier: "{static}" -> static
          | "{abstract}" -> abstract
 
 relation_type: "--|>" -> inheritance
-             | "--" -> association
+             | "-->" -> association
              | "*--" -> composition
              | "o--" -> aggregation
-             | "..>" -> dotted_dependency
-             | "-->" -> dependency
+             | "..>" -> dependency
              | "..|>" -> realization
 
 // Variables and Methods visibility
@@ -62,7 +73,9 @@ COLOR: /#[a-zA-Z0-9]+/
 relation_source: CNAME
 relation_target: CNAME
 note_target:CNAME 
-type: /.+/
+varaible_type: /.+/
+return_type: /.+/
+param_type : ALPHANUM_SPECIAL
 var: CNAME
 sparam: CNAME
 svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
@@ -70,13 +83,17 @@ attribute_name: CNAME
 method_name: CNAME
 class_name: CNAME
 interface_name: CNAME
+struct_name: CNAME
 enum_value: CNAME
 enum_name: CNAME
 package_name: ESCAPED_STRING
 stereotype_name: CNAME
 relation_text: (WORD|ESCAPED_STRING|DIGIT|">"|"<")*
 COMMENT: "'" /[^\n]*/
-NOTE_LINE: /-.+/
+note_content: (LINE | NEWLINE)*
+LINE: /(?!(end note))(.+)/
+NEWLINE: /\\r?\\n/
+ALPHANUM_SPECIAL: /[a-zA-Z0-9_!@#$%^&*(\[\]:;"'.<>\/?\\|`~\-]+/
 
 %import common.CNAME
 %import common.ESCAPED_STRING

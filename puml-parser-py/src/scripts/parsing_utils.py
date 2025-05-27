@@ -1,4 +1,5 @@
 from lark import Token, Tree
+import re
 
 class ParsingUtil:
     
@@ -22,7 +23,7 @@ class ParsingUtil:
 
         return str(tree)  # Default case to ensure a string is returned
 
-
+    @staticmethod
     def parse_attribute(tree):
         """
         Parse a Tree object representing an attribute and return it in the format 'var_value:type_value'.
@@ -41,15 +42,17 @@ class ParsingUtil:
             if isinstance(child, Tree) and child.data == 'var':
                 # Extract the variable name
                 var_value = child.children[0].value if isinstance(child.children[0], Token) else None
-            elif isinstance(child, Tree) and child.data == 'type':
+            elif isinstance(child, Tree) and child.data == 'varaible_type':
                 # Extract the type
                 type_value = child.children[0].value if isinstance(child.children[0], Token) else None
+                type_value = type_value.replace(":", "")  # Remove array brackets if present
 
         if var_value and type_value:
             return f"{var_value}:{type_value}"
         else:
-            raise ValueError("Invalid tree structure. Missing 'var' or 'type'.")
-        
+            raise ValueError("Invalid tree structure. Missing 'var' or 'varaible_type'.")
+    
+    @staticmethod
     def parse_method(tree):
         """
         Parse a Tree object representing a method and extract its name, parameters, and return type.
@@ -73,18 +76,14 @@ class ParsingUtil:
                     # Extract the parameters
                     if child.children:
                         for param in child.children:
+                            param_obj = {}
                             if param:
-                                if param.data == 'variable':
-                                    var_name = None
-                                    var_type = None
-                                    for var_child in param.children:
-                                        if var_child.data == 'var':
-                                            var_name = var_child.children[0].value if isinstance(var_child.children[0], Token) else None
-                                        elif var_child.data == 'type':
-                                            var_type = var_child.children[0].value if isinstance(var_child.children[0], Token) else None
-                                    if var_name and var_type:
-                                        params.append({"name": var_name, "type": var_type})
-                elif child.data == 'type':
+                                param_obj["name"] =  ParsingUtil.extract_token_value(param['param']['name'])
+                                param_obj["type"] = ParsingUtil.extract_token_value(param['param']['type'])
+
+                            if "name" in param_obj and "type" in param_obj:
+                                params.append(param_obj)
+                elif child.data == 'return_type':
                     # Extract the return type
                     return_type = child.children[0].value if isinstance(child.children[0], Token) else None
 
@@ -97,6 +96,12 @@ class ParsingUtil:
             "return_type": return_type
         }
     
+    def extract_token_value(tree_str):
+        # Extracts the value inside Token('CNAME', '...')
+        match = re.search(r"Token\('CNAME', '([^']+)'\)", tree_str)
+        return match.group(1) if match else None
+    
+    @staticmethod
     def parse_class(tree):
         """
         Parse a Tree object representing a class and extract its name, stereotype, attributes, and methods.
@@ -107,21 +112,28 @@ class ParsingUtil:
         if not isinstance(tree, Tree) or tree.data != 'class':
             raise ValueError("Invalid tree structure. Expected a 'class' tree.")
 
+        isAbstract = False
         class_name = None
         stereotype = None
         attributes = []
         methods = []
+        implements= []
+        extends = []
 
         for child in tree.children:
             if isinstance(child, Tree):
                 if child.data == 'class_name':
-                    # Extract the class name
                     class_name = child.children[0].value if isinstance(child.children[0], Token) else None
                 elif child.data == 'stereotype':
-                    # Extract the stereotype
                     stereotype = child.children[0].value if isinstance(child.children[0], Token) else None
+                elif child.data == 'class_implements':
+                    implements = ParsingUtil.parse_interface_extends(child)
+                elif child.data == 'class_extends':
+                    extends = ParsingUtil.parse_class_extends(child)
+                elif child.data == 'abstract':
+                    isAbstract = True
+
             elif isinstance(child, dict):
-                # Extract attributes and methods
                 if 'attribute' in child:
                     attributes.append(child['attribute'])
                 elif 'method' in child:
@@ -132,12 +144,41 @@ class ParsingUtil:
 
         return {
             "name": class_name,
+            "isAbstract":isAbstract,
             "stereotype": stereotype,
+            "extends": extends,
+            "implements": implements,
             "attributes": attributes,
             "methods": methods
         }
-    
+    @staticmethod
+    def parse_interface(tree):
 
+        """
+        Parse a Tree object representing an interface and extract its name, stereotype, and methods.
+
+        :param tree: The Tree object to parse.
+        :return: A dictionary with 'name', 'stereotype', and 'methods'.
+        """
+
+        methods = []
+        extends = []
+
+        for child in tree:
+            if isinstance(child, Tree):
+                if child.data == 'interface_extends':
+                    extends = ParsingUtil.parse_interface_extends(child)
+            elif(isinstance(child, dict)):
+                if 'method' in child:
+                    methods.append(child['method'])
+
+        return {
+            "extends": extends,
+            "methods": methods
+        }
+
+    
+    @staticmethod
     def parse_enum_values(tree):
         """
         Parse a Tree object representing enum values and return a list of values.
@@ -158,3 +199,48 @@ class ParsingUtil:
                     enum_values.append(value)
 
         return enum_values
+    
+    @staticmethod
+    def parse_interface_extends(tree):
+        """
+        Parse a Tree object representing interface_extends and return a list of interface names.
+        :param tree: The Tree object to parse.
+        :return: A list of interface names.
+        """
+        if tree is None:
+            return []  # Return an empty list if the tree is None
+
+        if not isinstance(tree, Tree) or (tree.data != 'interface_extends'  and  tree.data != 'class_implements'):
+            raise ValueError("Invalid tree structure. Expected an 'interface_extends' tree.")
+
+        interface_names = []
+        for child in tree.children:
+            if isinstance(child, Tree) and child.data == 'interface_list':
+                for iface in child.children:
+                    if isinstance(iface, Tree) and iface.data == 'interface_name':
+                        # Extract the interface name
+                        name = iface.children[0].value if isinstance(iface.children[0], Token) else None
+                        if name:
+                            interface_names.append(name)
+        return interface_names
+    
+    @staticmethod
+    def parse_class_extends(tree):
+        """
+        Parse a Tree object representing class_extends and return a list of interface names.
+        :param tree: The Tree object to parse.
+        :return: A list of interface names.
+        """
+        if tree is None:
+            return []  # Return an empty list if the tree is None
+    
+        if not isinstance(tree, Tree) or tree.data != 'class_extends':
+            raise ValueError("Invalid tree structure. Expected an 'class_extends' tree.")
+
+        interface_names = []
+        for child in tree.children:
+            if isinstance(child, Tree) and child.data == 'class_name':
+                for iface in child.children:
+                    if iface:
+                        interface_names.append(str(iface))
+        return interface_names
