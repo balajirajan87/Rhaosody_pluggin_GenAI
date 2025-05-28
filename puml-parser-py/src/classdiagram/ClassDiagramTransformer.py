@@ -109,13 +109,13 @@ class ClassDiagramTransformer(Transformer):
     @v_args(inline=True)
     def relationship(self, source, relation_type, target, description=None):
         return {
-            "relationship": {
-                "source": str(ParsingUtil.parse_tree(source)),
-                "type": str(relation_type.data),
-                "target": str(ParsingUtil.parse_tree(target)),
-                "description": str(ParsingUtil.parse_tree(description)).replace("\"", ""),
-            }
-        }
+                    "relationship": {
+                        "source": str(ParsingUtil.parse_tree(source)),
+                        "type": str(relation_type.data),
+                        "target": str(ParsingUtil.parse_tree(target)),
+                        "description": str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
+                    }
+                }
 
     @v_args(inline=True)
     def note(self, position, target, description):
@@ -123,7 +123,7 @@ class ClassDiagramTransformer(Transformer):
             "note": {
                 "position": str(position.data),
                 "target": str(ParsingUtil.parse_tree(target)),
-                "description": str(ParsingUtil.parse_tree(description)).replace("\"", ""),
+                "description": str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
             }
         }
 

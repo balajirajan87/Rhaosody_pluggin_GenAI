@@ -2,6 +2,8 @@ import os
 import json
 from lark import Lark, exceptions
 from .ClassDiagramTransformer import ClassDiagramTransformer
+import tkinter as tk
+from tkinter import messagebox
 
 def process_class_diagram(input_file, output_file):
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -25,9 +27,15 @@ def process_class_diagram(input_file, output_file):
                         with open(output_file, 'w', encoding="utf-8") as outfile:
                             outfile.write(json_like_output)
                     except (json.JSONDecodeError) as e:
-                        print(f"Error processing input or output files: {e}")                
+                        root = tk.Tk()
+                        root.withdraw()
+                        messagebox.showerror("Error", f"Error processing output json files: {e}")
             except (OSError) as e:
-                print(f"Error processing input or output files: {e}")
+                root = tk.Tk()
+                root.withdraw()
+                messagebox.showerror("Error", f"Error processing input puml files: {e}")
 
         except exceptions.LarkError as e:
-            print(f"Grammar validation failed: {e}")
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Error", f"Grammar validation failed: {e}")

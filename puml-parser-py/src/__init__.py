@@ -4,10 +4,7 @@
 # Copyright 2018 Pedro Cuadra - pjcuadra@gmail.com
 # Licensed under the Apache License, Version 2.0
 
-import os
-import logging
-import json
-from lark import Lark, exceptions
+
 from src.classdiagram.ClassDiagramTransformer import ClassDiagramTransformer
 
 
