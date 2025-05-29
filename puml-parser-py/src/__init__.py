@@ -1,26 +1,33 @@
-"""Module for parsing PlantUML diagrams to an AST"""
+import os
+import json
+from lark import Lark, exceptions
+from transformer.ClassDiagramTransformer import ClassDiagramTransformer
 
-# Copyright 2024 René Fischer - renefischer@fischer-homenet.de
-# Copyright 2018 Pedro Cuadra - pjcuadra@gmail.com
-# Licensed under the Apache License, Version 2.0
+def process_class_diagram(input_file, output_file):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    grammar_file_path = os.path.join(dir_path,  "grammar","classdiagram.lark")
 
+    with open(grammar_file_path, encoding="utf-8") as grammar_file:
+        try:
+            parser = Lark(
+                grammar_file.read(),
+                parser='lalr',
+                transformer=ClassDiagramTransformer(),
+                start='start'
+            )
 
-from src.classdiagram.ClassDiagramTransformer import ClassDiagramTransformer
+            try:
+                with open(input_file, encoding="utf-8") as puml:
+                    parsed_data = parser.parse(puml.read())
+                    # print(parsed_data)
+                    try:
+                        json_like_output = json.dumps(parsed_data, indent=4).replace("None", "\"\"")
+                        with open(output_file, 'w', encoding="utf-8") as outfile:
+                            outfile.write(json_like_output)
+                    except (json.JSONDecodeError) as e:
+                        print(f"Error processing input or output files: {e}")                
+            except (OSError) as e:
+                print(f"Error processing input or output files: {e}")
 
-
-def getopts(argvalues):
-    """Function parsing command line options"""
-    opts = {}  # Empty dictionary to store key-value pairs.
-    while argvalues:  # While there are arguments left to parse...
-        if argvalues[0][0] == '-':  # Found a "-name value" pair.
-            if len(argvalues) > 1:
-                if argvalues[1][0] != '-':
-                    opts[argvalues[0]] = argvalues[1]
-                else:
-                    opts[argvalues[0]] = True
-            elif len(argvalues) == 1:
-                opts[argvalues[0]] = True
-
-        # Reduce the argument list by copying it starting from index 1.
-        argvalues = argvalues[1:]
-    return opts
+        except exceptions.LarkError as e:
+            print(f"Grammar validation failed: {e}")

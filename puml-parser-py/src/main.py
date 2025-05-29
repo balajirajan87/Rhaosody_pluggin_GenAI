@@ -4,15 +4,30 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sys import argv
 import logging
-from src import getopts
-from src.classdiagram import process_class_diagram
-from src.activitydiagram import process_activity_diagram 
+from __init__ import process_class_diagram
 import tkinter as tk
 from tkinter import messagebox
 
 def print_usage():
     print("Usage: python main.py -t <diagramtype> -i <input_file> -o <output_file> [-v]")
     sys.exit(1)
+
+def getopts(argvalues):
+    """Function parsing command line options"""
+    opts = {}  # Empty dictionary to store key-value pairs.
+    while argvalues:  # While there are arguments left to parse...
+        if argvalues[0][0] == '-':  # Found a "-name value" pair.
+            if len(argvalues) > 1:
+                if argvalues[1][0] != '-':
+                    opts[argvalues[0]] = argvalues[1]
+                else:
+                    opts[argvalues[0]] = True
+            elif len(argvalues) == 1:
+                opts[argvalues[0]] = True
+
+        # Reduce the argument list by copying it starting from index 1.
+        argvalues = argvalues[1:]
+    return opts
 
 if __name__ == '__main__':
     myargs = getopts(argv)
@@ -29,8 +44,6 @@ if __name__ == '__main__':
         try:
             if diagram_type == "classdiagram":
                 process_class_diagram(input_file, output_file)
-            elif diagram_type == "activitydiagram":
-                process_activity_diagram(input_file, output_file)  # Handle activity diagrams
             else:
                 print(f"Unsupported diagram type: {diagram_type}")
                 print_usage()
