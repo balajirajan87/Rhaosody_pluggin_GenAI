@@ -53,6 +53,8 @@ method: modifier? visibility? function
 // Attribute Scope
 modifier: "{static}" -> static
          | "{abstract}" -> abstract
+         | "<<static>>" -> static
+         | "<<abstract>>" -> abstract
 
 relation_type: "--|>" -> inheritance
              | "-->" -> association
