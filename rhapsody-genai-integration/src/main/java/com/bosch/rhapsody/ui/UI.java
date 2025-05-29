@@ -29,11 +29,11 @@ import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
+import com.bosch.rhapsody.generator.ClassDiagram;
 import com.bosch.rhapsody.integrator.GenAiHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
-import com.bosch.rhapsody.genertator.ClassDiagram;
 
 /**
  * @author AI generated

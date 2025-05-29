@@ -38,4 +38,27 @@ public class Constants {
       "*.c, *.cpp, *.h, *.hpp, *.xml, *.arxml, *.json, *.py, *.ipynb, *.yaml, *.sh, *.bat, *.puml, *.xmi, *.md, *.j2, *.yml, *.java" };
   public static String[] guideExtension = { "*.pdf" };
 
+  public static final String JSON_CLASSES = "classes";
+  public static final String JSON_INTERFACES = "interfaces";
+  public static final String JSON_ENUMS = "enums";
+  public static final String JSON_STRUCTS = "structs";
+  public static final String JSON_PACKAGES = "packages";
+  public static final String JSON_RELATIONSHIPS = "relationships";
+  public static final String JSON_NOTES = "notes";
+  public static final String JSON_ATTRIBUTES = "attributes";
+  public static final String JSON_METHODS = "methods";
+  public static final String JSON_PARAMS = "params";
+  public static final String JSON_VALUES = "values";
+  public static final String JSON_NAME = "name";
+  public static final String JSON_TYPE = "type";
+  public static final String JSON_VISIBILITY = "visibility";
+  public static final String JSON_RETURN_TYPE = "return_type";
+  public static final String JSON_DESCRIPTION = "description";
+  public static final String JSON_TARGET = "target";
+  public static final String JSON_SOURCE = "source";
+  public static final String JSON_TITLE = "title";
+  public static final String JSON_IMPLEMENTS = "implements";
+  public static final String JSON_EXTENDS = "extends";
+  // ...add more as needed...
+
 }
