@@ -102,7 +102,7 @@ class ClassDiagramTransformer(Transformer):
         return {
             "struct": {
                 "name": str(ParsingUtil.parse_tree(name)),
-                "attributes": list(attributes)
+                "attributes": ParsingUtil.attribute_unwrapped(attributes)
             }
         }
 

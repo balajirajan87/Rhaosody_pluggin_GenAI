@@ -244,3 +244,24 @@ class ParsingUtil:
                     if iface:
                         interface_names.append(str(iface))
         return interface_names
+    
+    def attribute_unwrapped(attributes):
+        elements = []
+        for attribute in attributes:
+            finalAttribute = attribute.get("attribute",None)
+            if finalAttribute:
+                isStatic = finalAttribute.get("isStatic", False)
+                isAbstract = finalAttribute.get("isAbstract", False)
+                visibility = finalAttribute.get("visibility", None)
+                var_name = finalAttribute.get("name", "").strip()
+                type_ = finalAttribute.get("type", "").strip()
+                
+                elements.append({
+                    "isStatic": isStatic,
+                    "isAbstract": isAbstract,
+                    "visibility": str(visibility) if visibility else None,
+                    "name": var_name,
+                    "type": type_,
+                })
+            
+        return elements
