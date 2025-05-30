@@ -6,7 +6,7 @@ skinparam: "skinparam" sparam svalue
 
 package: "package" package_name "{" (class | interface | struct| enum | relationship | note)* "}"
 
-class: class_modifier? "class" class_name stereotype? class_extends? class_implements? ("{" (attribute | method)* "}")?
+class: class_modifier? "class" class_name stereotype? class_extends? class_implements? ("{" (attribute | method | enum_value+ )* "}")?
 
 interface: "interface" interface_name interface_extends? "{" method* "}"
 

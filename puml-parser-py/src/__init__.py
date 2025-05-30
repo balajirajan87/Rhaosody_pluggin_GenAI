@@ -24,9 +24,9 @@ def process_class_diagram(input_file, output_file):
                         with open(output_file, 'w', encoding="utf-8") as outfile:
                             outfile.write(json_like_output)
                     except (json.JSONDecodeError) as e:
-                        raise Exception("Error processing input or output files: \n"+ e)                
+                        raise Exception(e)                
             except (OSError) as e:
-                raise Exception("Error processing input or output files: \n"+ e)
+                raise Exception(e)
 
         except exceptions.LarkError as e:
-            raise Exception("Grammar validation failed: \n"+ e)
+            raise exceptions.LarkError(e)

@@ -207,7 +207,7 @@ class ClassDiagramTransformer(Transformer):
 
     @v_args(inline=True)
     def stereotype(self, name):
-        return str(name)
+        return name
     
 
     def _process_dict_item(self, item, result):
