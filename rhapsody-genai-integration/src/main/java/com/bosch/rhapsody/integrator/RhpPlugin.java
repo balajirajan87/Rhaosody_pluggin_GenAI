@@ -47,14 +47,13 @@ public class RhpPlugin extends RPUserPlugin {
           + "rhapsody-genai-integration\\src\\main\\resources";
       Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
-      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\src\\main.py";
-      
+      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\buildspec\\pumlparser.exe";     
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
       Constants.BACKEND_SCRIPT_PATH = Constants.PROFILEPATH + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
-      Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "main.exe";
+      Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "pumlparser.exe";
     }
 
     fileHandler.getChatLogFile();

@@ -135,6 +135,15 @@ public class RhapsodyUtil {
         if (gen != null) gen.setName(description);
     }
 
+    public static void createAggregation(IRPClass from, IRPClass to, String description) {
+        from.addRelationTo(to, "", "Association", "", "", "Aggregation", "", description);
+    }
+
+    public static void createComposition(IRPClass from, IRPClass to, String description) {
+        IRPRelation comp = from.addRelationTo(to, "", "Association", "", "", "Aggregation", "", description);
+        comp.setRelationType("Composition");
+    }
+
     public static void addStereotype(IRPObjectModelDiagram diagram, String stereotype, String metaClass) {
         diagram.addStereotype(stereotype, metaClass);
     }

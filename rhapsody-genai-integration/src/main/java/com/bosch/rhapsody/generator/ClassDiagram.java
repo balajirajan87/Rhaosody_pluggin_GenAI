@@ -7,19 +7,16 @@ import org.eclipse.swt.widgets.Shell;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.util.RhapsodyUtil;
 import com.telelogic.rhapsody.core.*;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ClassDiagram {
 
@@ -37,64 +34,58 @@ public class ClassDiagram {
         Constants.rhapsodyApp = app;
         Display display = new Display();
         Shell shell = new Shell(display);
-        Constants.PUML_PARSER_PATH = "";
+        Constants.PUML_PARSER_PATH = "C:\\Users\\xav1cob\\Rapsody\\Crowdsourcing\\Rhaosody_pluggin_GenAI\\puml-parser-py\\buildspec\\pumlparser.exe";
         new ClassDiagram().createClassDiagram("", shell);
     }
 
-    public void createClassDiagram(String chatContent,Shell shell) throws IOException {
-        rhapsodyApp = Constants.rhapsodyApp;
-        String inputFile ="C:\\temp\\classdiagram.puml";
-        String outputFile = "C:\\temp\\classdiagram.json";
-        extractLastPumlBlock(chatContent, inputFile);
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                Constants.PUML_PARSER_PATH,
-                "-i", inputFile,
-                "-o", outputFile,
-                "-t", "classdiagram"
-            );
-            processBuilder.redirectErrorStream(true);
-            Process pythonBackendProcess = processBuilder.start();
-            int exitCode = pythonBackendProcess.waitFor();
-            if (exitCode != 0) {
-                throw new IOException("Python parser failed with exit code " + exitCode);
-            }
-            if (!Files.exists(Paths.get(outputFile))) {
-                throw new IOException("Output file was not generated: " + outputFile);
-            }
+    public void createClassDiagram(String outputFile,Shell shell){  
+        try{
+            rhapsodyApp = Constants.rhapsodyApp;
             String jsonString = readJsonFile(outputFile);
             JSONObject json = new JSONObject(jsonString);
-            createUML(json,shell);
-            
-        } 
-        catch (IOException io) {
-            throw io;
+            IRPProject project = RhapsodyUtil.getActiveProject(rhapsodyApp);
+            language = RhapsodyUtil.getProjectLanguage(project);
+            if (language.equals("C")) {
+                basePackage = createBasePackage(project, shell);
+                if (basePackage == null) {
+                    return;
+                }
+                elementsToPopulate = rhapsodyApp.createNewCollection();
+
+                // Handle root-level elements (outside packages)
+                createElements(basePackage, json);
+
+                // Handle packages
+                createPackage(json);
+
+                // Handle calls/relations if present
+                createRelation(json);
+
+                //Handel implements and extends
+                createRealizationsAndGeneralizations();
+
+                //Add notes relations
+                createNoteRelation();
+
+                //Create class diagram
+                createBDD(basePackage, json);
+
+                LoggerUtil.info("Class Diagram generated successfully");
+                MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
+                messageBox.setMessage("Class Diagram generated successfully");
+                messageBox.open();
+
+            } else {
+                MessageBox messageBox = new MessageBox(shell, SWT.ERROR | SWT.OK);
+                LoggerUtil.error("Expected Project type is C but found " + language);
+                messageBox.setMessage("Expected Project type is C but found " + language);
+                messageBox.open();
+                return;
+            } 
         } 
         catch (Exception e) {
+            LoggerUtil.error("Error while generating class diagram"+e.getMessage());
             throw new RuntimeException(e);
-        }finally{
-            // try {
-            //     java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(inputFile));
-            //     java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
-            // } catch (IOException ex) {
-            //     ex.printStackTrace();
-            // }
-        }
-    }
-
-    private void extractLastPumlBlock(String input, String outputFilePath) throws IOException {
-        Pattern pattern = Pattern.compile("@startuml[\\s\\S]*?@enduml", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(input);
-        String lastBlock = null;
-        while (matcher.find()) {
-            lastBlock = matcher.group();
-        }
-        if (lastBlock != null) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
-                writer.write(lastBlock);
-            }
-        } else {
-            throw new IOException("No @startuml ... @enduml block found.");
         }
     }
 
@@ -102,82 +93,43 @@ public class ClassDiagram {
         try {
             return new String(Files.readAllBytes(Paths.get(filePath)));
         } catch (IOException e) {
+             LoggerUtil.error("Error reading json file.");
             e.printStackTrace();
             return null;
         }
     }
 
-    private void createUML(JSONObject jsonObject, Shell shell) {
-        IRPProject project = RhapsodyUtil.getActiveProject(rhapsodyApp);
-        language = RhapsodyUtil.getProjectLanguage(project);
-        if (language.equals("C")) {
-            basePackage = getOrCreatePackage(project, shell);
-            if (basePackage == null) {
-                return;
-            }
-            elementsToPopulate = rhapsodyApp.createNewCollection();
-
-            // Handle root-level elements (outside packages)
-            createElements(basePackage, jsonObject);
-
-            // Handle packages
-            JSONArray packages = jsonObject.optJSONArray(Constants.JSON_PACKAGES);
-            if (packages != null) {
-                for (int i = 0; i < packages.length(); i++) {
-                    JSONObject packageObject = packages.getJSONObject(i);
-                    String packageName = packageObject.getString(Constants.JSON_NAME).replace(" ", "_");
-                    IRPPackage rhapsodyPackage = RhapsodyUtil.addPackage(basePackage, packageName, basePackage);
-                    elementMap.put(packageName, rhapsodyPackage);
-                    createElements(rhapsodyPackage, packageObject);
-                }
-            }
-
-            // Handle calls/relations if present
-            JSONArray calls = jsonObject.optJSONArray(Constants.JSON_RELATIONSHIPS);
-            if (calls != null) {
-                for (int i = 0; i < calls.length(); i++) {
-                    JSONObject call = calls.getJSONObject(i);
-                    createRelation(call);
-                }
-            }
-            //Handel implements and extends
-            createRealizationsAndGeneralizations();
-
-            //Add notes relations
-            createNoteRelation();
-
-            //Create class diagram
-            createBDD(basePackage, jsonObject);
-            MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
-            messageBox.setMessage("Class Diagram generated successfully");
-            messageBox.open();
-
-       } else {
-          MessageBox messageBox = new MessageBox(shell, SWT.ERROR | SWT.OK);
-          messageBox.setMessage("Expected Project type is C but found " + language);
-          messageBox.open();
-          return;
-       }
-    }
-
-    private IRPPackage getOrCreatePackage(IRPProject project, Shell shell) {
-        IRPModelElement newPackage = project.findNestedElementRecursive("ClassDiagramElements", "Package");
+    private IRPPackage createBasePackage(IRPProject project, Shell shell) {
+        IRPModelElement newPackage = project.findNestedElementRecursive("ClassDiagram", "Package");
         if (newPackage != null) {
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             messageBox.setText("Package Exists");
             messageBox.setMessage("The package 'ClassDiagramElements' already exists. Do you want to overwrite it?");
+            LoggerUtil.info("The package 'ClassDiagramElements' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
                 newPackage.deleteFromProject();
-                return RhapsodyUtil.addPackage(project, "ClassDiagramElements");
+                return RhapsodyUtil.addPackage(project, "ClassDiagram");
             } else {
                 return null;
             }
         } else {
-            return RhapsodyUtil.addPackage(project, "ClassDiagramElements");
+            return RhapsodyUtil.addPackage(project, "ClassDiagram");
         }
     }
 
+    private void createPackage(JSONObject jsonObject) {
+        JSONArray packages = jsonObject.optJSONArray(Constants.JSON_PACKAGES);
+        if (packages != null) {
+            for (int i = 0; i < packages.length(); i++) {
+                JSONObject packageObject = packages.getJSONObject(i);
+                String packageName = packageObject.getString(Constants.JSON_NAME).replace(" ", "_");
+                IRPPackage rhapsodyPackage = RhapsodyUtil.addPackage(basePackage, packageName, basePackage);
+                elementMap.put(packageName, rhapsodyPackage);
+                createElements(rhapsodyPackage, packageObject);
+            }
+        }   
+    }
 
     private void createElements(IRPModelElement container, JSONObject obj) {
         // Classes
@@ -268,8 +220,7 @@ public class ClassDiagram {
         } 
     }
 
-    private void addAttributesAndMethods(IRPClass rhapsodyClass, JSONObject classOrInterfaceObject) {
-        // Attributes
+    private void addAttributes(IRPModelElement element, JSONObject classOrInterfaceObject) {
         JSONArray attributes = classOrInterfaceObject.optJSONArray(Constants.JSON_ATTRIBUTES);
         if (attributes != null) {
             for (int i = 0; i < attributes.length(); i++) {
@@ -277,9 +228,20 @@ public class ClassDiagram {
                 String visibility = attribute.optString(Constants.JSON_VISIBILITY, "public");
                 String attrName = attribute.getString(Constants.JSON_NAME).replace(" ", "_");
                 String attrType = attribute.optString(Constants.JSON_TYPE, "int");
-                RhapsodyUtil.addAttributeToClass(rhapsodyClass, attrName, attrType, visibility);
+                if(element instanceof IRPClass){
+                    RhapsodyUtil.addAttributeToClass((IRPClass)element, attrName, attrType, visibility);
+                }else if(element instanceof IRPType){
+                    RhapsodyUtil.addAttributeToType((IRPType)element, attrName, attrType, visibility);
+                }
+                
             }
         }
+    }
+
+    private void addAttributesAndMethods(IRPClass rhapsodyClass, JSONObject classOrInterfaceObject) {
+        // Attributes
+        addAttributes(rhapsodyClass,classOrInterfaceObject);
+
         // Methods
         JSONArray methods = classOrInterfaceObject.optJSONArray(Constants.JSON_METHODS);
         if (methods != null) {
@@ -321,17 +283,7 @@ public class ClassDiagram {
         String structName = structObject.getString(Constants.JSON_NAME).replace(" ", "_");
         IRPType rhapsodyStruct = RhapsodyUtil.addStruct((IRPPackage)container, structName,basePackage);
         elementMap.put(structName, rhapsodyStruct);
-
-        JSONArray attributes = structObject.optJSONArray(Constants.JSON_ATTRIBUTES);
-        if (attributes != null) {
-            for (int i = 0; i < attributes.length(); i++) {
-                JSONObject attribute = attributes.getJSONObject(i);
-                String visibility = attribute.optString(Constants.JSON_VISIBILITY, "public");
-                String attrName = attribute.getString(Constants.JSON_NAME).replace(" ", "_");
-                String attrType = attribute.optString(Constants.JSON_TYPE, "int");
-                RhapsodyUtil.addAttributeToType(rhapsodyStruct, attrName, attrType, visibility);
-            }
-        }
+        addAttributes(rhapsodyStruct,structObject);
     }
 
     private void createNote(IRPModelElement container, JSONObject noteObject,int index) {
@@ -344,7 +296,7 @@ public class ClassDiagram {
     }
 
     private void createNoteRelation(){
-        for (Entry<IRPComment, String> entry : anchors.entrySet()) {
+        for (Entry<IRPComment, String> entry :anchors.entrySet()) {
             IRPComment fromElem = entry.getKey();
             String targetElement = anchors.get(fromElem);
             if(elementMap.containsKey(targetElement)){
@@ -354,45 +306,32 @@ public class ClassDiagram {
         }
     }
 
-   /*  private void createNote(IRPModelElement container, JSONObject jsonObject, IRPDiagram classDiagram) {
-        JSONArray notes = jsonObject.optJSONArray(Constants.JSON_NOTES);
-        if (notes != null) {
-            int baseX = 100;
-            int baseY = 100;
-            int offsetY = 120; // vertical spacing between notes
-            for (int i = 0; i < notes.length(); i++) {
-                JSONObject noteObject = notes.getJSONObject(i);
-                String noteText = noteObject.optString(Constants.JSON_DESCRIPTION, "");
-                String target = noteObject.optString(Constants.JSON_TARGET, "");
-                // Optionally, allow explicit position from JSON
-                int x = noteObject.has("x") ? noteObject.getInt("x") : baseX;
-                int y = noteObject.has("y") ? noteObject.getInt("y") : baseY + i * offsetY;
-                IRPGraphNode noteNode = classDiagram.addNewNodeByType("Note", x, y, 200, 80);
-                noteNode.setGraphicalProperty("Text", noteText);
-                IRPModelElement targetElement = elementMap.get(target);
-                IRPCollection elements = classDiagram.getCorrespondingGraphicElements(targetElement);
-                IRPGraphElement IRPGraphElement = (IRPGraphElement)elements.getItem(1);
-                //classDiagram.addNewEdgeByType("anchor", (IRPGraphElement)noteNode, x, i, IRPGraphElement, x, y);
-            }
-        } 
-    }*/
-
-    private void createRelation(JSONObject call) {
-        String from = call.getString(Constants.JSON_SOURCE);
-        String to = call.getString(Constants.JSON_TARGET);
-        String type = call.optString(Constants.JSON_TYPE, "association");
-        String description = call.getString(Constants.JSON_DESCRIPTION);
-        IRPModelElement fromElem = elementMap.get(from);
-        IRPModelElement toElem = elementMap.get(to);
-        if (fromElem instanceof IRPClass && toElem instanceof IRPClass) {
-            if ("association".equals(type)) {
-                RhapsodyUtil.createAssociation((IRPClass)fromElem, (IRPClass)toElem, description);
-            } else if ("dependency".equals(type) || "dotted_dependency".equals(type)) {
-                RhapsodyUtil.createDependency(fromElem, toElem, description);
-            } else if ("realization".equals(type)) {
-                RhapsodyUtil.createRealization((IRPClass)fromElem, (IRPClassifier)toElem);
-            } else if ("inheritance".equals(type)) {
-                RhapsodyUtil.createInheritance((IRPClass)fromElem, (IRPClassifier)toElem, description);
+    private void createRelation(JSONObject json) {
+        JSONArray calls = json.optJSONArray(Constants.JSON_RELATIONSHIPS);
+        if (calls != null) {
+            for (int i = 0; i < calls.length(); i++) {
+                JSONObject call = calls.getJSONObject(i);
+                String from = call.getString(Constants.JSON_SOURCE);
+                String to = call.getString(Constants.JSON_TARGET);
+                String type = call.optString(Constants.JSON_TYPE, "association");
+                String description = call.getString(Constants.JSON_DESCRIPTION);
+                IRPModelElement fromElem = elementMap.get(from);
+                IRPModelElement toElem = elementMap.get(to);
+                if (fromElem instanceof IRPClass && toElem instanceof IRPClass) {
+                    if ("association".equals(type)) {
+                        RhapsodyUtil.createAssociation((IRPClass)fromElem, (IRPClass)toElem, description);
+                    } else if ("dependency".equals(type) || "dotted_dependency".equals(type)) {
+                        RhapsodyUtil.createDependency(fromElem, toElem, description);
+                    } else if ("realization".equals(type)) {
+                        RhapsodyUtil.createRealization((IRPClass)fromElem, (IRPClassifier)toElem);
+                    } else if ("inheritance".equals(type)) {
+                        RhapsodyUtil.createInheritance((IRPClass)fromElem, (IRPClassifier)toElem, description);
+                    }else if("aggregation".equals(type)) {
+                        RhapsodyUtil.createAggregation((IRPClass)toElem, (IRPClass)fromElem, description);
+                    }else if("composition".equals(type)) {
+                        RhapsodyUtil.createComposition((IRPClass)fromElem, (IRPClass)toElem, description);
+                    }
+                }
             }
         }
     }

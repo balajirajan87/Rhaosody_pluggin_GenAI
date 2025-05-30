@@ -1,6 +1,7 @@
 package com.bosch.rhapsody.ui;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,8 +30,8 @@ import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
-import com.bosch.rhapsody.generator.ClassDiagram;
 import com.bosch.rhapsody.integrator.GenAiHandler;
+import com.bosch.rhapsody.parser.PUMLParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
@@ -430,12 +431,11 @@ public class UI {
     // Add functionality to generateButton
     generateButton.addListener(SWT.Selection, event -> {
       String chatContent = chatArea.getText();
-      if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
-        generateDiagram(Constants.userMessageDiagramType, chatContent, shell);
-      } else {
-        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-        messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
-        messageBox.open();
+      PUMLParser parserHandler = new PUMLParser();
+      try {
+        parserHandler.generatePUML(chatContent, shell, Constants.userMessageDiagramType);
+      } catch (IOException e1) {
+        e1.printStackTrace();
       }
     });
 
@@ -517,18 +517,5 @@ public class UI {
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
   }
-
-  private void generateDiagram(String diagramType, String chatContent, Shell parentShell) {
-    diagramType = diagramType.replaceAll("\\s+", "").toLowerCase();
-    ClassDiagram diagramHandler = new ClassDiagram();
-    if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
-      try {
-        diagramHandler.createClassDiagram(chatContent, parentShell);
-      } catch (Exception e) {
-        // Print error to terminal
-        e.printStackTrace();
-      }
-    }
-  }
-
+  
 }
