@@ -1,0 +1,86 @@
+@startuml
+title Voltage Monitoring & Safety Management Class Diagram
+
+' ADC-related classes
+class AdcController {
+    +Init()
+    +StartGroupConversion(groupId: int)
+    +GetGroupStatus(groupId: int): AdcGroupStatus
+    +ReadGroup(groupId: int, resultBuffer: AdcResultBuffer)
+}
+
+enum AdcGroupStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+class AdcResultBuffer {
+    +results: float[]
+}
+
+class AdcUnitConverter {
+    +Convert(rawValue: float): float
+}
+
+class VoltageSignal {
+    +name: string
+    +currentVoltage: float
+    +underVoltageThreshold: float
+    +overVoltageThreshold: float
+}
+
+class VoltageMonitor {
+    +MonitorAllVoltages()
+    +CheckThresholds()
+    +GetVoltage(signal: VoltageSignal): float
+    +StoreVoltage(signal: VoltageSignal, value: float)
+    +periodicInterval: int
+    +lastResults: Map<VoltageSignal, float>
+}
+
+class FaultInjectionStub {
+    +EnableFaultInjection()
+    +InjectVoltage(signal: VoltageSignal, value: float)
+    +IsFaultInjectionEnabled(): bool
+    +GetInjectedVoltage(signal: VoltageSignal): float
+    +measurementCycleCount: int
+}
+
+class SafetyManager {
+    +ProcessErrorInfo()
+    +ReportError(errInfo_u16: int, add_info_u32: int, dem_status: int)
+    +RaiseDTC(dtcCode: string)
+    +SetDegradationMode()
+}
+
+' Relationships
+AdcController "1" o-- "1" AdcResultBuffer
+AdcController "1" o-- "1" AdcUnitConverter
+VoltageMonitor "1" o-- "*" VoltageSignal
+VoltageMonitor "1" o-- "1" AdcController
+VoltageMonitor "1" o-- "1" FaultInjectionStub
+VoltageMonitor "1" o-- "1" SafetyManager
+
+' Notes and constraints
+note right of VoltageMonitor
+  - Monitors all supply voltages every 10ms
+  - Calls AdcController APIs
+  - Stores and checks voltage values
+  - Triggers SafetyManager on deviation
+end note
+
+note right of FaultInjectionStub
+  - Allows SW-only fault injection
+  - Supports injected values for test/verification
+  - Used after 5 measurement cycles (50ms)
+end note
+
+note right of SafetyManager
+  - Raises BOSCH_SECPOWERSUPPLY_FAILURE DTC
+  - Reports errors and sets degradation mode
+  - Logs DEM events
+end note
+
+@enduml

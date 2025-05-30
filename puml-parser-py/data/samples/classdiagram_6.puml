@@ -1,0 +1,76 @@
+@startuml
+title Voltage Monitoring System - Class Diagram
+
+package "RTOS" {
+    class ClRTAOS_Task10ms {
+        +run()
+    }
+}
+
+package "ADC Driver" {
+    class AdcDriver {
+        +Adc_Init()
+        +Adc_StartGroupConversion(groupId)
+        +Adc_GetGroupStatus(groupId): AdcStatus
+        +Adc_ReadGroup(groupId, resultBuffer)
+    }
+    enum AdcStatus {
+        IDLE
+        BUSY
+        COMPLETED
+        STREAM_COMPLETED
+    }
+}
+
+package "Voltage Monitoring" {
+    class ClVoltMon {
+        +monitorVoltages()
+        +compareThresholds(adcResults)
+        +incrementFaultCounter(channel)
+        +resetFaultCounter(channel)
+        +injectFault(channel, value)
+        -uvThresholds: Map
+        -ovThresholds: Map
+        -faultCounters: Map
+    }
+}
+
+package "Error Management" {
+    class ClErrMgmt {
+        +reportError(errorId, addInfo, demStatus)
+    }
+    class RbsftyErrMgt {
+        +ReportError(errorId, addInfo, demStatus)
+    }
+}
+
+package "Fault Injection" {
+    class StubVariable {
+        +setValue(channel, value)
+        +getValue(channel): value
+    }
+}
+
+package "Safety Monitoring" {
+    class MPCI {
+        +checkInitializationFaults()
+        +bladeLevelMonitoring()
+    }
+}
+
+' Associations
+ClRTAOS_Task10ms --> ClVoltMon : triggers monitorVoltages()
+ClVoltMon --> AdcDriver : uses
+ClVoltMon --> ClErrMgmt : on fault
+ClErrMgmt --> RbsftyErrMgt : forwards error
+ClVoltMon --> StubVariable : uses for fault injection
+ClVoltMon --> MPCI : notifies on persistent fault
+
+' Notes for key data flows
+note right of ClVoltMon
+- Monitors: VDD_5V, VDD_1V2_SSD, VDD_0V9_SSD, etc.
+- 5 consecutive out-of-threshold triggers DTC
+- Supports software fault injection
+end note
+
+@enduml
