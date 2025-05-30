@@ -141,7 +141,7 @@ class ParsingUtil:
             if isinstance(child, Tree):
                 if child.data == 'class_name':
                     class_name = child.children[0].value if isinstance(child.children[0], Token) else None
-                elif child.data == 'stereotype':
+                elif child.data == 'stereotype_name':
                     stereotype = child.children[0].value if isinstance(child.children[0], Token) else None
                 elif child.data == 'class_implements':
                     implements = ParsingUtil.parse_interface_extends(child)
@@ -168,6 +168,7 @@ class ParsingUtil:
             "attributes": attributes,
             "methods": methods
         }
+    
     @staticmethod
     def parse_interface(tree):
 

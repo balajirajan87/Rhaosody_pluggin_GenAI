@@ -1,0 +1,107 @@
+@startuml
+title Power Supply Voltage Monitoring & Fault Injection - Class Diagram
+
+'Main Monitoring Controller
+class VoltageMonitorController {
+    - adcManager: AdcManager
+    - errorManager: ErrorManager
+    - stubManager: StubManager
+    - debounceCounters: Map<VoltageRail, int>
+    - thresholds: Map<VoltageRail, Threshold>
+    + runPeriodicCheck(): void
+    + injectFault(VoltageRail, float): void
+}
+
+' ADC Management and API
+class AdcManager {
+    + init(): void
+    + startGroupConversion(groupId: int): void
+    + getGroupStatus(groupId: int): AdcGroupStatus
+    + readGroup(groupId: int, resultBuffer: float[]): void
+}
+
+enum AdcGroupStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+' Error Management and DTC Logging
+class ErrorManager {
+    + reportError(errInfo: int, addInfo: int, demStatus: int): void
+}
+
+' Stub/Fault Injection Management
+class StubManager {
+    - stubValues: Map<VoltageRail, float>
+    + getStubValue(VoltageRail): float
+    + setStubValue(VoltageRail, float): void
+    + isStubActive(VoltageRail): bool
+}
+
+' Data Structures
+class VoltageRail <<enumeration>> {
+    VDD_5V
+    VDD_1V2_SSD
+    VDD_0V9_SSD
+    VDD_3V3_ETH
+    VDD_1V2_ETH
+    VDD_0V8_ETH
+    US33_LDO3_S32G
+}
+
+class Threshold {
+    - underVoltage: float
+    - overVoltage: float
+    + getUnderVoltage(): float
+    + getOverVoltage(): float
+}
+
+' OS Task
+class ClRTAOSTask10ms {
+    + execute(): void
+}
+
+' Interrupts
+class IsrAdc0 {
+    + onAdcComplete(): void
+}
+class IsrAdc1 {
+    + onAdcComplete(): void
+}
+
+'Relationships
+VoltageMonitorController "1" *-- "1" AdcManager
+VoltageMonitorController "1" *-- "1" ErrorManager
+VoltageMonitorController "1" *-- "1" StubManager
+VoltageMonitorController "1" o-- "1" ClRTAOSTask10ms : schedules
+AdcManager ..> IsrAdc0 : triggers
+AdcManager ..> IsrAdc1 : triggers
+VoltageMonitorController ..> VoltageRail
+VoltageMonitorController ..> Threshold
+StubManager ..> VoltageRail
+Threshold ..> VoltageRail
+
+'Notes for API mapping
+note right of AdcManager
+  Adc_Init()
+  Adc_StartGroupConversion()
+  Adc_GetGroupStatus()
+  Adc_ReadGroup()
+end note
+
+note right of ErrorManager
+  rbsfty_ErrMgt_ReportError()
+end note
+
+note right of ClRTAOSTask10ms
+  10ms periodic scheduling
+end note
+
+note right of StubManager
+  Software-based fault injection
+  (read/modify stub values)
+end note
+
+@enduml
