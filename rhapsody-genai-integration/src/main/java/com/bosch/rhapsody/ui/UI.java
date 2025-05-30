@@ -45,6 +45,8 @@ public class UI {
   String startPythonBackend;
 
   private Text chatArea;
+  public Display display =null;
+  public Shell shell=null;
 
   public UI(GenAiHandler genAiHandler, String startPythonBackend) {
     this.startPythonBackend = startPythonBackend;
@@ -88,9 +90,8 @@ public class UI {
   public void createUI() {
 
     Map<String, ArrayList<String>> dropdownFileMapping = new HashMap<>();
-
-    Display display = new Display();
-    Shell shell = new Shell(display);
+    display = new Display();
+    shell = new Shell(display);
     setShellLocation(display, shell);
     toggleAlwaysOnTop(shell, true);
 
