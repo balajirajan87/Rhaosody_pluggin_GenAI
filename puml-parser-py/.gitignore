@@ -56,3 +56,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#exe
+main.build/
+main.dist/
+main.onefile-build/
