@@ -17,8 +17,7 @@ import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.telelogic.rhapsody.core.IRPApplication;
-import com.telelogic.rhapsody.core.RhapsodyAppServer;
+
 
 /**
  * @author DHP4COB
@@ -27,10 +26,9 @@ public class GenAiHandler {
 
   private Process pythonBackendProcess;
   private String sessionId = null; // Store the session ID
-  private IRPApplication rhapsodyApp;
 
   public static void main(String[] args) {
-    GenAiHandler plugin = new GenAiHandler(RhapsodyAppServer.getActiveRhapsodyApplication());
+    GenAiHandler plugin = new GenAiHandler();
     try {
       plugin.startPythonBackend();
     } catch (ProcessingException e) {
@@ -40,12 +38,6 @@ public class GenAiHandler {
     // plugin.generateUMLDesign();
   }
 
-  /**
-   * @param rhapsodyApp2
-   */
-  public GenAiHandler(IRPApplication rhapsodyApp2) {
-    this.rhapsodyApp = rhapsodyApp2;
-  }
 
   /**
    * Reads the API key from the file and decrypts it using the Python script.
