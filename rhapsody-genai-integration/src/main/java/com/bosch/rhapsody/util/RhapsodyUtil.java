@@ -1,6 +1,7 @@
 package com.bosch.rhapsody.util;
 
 import com.telelogic.rhapsody.core.*;
+import com.bosch.rhapsody.constants.Constants;
 
 public class RhapsodyUtil {
 
@@ -16,17 +17,17 @@ public class RhapsodyUtil {
         return project.addPackage(packageName);
     }
 
-    public static IRPPackage addPackage(IRPPackage pkg, String packageName,IRPPackage basePackage) {
-        IRPModelElement element = basePackage.findNestedElementRecursive(packageName, "Package");
+    public static IRPPackage addPackage(IRPPackage pkg, String packageName, IRPPackage basePackage) {
+        IRPModelElement element = basePackage.findNestedElementRecursive(packageName, Constants.RHAPSODY_PACKAGE);
         if (element != null && element instanceof IRPPackage) {
             return (IRPPackage) element;
         } else {
-            return (IRPPackage) pkg.addNewAggr("Package", packageName);
+            return (IRPPackage) pkg.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
         }
     }
 
     public static IRPClass addClass(IRPPackage pkg, String className, IRPPackage basePackage) {
-        IRPModelElement element = basePackage.findNestedElementRecursive(className, "Class");
+        IRPModelElement element = basePackage.findNestedElementRecursive(className, Constants.RHAPSODY_CLASS);
         if (element != null && element instanceof IRPClass) {
             return (IRPClass) element;
         } else {
@@ -34,33 +35,33 @@ public class RhapsodyUtil {
         }
     }
 
-    public static IRPClass addInterface(IRPPackage pkg, String interfaceName,IRPPackage basePackage) {
-        IRPModelElement element = basePackage.findNestedElementRecursive(interfaceName, "Interface");
+    public static IRPClass addInterface(IRPPackage pkg, String interfaceName, IRPPackage basePackage) {
+        IRPModelElement element = basePackage.findNestedElementRecursive(interfaceName, Constants.RHAPSODY_INTERFACE);
         if (element != null && element instanceof IRPClass) {
             return (IRPClass) element;
         } else {
-            return (IRPClass) pkg.addNewAggr("Interface", interfaceName);
+            return (IRPClass) pkg.addNewAggr(Constants.RHAPSODY_INTERFACE, interfaceName);
         }
     }
 
-    public static IRPType addEnum(IRPPackage pkg, String enumName,IRPPackage basePackage) {
-        IRPModelElement element = basePackage.findNestedElementRecursive(enumName, "Type");
-        if (element != null && element instanceof IRPType && ((IRPType) element).getKind().equals("Enumeration")) {
+    public static IRPType addEnum(IRPPackage pkg, String enumName, IRPPackage basePackage) {
+        IRPModelElement element = basePackage.findNestedElementRecursive(enumName, Constants.RHAPSODY_TYPE);
+        if (element != null && element instanceof IRPType && ((IRPType) element).getKind().equals(Constants.RHAPSODY_ENUMERATION)) {
             return (IRPType) element;
         } else {
             IRPType type = pkg.addType(enumName);
-            type.setKind("Enumeration");
+            type.setKind(Constants.RHAPSODY_ENUMERATION);
             return type;
         }
     }
 
-     public static IRPType addStruct(IRPPackage pkg, String structName,IRPPackage basePackage) {
-        IRPModelElement element = basePackage.findNestedElementRecursive(structName, "Type");
-        if (element != null && element instanceof IRPType && ((IRPType) element).getKind().equals("Structure")) {
+    public static IRPType addStruct(IRPPackage pkg, String structName, IRPPackage basePackage) {
+        IRPModelElement element = basePackage.findNestedElementRecursive(structName, Constants.RHAPSODY_TYPE);
+        if (element != null && element instanceof IRPType && ((IRPType) element).getKind().equals(Constants.RHAPSODY_STRUCTURE)) {
             return (IRPType) element;
         } else {
             IRPType type = pkg.addType(structName);
-            type.setKind("Structure");
+            type.setKind(Constants.RHAPSODY_STRUCTURE);
             return type;
         }
     }
@@ -75,7 +76,7 @@ public class RhapsodyUtil {
         return attr;
     }
 
-    public static IRPAttribute addAttributeToType(IRPType rhapsodyStruct, String name, String type,String visibility) {
+    public static IRPAttribute addAttributeToType(IRPType rhapsodyStruct, String name, String type, String visibility) {
         IRPAttribute attr = rhapsodyStruct.findAttribute(name);
         if (attr == null){
             attr = rhapsodyStruct.addAttribute(name);
@@ -105,17 +106,17 @@ public class RhapsodyUtil {
     }
 
     public static IRPObjectModelDiagram addClassDiagram(IRPPackage pkg, String title) {
-        return (IRPObjectModelDiagram) pkg.addNewAggr("ObjectModelDiagram", title);
+        return (IRPObjectModelDiagram) pkg.addNewAggr(Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM, title);
     }
 
     public static IRPGraphNode addNote(IRPObjectModelDiagram diagram, String text, int x, int y) {
-        IRPGraphNode note = diagram.addNewNodeByType("Note", x, y, 200, 80);
+        IRPGraphNode note = diagram.addNewNodeByType(Constants.RHAPSODY_NOTE, x, y, 200, 80);
         note.setGraphicalProperty("Text", text);
         return note;
     }
 
     public static void createAssociation(IRPClass from, IRPClass to, String description) {
-        from.addRelationTo(to, "", "Association", "", "", "Association", "", description);
+        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_ASSOCIATION, "", description);
     }
 
     public static void createDependency(IRPModelElement from, IRPModelElement to, String description) {
@@ -126,7 +127,7 @@ public class RhapsodyUtil {
     public static void createRealization(IRPClass from, IRPClassifier to) {
         from.addGeneralization(to);
         IRPGeneralization gen = from.findGeneralization(to.getName());
-        if (gen != null) gen.changeTo("Realization");
+        if (gen != null) gen.changeTo(Constants.RHAPSODY_REALIZATION);
     }
 
     public static void createInheritance(IRPClass from, IRPClassifier to, String description) {
@@ -136,12 +137,12 @@ public class RhapsodyUtil {
     }
 
     public static void createAggregation(IRPClass from, IRPClass to, String description) {
-        from.addRelationTo(to, "", "Association", "", "", "Aggregation", "", description);
+        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_AGGREGATION, "", description);
     }
 
     public static void createComposition(IRPClass from, IRPClass to, String description) {
-        IRPRelation comp = from.addRelationTo(to, "", "Association", "", "", "Aggregation", "", description);
-        comp.setRelationType("Composition");
+        IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_AGGREGATION, "", description);
+        comp.setRelationType(Constants.RHAPSODY_COMPOSITION);
     }
 
     public static void addStereotype(IRPObjectModelDiagram diagram, String stereotype, String metaClass) {
@@ -172,5 +173,4 @@ public class RhapsodyUtil {
         element.setGraphicalProperty(property, value);
     }
 
-    // ... Add more utility methods as needed for relations, dependencies, etc.
 }

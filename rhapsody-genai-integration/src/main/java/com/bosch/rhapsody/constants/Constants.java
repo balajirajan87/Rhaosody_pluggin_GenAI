@@ -59,6 +59,30 @@ public class Constants {
   public static final String JSON_TITLE = "title";
   public static final String JSON_IMPLEMENTS = "implements";
   public static final String JSON_EXTENDS = "extends";
-  // ...add more as needed...
+
+  public static final String RHAPSODY_CLASS_DIAGRAM = "ClassDiagram";
+  public static final String RHAPSODY_CLASS_DIAGRAM_STEREOTYPE = "Class Diagram";
+  public static final String RHAPSODY_OBJECT_MODEL_DIAGRAM = "ObjectModelDiagram";
+  public static final String RHAPSODY_ALL_RELATIONS = "AllRelations";
+  public static final String RHAPSODY_POPULATE_MODE = "fromto";
+  public static final String RHAPSODY_INTERFACE = "Interface";
+  public static final String RHAPSODY_CLASS = "Class";
+  public static final String RHAPSODY_OPERATIONS_DISPLAY = "OperationsDisplay";
+  public static final String RHAPSODY_ATTRIBUTES_DISPLAY = "AttributesDisplay";
+  public static final String RHAPSODY_DISPLAY_ALL = "All";
+  public static final String RHAPSODY_CLASS_DIAGRAM_ELEMENTS = "ClassDiagramElements";
+  public static final String RHAPSODY_PACKAGE = "Package";
+  public static final String RHAPSODY_TYPE = "Type";
+  public static final String RHAPSODY_STRUCTURE = "Structure";
+  public static final String RHAPSODY_ENUMERATION = "Enumeration";
+  public static final String RHAPSODY_COMMENT = "Comment";
+  public static final String RHAPSODY_NOTE = "Note";
+  public static final String RHAPSODY_ASSOCIATION = "association";
+  public static final String RHAPSODY_DEPENDENCY = "dependency";
+  public static final String RHAPSODY_DOTTED_DEPENDENCY = "dotted_dependency";
+  public static final String RHAPSODY_REALIZATION = "realization";
+  public static final String RHAPSODY_INHERITANCE = "inheritance";
+  public static final String RHAPSODY_AGGREGATION = "aggregation";
+  public static final String RHAPSODY_COMPOSITION = "composition";
 
 }
