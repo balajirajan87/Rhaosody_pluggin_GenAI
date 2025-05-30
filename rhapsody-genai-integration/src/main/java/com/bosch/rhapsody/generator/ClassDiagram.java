@@ -37,7 +37,7 @@ public class ClassDiagram {
             IRPProject project = RhapsodyUtil.getActiveProject(rhapsodyApp);
             if (project == null) {
                 rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: Rhapsody project not found.Hence diagram will not be generated");
+                        "\nERROR: Rhapsody project not found.Hence diagram will not be generated");
             }
             language = RhapsodyUtil.getProjectLanguage(project);
             if (language.equals("C")) {
@@ -65,14 +65,14 @@ public class ClassDiagram {
                 // Create class diagram
                 createBDD(basePackage, json);
 
-                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "Class Diagram generated successfully");
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nClass Diagram generated successfully");
                 MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
                 messageBox.setMessage("Class Diagram generated successfully");
                 messageBox.open();
 
             } else {
                 MessageBox messageBox = new MessageBox(shell, SWT.ERROR | SWT.OK);
-                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "Expected Rhapsody project type is \"C\" but found \""
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nExpected Rhapsody project type is \"C\" but found \""
                         + language + "\". Hence diagram will not be generated.");
                 messageBox.setMessage("Expected Rhapsody project type is \"C\" but found \"" + language
                         + "\". Hence diagram will not be generated.");
@@ -80,8 +80,16 @@ public class ClassDiagram {
                 return;
             }
         } catch (Exception e) {
-            rhapsodyApp.writeToOutputWindow("GenAIPlugin", "Error while generating class diagram " + e.getMessage());
             throw new RuntimeException(e);
+        } finally {
+            try {
+                java.nio.file.Path outputPath = java.nio.file.Paths.get(outputFile);
+                if (java.nio.file.Files.exists(outputPath)) {
+                    java.nio.file.Files.delete(outputPath);
+                }
+            } catch (Exception ex) {
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Could not delete output file: " + ex.getMessage());
+            }
         }
     }
 
@@ -89,7 +97,7 @@ public class ClassDiagram {
         try {
             return new String(Files.readAllBytes(Paths.get(filePath)));
         } catch (IOException e) {
-            rhapsodyApp.writeToOutputWindow("GenAIPlugin", "Error reading json file.");
+            rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nError reading json file.");
             e.printStackTrace();
             return null;
         }
@@ -105,7 +113,7 @@ public class ClassDiagram {
             messageBox.setMessage("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM
                     + "' already exists. Do you want to overwrite it?");
             rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists.");
+                    "\nThe package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
                 newPackage.deleteFromProject();
@@ -134,7 +142,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating package " + e.getMessage());
+                            "\nERROR: Error while creating package " + e.getMessage());
                 }
 
             }
@@ -175,7 +183,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating class " + e.getMessage());
+                            "\nERROR: Error while creating class " + e.getMessage());
                 }
             }
         }
@@ -199,7 +207,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating interface " + e.getMessage());
+                            "\nERROR: Error while creating interface " + e.getMessage());
                 }
             }
         }
@@ -239,7 +247,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating attributes " + e.getMessage());
+                            "\nERROR: Error while creating attributes " + e.getMessage());
                 }
             }
         }
@@ -271,7 +279,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating methods " + e.getMessage());
+                            "\nERROR: Error while creating methods " + e.getMessage());
                 }
             }
         }
@@ -297,7 +305,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating enum " + e.getMessage());
+                            "\nERROR: Error while creating enum " + e.getMessage());
                 }
             }
         }
@@ -318,7 +326,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating struct " + e.getMessage());
+                            "\nERROR: Error while creating struct " + e.getMessage());
                 }
             }
         }
@@ -341,7 +349,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating note " + e.getMessage());
+                            "\nERROR: Error while creating note " + e.getMessage());
                 }
             }
         }
@@ -359,7 +367,7 @@ public class ClassDiagram {
                 }
             } catch (Exception e) {
                 rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: Error while creating note relations " + e.getMessage());
+                        "\nERROR: Error while creating note relations " + e.getMessage());
             }
         }
     }
@@ -401,7 +409,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating relations " + e.getMessage());
+                            "\nERROR: Error while creating relations " + e.getMessage());
                 }
             }
         }
@@ -419,7 +427,7 @@ public class ClassDiagram {
                 }
             } catch (Exception e) {
                 rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: Error while creating realizations " + e.getMessage());
+                        "\nERROR: Error while creating realizations " + e.getMessage());
             }
         }
         // Generalizations (extends)
@@ -433,7 +441,7 @@ public class ClassDiagram {
                 }
             } catch (Exception e) {
                 rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: Error while creating generalization " + e.getMessage());
+                        "\nERROR: Error while creating generalization " + e.getMessage());
             }
         }
     }
@@ -460,7 +468,7 @@ public class ClassDiagram {
                 }
             }
         } catch (Exception e) {
-            rhapsodyApp.writeToOutputWindow("GenAIPlugin", "ERROR: Error while creating diagram " + e.getMessage());
+            rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Error while creating diagram " + e.getMessage());
         }
     }
 
@@ -485,7 +493,7 @@ public class ClassDiagram {
                     }
                 } catch (Exception e) {
                     rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Error while creating diagram properties " + e.getMessage());
+                            "\nERROR: Error while creating diagram properties " + e.getMessage());
                 }
             }
         }

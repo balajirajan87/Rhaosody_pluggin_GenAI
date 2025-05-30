@@ -435,8 +435,8 @@ public class UI {
       PUMLParser parserHandler = new PUMLParser();
       try {
         parserHandler.generatePUML(chatContent, shell, Constants.userMessageDiagramType);
-      } catch (IOException e1) {
-        e1.printStackTrace();
+      } catch (Exception e) {
+        Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","\nERROR: Error while generating  " + e.getMessage());
       }
     });
 

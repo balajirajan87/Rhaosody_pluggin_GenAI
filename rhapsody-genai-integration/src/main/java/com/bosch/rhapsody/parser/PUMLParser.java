@@ -32,13 +32,9 @@ public class PUMLParser {
                 Process pythonBackendProcess = processBuilder.start();
                 int exitCode = pythonBackendProcess.waitFor();
                 if (exitCode != 0) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Python parser failed with exit code " + exitCode);
                     throw new IOException("Python parser failed with exit code " + exitCode);
                 }
                 if (!Files.exists(Paths.get(outputFile))) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "ERROR: Output file was not generated: " + outputFile);
                     throw new IOException("Output file was not generated: " + outputFile);
                 }
                 if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
@@ -46,12 +42,8 @@ public class PUMLParser {
                     diagramHandler.createClassDiagram(outputFile, shell);
                 }
             } catch (IOException io) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: IO exception while generating class diagram" + io.getMessage());
                 throw io;
             } catch (Exception e) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "ERROR: Error while generating class diagram" + e.getMessage());
                 throw new RuntimeException(e);
             }
         } else {
