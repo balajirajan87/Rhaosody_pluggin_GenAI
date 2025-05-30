@@ -91,7 +91,7 @@ relation_target: CNAME
 note_target:CNAME 
 varaible_type: /.+/
 return_type: /.+/
-param_type : ALPHANUM_SPECIAL
+param_type : ALPHANUM_SPECIAL_PARAM
 var: CNAME
 sparam: CNAME
 svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
@@ -103,13 +103,14 @@ struct_name: CNAME
 enum_value: CNAME
 enum_name: CNAME
 package_name: ESCAPED_STRING
-stereotype_name: CNAME
+stereotype_name: CNAME | ALPHANUM_SPECIAL_STEREOTYPE
 relation_text: (WORD|ESCAPED_STRING|DIGIT|">"|"<")*
 COMMENT: "'" /[^\n]*/
 note_content: (LINE | NEWLINE)*
 LINE: /(?!(end note))(.+)/
 NEWLINE: /\\r?\\n/
-ALPHANUM_SPECIAL: /[a-zA-Z0-9_!@#$%^&*(\[\]:;"'.<>\/?\\|`~\-]+/
+ALPHANUM_SPECIAL_PARAM: /[a-zA-Z0-9_!@#$%^&*(\[\]:;"'.<>\/?\\|`~\-]+/
+ALPHANUM_SPECIAL_STEREOTYPE: /[a-zA-Z0-9_!@#$%^&*()\[\]:;"'.,<\/?\\|`~\- ]+/
 
 %import common.CNAME
 %import common.ESCAPED_STRING
