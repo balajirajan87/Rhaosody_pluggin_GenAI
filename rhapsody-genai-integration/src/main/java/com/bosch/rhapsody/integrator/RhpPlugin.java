@@ -48,7 +48,7 @@ public class RhpPlugin extends RPUserPlugin {
           + "rhapsody-genai-integration\\src\\main\\resources";
       Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
-      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\buildspec\\pumlparser.exe";     
+      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\buildspec\\pumlparser.exe";
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
@@ -58,17 +58,18 @@ public class RhpPlugin extends RPUserPlugin {
     }
 
     fileHandler.getChatLogFile();
-
     LoggerUtil.info("GenAI Plugin loaded " + Constants.VERSION + ". Use the menu to \"Rhapsody GenAI\".");
   }
 
   @Override
   public void OnMenuItemSelect(String menuItem) {
+    Constants.rhapsodyApp = RhapsodyAppServer.getActiveRhapsodyApplication();
+    LoggerUtil.setRhapsodyApp(Constants.rhapsodyApp);
     if (menuItem.equals("Rhapsody GenAI")) {
       if (fileHandler.validatePaths()) {
         try {
           LoggerUtil.info("Running GenAI...");
-          genAiHandler = new GenAiHandler(rhapsodyApp);
+          genAiHandler = new GenAiHandler();
           if (!genAiHandler.isPythonCommandAccessible()) {
             LoggerUtil.error(
                 "Python command is not accessible. Please ensure Python is installed and added to the system PATH.");
@@ -82,9 +83,9 @@ public class RhpPlugin extends RPUserPlugin {
           } catch (Exception e) {
             LoggerUtil.error(e.getMessage());
           }
-          genAiHandler.shutdown();
-          // files.deleteDirectories();
-
+          if (ui.display.isDisposed()) {
+            genAiHandler.shutdown();
+          }
         } catch (Exception e) {
           LoggerUtil.error(e.getMessage());
         }
