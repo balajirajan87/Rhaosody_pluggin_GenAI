@@ -19,15 +19,14 @@ def process_class_diagram(input_file, output_file):
             try:
                 with open(input_file, encoding="utf-8") as puml:
                     parsed_data = parser.parse(puml.read())
-                    # print(parsed_data)
                     try:
                         json_like_output = json.dumps(parsed_data, indent=4).replace("None", "\"\"")
                         with open(output_file, 'w', encoding="utf-8") as outfile:
                             outfile.write(json_like_output)
                     except (json.JSONDecodeError) as e:
-                        print(f"Error processing input or output files: {e}")                
+                        raise Exception("Error processing input or output files: \n"+ e)                
             except (OSError) as e:
-                print(f"Error processing input or output files: {e}")
+                raise Exception("Error processing input or output files: \n"+ e)
 
         except exceptions.LarkError as e:
-            print(f"Grammar validation failed: {e}")
+            raise Exception("Grammar validation failed: \n"+ e)

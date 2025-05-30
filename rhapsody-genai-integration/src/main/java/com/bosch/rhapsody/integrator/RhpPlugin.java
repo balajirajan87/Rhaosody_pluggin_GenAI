@@ -104,6 +104,9 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public boolean RhpPluginCleanup() {
+    if (!ui.display.isDisposed()) {
+      ui.display.dispose();
+    }
     return false;
   }
 

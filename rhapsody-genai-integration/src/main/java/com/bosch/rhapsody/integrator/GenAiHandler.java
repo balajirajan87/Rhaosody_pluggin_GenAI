@@ -297,7 +297,7 @@ public class GenAiHandler {
   private void generateSessionId(boolean reset) {
     if (reset || sessionId == null) {
       sessionId = UUID.randomUUID().toString(); // Generate a unique session ID
-      LoggerUtil.info("Generated new session ID: " + sessionId);
+      // LoggerUtil.info("Generated new session ID: " + sessionId);
     }
   }
 

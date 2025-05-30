@@ -29,15 +29,6 @@ public class ClassDiagram {
     private Map<IRPComment, String> anchors = new HashMap<>();
     IRPPackage basePackage;
 
-    public static void main(String[] args) throws IOException {
-        IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
-        Constants.rhapsodyApp = app;
-        Display display = new Display();
-        Shell shell = new Shell(display);
-        Constants.PUML_PARSER_PATH = "C:\\Users\\xav1cob\\Rapsody\\Crowdsourcing\\Rhaosody_pluggin_GenAI\\puml-parser-py\\buildspec\\pumlparser.exe";
-        new ClassDiagram().createClassDiagram("", shell);
-    }
-
     public void createClassDiagram(String outputFile, Shell shell) {  
         try {
             rhapsodyApp = Constants.rhapsodyApp;
@@ -77,8 +68,8 @@ public class ClassDiagram {
 
             } else {
                 MessageBox messageBox = new MessageBox(shell, SWT.ERROR | SWT.OK);
-                LoggerUtil.error("Expected Project type is C but found " + language);
-                messageBox.setMessage("Expected Project type is C but found " + language);
+                LoggerUtil.error("Expected Rhapsody project type is \"C\" but found \"" + language+"\". Hence diagram will not be generated.");
+                messageBox.setMessage("Expected Rhapsody project type is \"C\" but found \"" + language+"\". Hence diagram will not be generated.");
                 messageBox.open();
                 return;
             } 
@@ -101,10 +92,11 @@ public class ClassDiagram {
     private IRPPackage createBasePackage(IRPProject project, Shell shell) {
         IRPModelElement newPackage = project.findNestedElementRecursive(Constants.RHAPSODY_CLASS_DIAGRAM, Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
+            newPackage.locateInBrowser();
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             messageBox.setText("Package Exists");
-            messageBox.setMessage("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM_ELEMENTS + "' already exists. Do you want to overwrite it?");
-            LoggerUtil.info("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM_ELEMENTS + "' already exists.");
+            messageBox.setMessage("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists. Do you want to overwrite it?");
+            LoggerUtil.info("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
                 newPackage.deleteFromProject();
@@ -360,6 +352,7 @@ public class ClassDiagram {
         RhapsodyUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
         RhapsodyUtil.populateDiagram(diagram, elementsToPopulate, relTypes, Constants.RHAPSODY_POPULATE_MODE);
         setDiagramProperties(diagram);
+        diagram.openDiagram();
     }
 
     private void setDiagramProperties(IRPObjectModelDiagram diagram) {

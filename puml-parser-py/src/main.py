@@ -47,6 +47,9 @@ if __name__ == '__main__':
             else:
                 print(f"Unsupported diagram type: {diagram_type}")
                 print_usage()
+                root = tk.Tk()
+                root.withdraw()  # Hide the root window
+                messagebox.showerror("Error", f"Unsupported diagram type: {diagram_type}")
         except Exception as e:
             root = tk.Tk()
             root.withdraw()  # Hide the root window

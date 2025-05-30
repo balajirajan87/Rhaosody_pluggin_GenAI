@@ -70,7 +70,6 @@ public class Constants {
   public static final String RHAPSODY_OPERATIONS_DISPLAY = "OperationsDisplay";
   public static final String RHAPSODY_ATTRIBUTES_DISPLAY = "AttributesDisplay";
   public static final String RHAPSODY_DISPLAY_ALL = "All";
-  public static final String RHAPSODY_CLASS_DIAGRAM_ELEMENTS = "ClassDiagramElements";
   public static final String RHAPSODY_PACKAGE = "Package";
   public static final String RHAPSODY_TYPE = "Type";
   public static final String RHAPSODY_STRUCTURE = "Structure";
