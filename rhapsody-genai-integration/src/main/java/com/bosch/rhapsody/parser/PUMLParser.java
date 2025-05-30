@@ -13,7 +13,6 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
  
 import com.bosch.rhapsody.constants.Constants;
-import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.generator.*;
  
 public class PUMLParser {
@@ -34,11 +33,11 @@ public class PUMLParser {
                 Process pythonBackendProcess = processBuilder.start();
                 int exitCode = pythonBackendProcess.waitFor();
                 if (exitCode != 0) {
-                    LoggerUtil.error("Python parser failed with exit code " + exitCode);
+                    Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","ERROR: Python parser failed with exit code " + exitCode);
                     throw new IOException("Python parser failed with exit code " + exitCode);
                 }
                 if (!Files.exists(Paths.get(outputFile))) {
-                    LoggerUtil.error("Output file was not generated: " + outputFile);
+                    Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","ERROR: Output file was not generated: " + outputFile);
                     throw new IOException("Output file was not generated: " + outputFile);
                 }
                 if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
@@ -47,16 +46,16 @@ public class PUMLParser {
                 }          
             }
             catch (IOException io) {
-                LoggerUtil.error("IO exception while generating class diagram"+io.getMessage());
+                Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","ERROR: IO exception while generating class diagram"+io.getMessage());
                 throw io;
             }
             catch (Exception e) {
-                LoggerUtil.error("Error while generating class diagram"+e.getMessage());
+                Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","ERROR: Error while generating class diagram"+e.getMessage());
                 throw new RuntimeException(e);
             }
         }
         else {
-            LoggerUtil.error("PUML not found, Make sure valid PUML exist in chat window");
+            Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","PUML not found, Make sure valid PUML exist in chat window");
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
             messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
             messageBox.open();
@@ -76,7 +75,7 @@ public class PUMLParser {
                 writer.write(lastBlock);
             }
         } else {
-            LoggerUtil.error("No @startuml ... @enduml block found.");
+            Constants.rhapsodyApp .writeToOutputWindow("GenAIPlugin","ERROR: No @startuml ... @enduml block found.");
             throw new IOException("No @startuml ... @enduml block found.");  
         }
     }

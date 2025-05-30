@@ -56,7 +56,7 @@ public class UI {
   public static void main(String[] args) {
     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
     Constants.rhapsodyApp = app;
-    GenAiHandler aiHandler = new GenAiHandler(app);
+    GenAiHandler aiHandler = new GenAiHandler();
     // String startPythonBackend2 = aiHandler.startPythonBackend();
 
     UI ui = new UI(aiHandler, "abc");
