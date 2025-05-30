@@ -45,8 +45,8 @@ public class UI {
   String startPythonBackend;
 
   private Text chatArea;
-  public Display display =null;
-  public Shell shell=null;
+  public Display display = null;
+  public Shell shell = null;
 
   public UI(GenAiHandler genAiHandler, String startPythonBackend) {
     this.startPythonBackend = startPythonBackend;
@@ -518,5 +518,5 @@ public class UI {
       chatArea.setTopIndex(chatArea.getLineCount() - 1);
     }
   }
-  
+
 }

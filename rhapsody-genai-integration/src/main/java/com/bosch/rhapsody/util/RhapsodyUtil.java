@@ -9,7 +9,7 @@ public class RhapsodyUtil {
         try {
             return app.activeProject();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","getActiveProject: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getActiveProject: " + e.getMessage());
         }
         return null;
     }
@@ -18,7 +18,7 @@ public class RhapsodyUtil {
         try {
             return project.getLanguage();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","getProjectLanguage: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getProjectLanguage: " + e.getMessage());
         }
         return null;
     }
@@ -27,7 +27,7 @@ public class RhapsodyUtil {
         try {
             return project.addPackage(packageName);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addPackage (project): " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (project): " + e.getMessage());
         }
         return null;
     }
@@ -41,7 +41,7 @@ public class RhapsodyUtil {
                 return (IRPPackage) pkg.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addPackage (pkg): " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (pkg): " + e.getMessage());
         }
         return null;
     }
@@ -55,7 +55,7 @@ public class RhapsodyUtil {
                 return pkg.addClass(className);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addClass: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addClass: " + e.getMessage());
         }
         return null;
     }
@@ -70,7 +70,7 @@ public class RhapsodyUtil {
                 return (IRPClass) pkg.addNewAggr(Constants.RHAPSODY_INTERFACE, interfaceName);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addInterface: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addInterface: " + e.getMessage());
         }
         return null;
     }
@@ -89,7 +89,7 @@ public class RhapsodyUtil {
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addEnum: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addEnum: " + e.getMessage());
         }
         return null;
     }
@@ -108,7 +108,7 @@ public class RhapsodyUtil {
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addStruct: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addStruct: " + e.getMessage());
         }
         return null;
     }
@@ -125,7 +125,7 @@ public class RhapsodyUtil {
                 return attr;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addAttributeToClass: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addAttributeToClass: " + e.getMessage());
         }
         return null;
     }
@@ -142,7 +142,7 @@ public class RhapsodyUtil {
                 return attr;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addAttributeToType: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addAttributeToType: " + e.getMessage());
         }
         return null;
     }
@@ -156,7 +156,7 @@ public class RhapsodyUtil {
                 return op;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addOperation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addOperation: " + e.getMessage());
         }
         return null;
     }
@@ -169,7 +169,7 @@ public class RhapsodyUtil {
                 return arg;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addArgument: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addArgument: " + e.getMessage());
         }
         return null;
     }
@@ -182,7 +182,7 @@ public class RhapsodyUtil {
                 return lit;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addEnumLiteral: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addEnumLiteral: " + e.getMessage());
         }
         return null;
     }
@@ -191,7 +191,7 @@ public class RhapsodyUtil {
         try {
             return (IRPObjectModelDiagram) pkg.addNewAggr(Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM, title);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addClassDiagram: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addClassDiagram: " + e.getMessage());
         }
         return null;
     }
@@ -204,7 +204,7 @@ public class RhapsodyUtil {
                 return note;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addNote: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addNote: " + e.getMessage());
         }
         return null;
     }
@@ -214,7 +214,7 @@ public class RhapsodyUtil {
             from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_ASSOCIATION_TYPE,
                     "", description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createAssociation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAssociation: " + e.getMessage());
         }
     }
 
@@ -226,7 +226,7 @@ public class RhapsodyUtil {
                 association.makeUnidirect();
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createDirectedAssociation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createDirectedAssociation: " + e.getMessage());
         }
     }
 
@@ -237,7 +237,7 @@ public class RhapsodyUtil {
                 dep.setName(description);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createDependency: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createDependency: " + e.getMessage());
         }
     }
 
@@ -248,7 +248,7 @@ public class RhapsodyUtil {
             if (gen != null)
                 gen.changeTo(Constants.RHAPSODY_REALIZATION_TYPE);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createRealization: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createRealization: " + e.getMessage());
         }
     }
 
@@ -259,7 +259,7 @@ public class RhapsodyUtil {
             if (gen != null)
                 gen.setName(description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createInheritance: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createInheritance: " + e.getMessage());
         }
     }
 
@@ -268,7 +268,7 @@ public class RhapsodyUtil {
             from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_AGGREGATION_TYPE,
                     "", description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createAggregation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAggregation: " + e.getMessage());
         }
     }
 
@@ -280,7 +280,7 @@ public class RhapsodyUtil {
                 comp.setRelationType(Constants.RHAPSODY_COMPOSITION_TYPE);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createComposition: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createComposition: " + e.getMessage());
         }
     }
 
@@ -288,7 +288,7 @@ public class RhapsodyUtil {
         try {
             diagram.addStereotype(stereotype, metaClass);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","addStereotype: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addStereotype: " + e.getMessage());
         }
     }
 
@@ -296,7 +296,7 @@ public class RhapsodyUtil {
         try {
             return app.createNewCollection();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","createNewCollection: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createNewCollection: " + e.getMessage());
             return null;
         }
     }
@@ -305,7 +305,7 @@ public class RhapsodyUtil {
         try {
             collection.setString(index, value);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","setCollectionString: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setCollectionString: " + e.getMessage());
         }
     }
 
@@ -313,7 +313,7 @@ public class RhapsodyUtil {
         try {
             collection.setSize(size);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","setCollectionSize: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setCollectionSize: " + e.getMessage());
         }
     }
 
@@ -322,7 +322,7 @@ public class RhapsodyUtil {
         try {
             diagram.populateDiagram(elements, relTypes, mode);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","populateDiagram: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "populateDiagram: " + e.getMessage());
         }
     }
 
@@ -330,7 +330,7 @@ public class RhapsodyUtil {
         try {
             return diagram.getGraphicalElements().toList();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","getGraphicalElements: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getGraphicalElements: " + e.getMessage());
         }
         return null;
     }
@@ -339,7 +339,7 @@ public class RhapsodyUtil {
         try {
             element.setGraphicalProperty(property, value);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","setGraphicalProperty: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setGraphicalProperty: " + e.getMessage());
         }
     }
 
