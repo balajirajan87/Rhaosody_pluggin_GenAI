@@ -116,7 +116,12 @@ public class RhapsodyUtil {
     }
 
     public static void createAssociation(IRPClass from, IRPClass to, String description) {
-        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_ASSOCIATION, "", description);
+        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", description);
+    }
+
+    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description) {
+        IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", description);
+        association.makeUnidirect();
     }
 
     public static void createDependency(IRPModelElement from, IRPModelElement to, String description) {
@@ -127,7 +132,7 @@ public class RhapsodyUtil {
     public static void createRealization(IRPClass from, IRPClassifier to) {
         from.addGeneralization(to);
         IRPGeneralization gen = from.findGeneralization(to.getName());
-        if (gen != null) gen.changeTo(Constants.RHAPSODY_REALIZATION);
+        if (gen != null) gen.changeTo(Constants.RHAPSODY_REALIZATION_TYPE);
     }
 
     public static void createInheritance(IRPClass from, IRPClassifier to, String description) {
@@ -137,12 +142,12 @@ public class RhapsodyUtil {
     }
 
     public static void createAggregation(IRPClass from, IRPClass to, String description) {
-        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_AGGREGATION, "", description);
+        from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_AGGREGATION_TYPE, "", description);
     }
 
     public static void createComposition(IRPClass from, IRPClass to, String description) {
-        IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION, "", "", Constants.RHAPSODY_AGGREGATION, "", description);
-        comp.setRelationType(Constants.RHAPSODY_COMPOSITION);
+        IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_AGGREGATION_TYPE, "", description);
+        comp.setRelationType(Constants.RHAPSODY_COMPOSITION_TYPE);
     }
 
     public static void addStereotype(IRPObjectModelDiagram diagram, String stereotype, String metaClass) {

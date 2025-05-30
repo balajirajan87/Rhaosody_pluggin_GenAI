@@ -77,11 +77,20 @@ public class Constants {
   public static final String RHAPSODY_COMMENT = "Comment";
   public static final String RHAPSODY_NOTE = "Note";
   public static final String RHAPSODY_ASSOCIATION = "association";
+  public static final String RHAPSODY_DIRECTED_ASSOCIATION = "directed_association";
   public static final String RHAPSODY_DEPENDENCY = "dependency";
   public static final String RHAPSODY_DOTTED_DEPENDENCY = "dotted_dependency";
   public static final String RHAPSODY_REALIZATION = "realization";
+  public static final String RHAPSODY_REVERSE_REALIZATION = "reverse_realization";
   public static final String RHAPSODY_INHERITANCE = "inheritance";
+  public static final String RHAPSODY_REVERSE_INHERITANCE = "reverse_inheritance";
   public static final String RHAPSODY_AGGREGATION = "aggregation";
   public static final String RHAPSODY_COMPOSITION = "composition";
+
+  public static final String RHAPSODY_ASSOCIATION_TYPE = "Association";
+  public static final String RHAPSODY_DEPENDENCY_TYPE = "Dependency";
+  public static final String RHAPSODY_REALIZATION_TYPE = "Realization";
+  public static final String RHAPSODY_AGGREGATION_TYPE = "Aggregation";
+  public static final String RHAPSODY_COMPOSITION_TYPE = "Composition";
 
 }

@@ -302,12 +302,18 @@ public class ClassDiagram {
                 if (fromElem instanceof IRPClass && toElem instanceof IRPClass) {
                     if (Constants.RHAPSODY_ASSOCIATION.equals(type)) {
                         RhapsodyUtil.createAssociation((IRPClass)fromElem, (IRPClass)toElem, description);
+                    } else if (Constants.RHAPSODY_DIRECTED_ASSOCIATION.equals(type)) {
+                        RhapsodyUtil.createDirectedAssociation((IRPClass)fromElem, (IRPClass)toElem, description);
                     } else if (Constants.RHAPSODY_DEPENDENCY.equals(type) || Constants.RHAPSODY_DOTTED_DEPENDENCY.equals(type)) {
                         RhapsodyUtil.createDependency(fromElem, toElem, description);
                     } else if (Constants.RHAPSODY_REALIZATION.equals(type)) {
                         RhapsodyUtil.createRealization((IRPClass)fromElem, (IRPClassifier)toElem);
+                    } else if (Constants.RHAPSODY_REVERSE_REALIZATION.equals(type)) {
+                        RhapsodyUtil.createRealization((IRPClass)toElem, (IRPClassifier)fromElem);
                     } else if (Constants.RHAPSODY_INHERITANCE.equals(type)) {
                         RhapsodyUtil.createInheritance((IRPClass)fromElem, (IRPClassifier)toElem, description);
+                    } else if (Constants.RHAPSODY_REVERSE_INHERITANCE.equals(type)) {
+                        RhapsodyUtil.createInheritance((IRPClass)toElem, (IRPClassifier)fromElem, description);
                     } else if (Constants.RHAPSODY_AGGREGATION.equals(type)) {
                         RhapsodyUtil.createAggregation((IRPClass)toElem, (IRPClass)fromElem, description);
                     } else if (Constants.RHAPSODY_COMPOSITION.equals(type)) {
