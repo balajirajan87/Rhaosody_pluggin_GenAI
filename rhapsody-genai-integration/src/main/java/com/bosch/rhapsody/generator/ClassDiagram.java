@@ -6,7 +6,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.bosch.rhapsody.constants.Constants;
-import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.util.RhapsodyUtil;
 import com.telelogic.rhapsody.core.*;
 
@@ -64,7 +63,7 @@ public class ClassDiagram {
                 // Create class diagram
                 createBDD(basePackage, json);
 
-                LoggerUtil.info("Class Diagram generated successfully");
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin","Class Diagram generated successfully");
                 MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
                 messageBox.setMessage("Class Diagram generated successfully");
                 messageBox.open();
@@ -99,7 +98,7 @@ public class ClassDiagram {
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             messageBox.setText("Package Exists");
             messageBox.setMessage("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists. Do you want to overwrite it?");
-            LoggerUtil.info("The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists.");
+            rhapsodyApp.writeToOutputWindow("GenAIPlugin","The package '" + Constants.RHAPSODY_CLASS_DIAGRAM + "' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
                 newPackage.deleteFromProject();
