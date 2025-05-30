@@ -22,7 +22,7 @@ struct: "struct" struct_name ("{" (attribute)* "}")
 
 enum: "enum" enum_name "{" enum_value+ "}"
 
-relationship: relation_source relation_type relation_target (":" description)?
+relationship: relation_source (end1_multiplicity)? relation_type (end2_multiplicity)? relation_target (":" description)?
 
 note: "note" note_position? "of"? note_target note_content "end note"
 
@@ -41,7 +41,7 @@ variable: var ":" varaible_type
 attribute: modifier? visibility? variable
          | visibility? modifier? variable
 
-param:  var ":" param_type
+param:  var ":"? param_type?
 
 param_list: [param ("," param)*]
 
@@ -57,11 +57,23 @@ modifier: "{static}" -> static
          | "<<abstract>>" -> abstract
 
 relation_type: "--|>" -> inheritance
-             | "-->" -> association
+             | "<|--" -> reverse_inheritance
+             | "-->" -> directed_association
              | "*--" -> composition
              | "o--" -> aggregation
              | "..>" -> dependency
              | "..|>" -> realization
+             | "<|.." -> reverse_realization
+             | "<--*" 
+             | ".."
+             | "--" -> association
+             | "#--"
+             | "x--"
+             | "}--"
+             | "+--"
+             | "^--"
+             | "<--*"
+
 
 // Variables and Methods visibility
 visibility: "+" -> public
@@ -69,6 +81,8 @@ visibility: "+" -> public
           | "#" -> protected
           | "~" -> package
 
+end1_multiplicity: ESCAPED_STRING
+end2_multiplicity: ESCAPED_STRING
 description: /.+/
 hex_color: /#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/
 COLOR: /#[a-zA-Z0-9]+/

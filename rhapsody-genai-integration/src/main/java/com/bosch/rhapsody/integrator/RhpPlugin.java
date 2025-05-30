@@ -24,6 +24,7 @@ public class RhpPlugin extends RPUserPlugin {
   ProcessFiles fileHandler = null;
   private IRPApplication rhapsodyApp;
   GenAiHandler genAiHandler = null;
+  private UI ui = null;
 
   public static void main(String[] args) {
     isStandalone = true;
@@ -75,7 +76,7 @@ public class RhpPlugin extends RPUserPlugin {
           }
           String response = genAiHandler.startPythonBackend();
 
-          UI ui = new UI(genAiHandler, response);
+          ui = new UI(genAiHandler, response);
           try {
             ui.createUI();
           } catch (Exception e) {
@@ -108,6 +109,9 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public void RhpPluginFinalCleanup() {
+    if (!ui.display.isDisposed()) {
+      ui.display.dispose();
+    }
     throw new UnsupportedOperationException("Unimplemented method 'RhpPluginFinalCleanup'");
   }
 

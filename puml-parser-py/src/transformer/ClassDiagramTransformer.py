@@ -107,15 +107,23 @@ class ClassDiagramTransformer(Transformer):
         }
 
     @v_args(inline=True)
-    def relationship(self, source, relation_type, target, description=None):
+    def relationship(self, source, end1_multiplicity=None,relation_type=None,end2_multiplicity=None,target=None, description=None):
+        
+        final_source = str(ParsingUtil.parse_tree(source))
+        final_end1_mul, final_relation_type, final_end2_mul, final_target, final_description = self._process_relationship(
+                end1_multiplicity, relation_type, end2_multiplicity, target, description
+            )
+        
         return {
-                    "relationship": {
-                        "source": str(ParsingUtil.parse_tree(source)),
-                        "type": str(relation_type.data),
-                        "target": str(ParsingUtil.parse_tree(target)),
-                        "description": str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
-                    }
-                }
+            "relationship": {
+                "source": final_source,
+                "end1_multiplicity": final_end1_mul,
+                "type": final_relation_type,
+                "end2_multiplicity":  final_end2_mul,
+                "target": final_target,
+                "description": final_description if final_description else None,
+            }
+        }
 
     @v_args(inline=True)
     def note(self, position, target, description):
@@ -190,8 +198,8 @@ class ClassDiagramTransformer(Transformer):
         }
 
     @v_args(inline=True)
-    def param(self, name, type_):
-        return {"param": {"name": str(name), "type": str(type_)}}
+    def param(self, name, type_=None):
+        return {"param": {"name": str(name), "type": str(type_) if type_ else "void"}}
 
     @v_args(inline=True)
     def description(self, *items):
@@ -273,3 +281,46 @@ class ClassDiagramTransformer(Transformer):
             "target": str(item.children[1]),
             "description": str(item.children[2]) if len(item.children) > 2 else None,
         }
+    
+    def _process_relationship(self,end1_multiplicity,relation_type,end2_multiplicity,target,description):
+        final_end1_mul = None
+        final_relation_type = None
+        final_end2_mul = None
+        final_target = None
+        final_description = None
+
+        end1_multiplicity_processed = self._validate_multiplicity(end1_multiplicity)
+        end2_multiplicity_processed = self._validate_multiplicity(end2_multiplicity)
+
+        if end1_multiplicity_processed == "not_a_multiplicity":
+            final_relation_type = str(end1_multiplicity.data) if end1_multiplicity.data else None
+            end2_multiplicity_processed = self._validate_multiplicity((ParsingUtil.parse_tree(relation_type)))
+            if end2_multiplicity_processed == "not_a_multiplicity":
+                final_description = str(ParsingUtil.parse_tree(end2_multiplicity)) if end2_multiplicity else None
+                final_target = str(ParsingUtil.parse_tree(relation_type))
+            else:
+                final_end2_mul = end2_multiplicity_processed
+                final_description = str(ParsingUtil.parse_tree(target)) if target else None
+                final_target = str(ParsingUtil.parse_tree(end2_multiplicity)) if relation_type else None
+        elif end2_multiplicity_processed == "not_a_multiplicity":
+            final_end1_mul =self._validate_multiplicity(end1_multiplicity)
+            final_relation_type = str(relation_type.data) if relation_type else None
+            final_description = str(ParsingUtil.parse_tree(target)) if target else None
+            final_target = str(ParsingUtil.parse_tree(end2_multiplicity))
+        else:
+            final_end1_mul =self._validate_multiplicity(end1_multiplicity)
+            final_target = str(ParsingUtil.parse_tree(target))
+            final_end2_mul =self._validate_multiplicity(end2_multiplicity)
+            final_description = str(description) if description else None
+            final_relation_type = str(relation_type.data) if relation_type else None
+        
+        return final_end1_mul, final_relation_type, final_end2_mul, final_target, final_description
+    
+    def _validate_multiplicity(self, multiplicity):
+        if multiplicity is None:
+            return None
+        value = str(ParsingUtil.parse_tree(multiplicity))
+        if value.startswith('"') and value.endswith('"'):
+            return value[1:-1]
+        
+        return "not_a_multiplicity"
