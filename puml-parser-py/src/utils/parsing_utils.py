@@ -79,7 +79,7 @@ class ParsingUtil:
                             param_obj = {}
                             if param:
                                 param_obj["name"] =  ParsingUtil.extract_token_value_by_type(param['param']['name'],'CNAME')
-                                param_obj["type"] = ParsingUtil.extract_token_value_by_type(param['param']['type'],'ALPHANUM_SPECIAL')
+                                param_obj["type"] = ParsingUtil.extract_token_value_by_type(param['param']['type'],'ALPHANUM_SPECIAL_PARAM')
 
                             if "name" in param_obj and "type" in param_obj:
                                 params.append(param_obj)
@@ -101,9 +101,9 @@ class ParsingUtil:
         match = re.search(r"Token\('CNAME', '([^']+)'\)", tree_str)
         return match.group(1) if match else None
     
-    def extract_ALPHANUM_SPECIAL_token_value(tree_str):
+    def extract_ALPHANUM_SPECIAL_PARAM_token_value(tree_str):
         # Extracts the value inside Token('CNAME', '...')
-        match = re.search(r"Token\('ALPHANUM_SPECIAL', '([^']+)'\)", tree_str)
+        match = re.search(r"Token\('ALPHANUM_SPECIAL_PARAM', '([^']+)'\)", tree_str)
         return match.group(1) if match else None
     
     @staticmethod
