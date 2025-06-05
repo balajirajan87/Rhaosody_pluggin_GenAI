@@ -7,7 +7,9 @@ import com.telelogic.rhapsody.core.IRPApplication;
  */
 public class Constants {
 
-    public static final String VERSION = " v1.3.0_2025-05-30";
+    public static final String VERSION = " v1.3.0_2025-06-03";
+
+    public static final String RHP_VERSION = " 10.0.1";
 
     public static String[] options = new String[] { "Requirement_Docs", "Reference_Docs", "ReferenceCode_Docs",
             "Guideline_Docs" };

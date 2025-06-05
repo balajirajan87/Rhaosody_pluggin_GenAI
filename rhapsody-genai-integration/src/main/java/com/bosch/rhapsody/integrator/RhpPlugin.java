@@ -16,19 +16,12 @@ import com.telelogic.rhapsody.core.RhapsodyAppServer;
  */
 public class RhpPlugin extends RPUserPlugin {
 
-  private static boolean isStandalone = false;
+  public static boolean isStandaloneJar = false;
+  public static boolean isValidLanguage = false;
   ProcessFiles fileHandler = null;
   private IRPApplication rhapsodyApp;
   GenAiHandler genAiHandler = null;
   private UI ui = null;
-
-  public static void main(String[] args) {
-    isStandalone = true;
-    RhpPlugin plugin = new RhpPlugin();
-    plugin.RhpPluginInit(RhapsodyAppServer.getActiveRhapsodyApplication());
-    plugin.OnMenuItemSelect("Rhapsody GenAI");
-
-  }
 
   @Override
   public void RhpPluginInit(IRPApplication rpyApplication) {
@@ -38,13 +31,12 @@ public class RhpPlugin extends RPUserPlugin {
     Constants.rhapsodyApp = rhapsodyApp;
     String temp = fileHandler.getJarPath();
 
-    if (RhpPlugin.isStandalone) {
-      Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
-      Constants.PROFILEPATH = Constants.ROOTDIR + File.separator
-          + "rhapsody-genai-integration\\src\\main\\resources";
-      Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
-      Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
-      Constants.PUML_PARSER_PATH = Constants.ROOTDIR + File.separator + "puml-parser-py\\buildspec\\pumlparser.exe";
+    if (RhpPlugin.isStandaloneJar) {
+      Constants.PROFILEPATH = temp;
+      Constants.ROOTDIR = temp;
+      Constants.BACKEND_SCRIPT_PATH = Constants.PROFILEPATH + File.separator + "openai.py";
+      Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
+      Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "pumlparser.exe";
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
@@ -80,6 +72,8 @@ public class RhpPlugin extends RPUserPlugin {
             LoggerUtil.error(e.getMessage());
           }
           if (ui.display.isDisposed()) {
+            RhpPlugin.isStandaloneJar = false;
+            RhpPlugin.isValidLanguage = false;
             genAiHandler.shutdown();
           }
         } catch (Exception e) {
@@ -103,6 +97,9 @@ public class RhpPlugin extends RPUserPlugin {
   public boolean RhpPluginCleanup() {
     if (!ui.display.isDisposed()) {
       ui.display.dispose();
+      RhpPlugin.isStandaloneJar = false;
+      RhpPlugin.isValidLanguage = false;
+      genAiHandler.shutdown();
     }
     return false;
   }
@@ -111,6 +108,9 @@ public class RhpPlugin extends RPUserPlugin {
   public void RhpPluginFinalCleanup() {
     if (!ui.display.isDisposed()) {
       ui.display.dispose();
+      RhpPlugin.isStandaloneJar = false;
+      RhpPlugin.isValidLanguage = false;
+      genAiHandler.shutdown();
     }
     throw new UnsupportedOperationException("Unimplemented method 'RhpPluginFinalCleanup'");
   }

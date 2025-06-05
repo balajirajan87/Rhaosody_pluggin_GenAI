@@ -59,12 +59,13 @@ modifier: "{static}" -> static
 relation_type: "--|>" -> inheritance
              | "<|--" -> reverse_inheritance
              | "-->" -> directed_association
+             | "<--" -> reverse_directed_association
              | "*--" -> composition
              | "o--" -> aggregation
              | "..>" -> dependency
+             | "<.." -> reverse_dependency
              | "..|>" -> realization
              | "<|.." -> reverse_realization
-             | "<--*" 
              | ".."
              | "--" -> association
              | "#--"

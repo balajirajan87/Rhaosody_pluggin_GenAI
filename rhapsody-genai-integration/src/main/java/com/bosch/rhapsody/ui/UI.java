@@ -31,6 +31,7 @@ import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
+import com.bosch.rhapsody.integrator.RhpPlugin;
 import com.bosch.rhapsody.parser.PUMLParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
@@ -380,6 +381,7 @@ public class UI {
     Button generateButton = new Button(inputRow1, SWT.PUSH);
     generateButton.setText("Generate Diagram");
     generateButton.setEnabled(false);
+    generateButton.setToolTipText("Enabled only for \"create_uml_design\" context");
     generateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
     // User input area
@@ -423,8 +425,13 @@ public class UI {
         // Clear user input
         userInput.setText("");
         if (dropdown.getText().equals("create_uml_design")) {
+          if(!RhpPlugin.isValidLanguage){
+            generateButton.setToolTipText("Disabled due to invalid language support.");
+          }else{
           generateButton.setEnabled(true);
+          generateButton.setToolTipText("Generate UML diagram in Rhapsody");
           Constants.userMessageDiagramType = userMessage;
+          }
         }
       }
     });
@@ -433,11 +440,16 @@ public class UI {
     generateButton.addListener(SWT.Selection, event -> {
       String chatContent = chatArea.getText();
       PUMLParser parserHandler = new PUMLParser();
-      try {
-        parserHandler.generatePUML(chatContent, shell, Constants.userMessageDiagramType);
-      } catch (Exception e) {
-        Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin","\nERROR: Error while generating  " + e.getMessage());
-      }
+      new Thread(() -> {
+        display.asyncExec(() -> {
+          try {
+            parserHandler.generatePUML(chatContent, shell, Constants.userMessageDiagramType);
+            // chatArea.append("Diagram generated successfully: " + "\n");
+          } catch (Exception e) {
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Error while generating " + e.getMessage());
+          }
+        });
+      }).start();
     });
 
     // Set the first tab as selected

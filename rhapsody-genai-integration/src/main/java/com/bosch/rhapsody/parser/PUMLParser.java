@@ -41,6 +41,9 @@ public class PUMLParser {
                     ClassDiagram diagramHandler = new ClassDiagram();
                     diagramHandler.createClassDiagram(outputFile, shell);
                 }
+                if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
+                    pythonBackendProcess.destroy();
+                }
             } catch (IOException io) {
                 throw io;
             } catch (Exception e) {

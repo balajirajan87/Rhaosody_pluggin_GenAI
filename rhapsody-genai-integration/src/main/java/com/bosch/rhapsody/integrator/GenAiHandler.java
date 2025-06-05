@@ -397,7 +397,7 @@ public class GenAiHandler {
     // Stop the Python backend when the plugin is closed
     if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
       pythonBackendProcess.destroy();
-      LoggerUtil.info("Python backend stopped.");
+      LoggerUtil.info("\nPython backend stopped.");
     }
   }
 
