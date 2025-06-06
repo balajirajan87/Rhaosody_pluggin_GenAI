@@ -106,13 +106,37 @@
                         <createDependencyReducedPom>true</createDependencyReducedPom>
                         <transformers>
                             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                <mainClass>com.bosch.rhapsody.integrator.RhpPlugin</mainClass>
+                                <mainClass>com.bosch.rhapsody.integrator.StandalonePlugin</mainClass>
                             </transformer>
                         </transformers>
                     </configuration>
                 </execution>
             </executions>
             </plugin> 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.3.0</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.bosch.rhapsody.integrator.RhpPlugin</mainClass> <!-- Change to your main class -->
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
         </plugins>
     </build>
 </project>
