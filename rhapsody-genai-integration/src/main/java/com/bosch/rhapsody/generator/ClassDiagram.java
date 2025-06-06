@@ -67,7 +67,7 @@ public class ClassDiagram {
 
                 rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nClass Diagram generated successfully");
                 MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
-                messageBox.setMessage("Class Diagram generated successfully");
+                messageBox.setMessage("Class Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
                 messageBox.open();
 
             } else {

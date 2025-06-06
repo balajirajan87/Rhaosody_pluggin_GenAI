@@ -7,7 +7,9 @@ import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.ui.UI;
+import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.IRPApplication;
+import com.telelogic.rhapsody.core.IRPProject;
 import com.telelogic.rhapsody.core.RPUserPlugin;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
 
@@ -23,6 +25,14 @@ public class RhpPlugin extends RPUserPlugin {
   GenAiHandler genAiHandler = null;
   private UI ui = null;
 
+    public static void main(String[] args) {
+    isStandaloneJar = true;
+    RhpPlugin plugin = new RhpPlugin();
+    plugin.RhpPluginInit(RhapsodyAppServer.getActiveRhapsodyApplication());
+    plugin.OnMenuItemSelect("Rhapsody GenAI");
+
+  }
+  
   @Override
   public void RhpPluginInit(IRPApplication rpyApplication) {
     fileHandler = new ProcessFiles();
@@ -32,11 +42,15 @@ public class RhpPlugin extends RPUserPlugin {
     String temp = fileHandler.getJarPath();
 
     if (RhpPlugin.isStandaloneJar) {
-      Constants.PROFILEPATH = temp;
-      Constants.ROOTDIR = temp;
+      Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
+      Constants.PROFILEPATH = Constants.ROOTDIR + File.separator
+          + "RhapsodyPlugin\\RhapsodyPlugin_rpy\\GenAiIntegrationProfile";
+
       Constants.BACKEND_SCRIPT_PATH = Constants.PROFILEPATH + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
       Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "pumlparser.exe";
+
+     
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
@@ -51,9 +65,13 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public void OnMenuItemSelect(String menuItem) {
+    if (!run()) {
+      return;
+    }
     Constants.rhapsodyApp = RhapsodyAppServer.getActiveRhapsodyApplication();
     LoggerUtil.setRhapsodyApp(Constants.rhapsodyApp);
     if (menuItem.equals("Rhapsody GenAI")) {
+
       if (fileHandler.validatePaths()) {
         try {
           LoggerUtil.info("Running GenAI...");
@@ -80,6 +98,45 @@ public class RhpPlugin extends RPUserPlugin {
           LoggerUtil.error(e.getMessage());
         }
       }
+    }
+  }
+
+  public boolean run() {
+    try {
+      IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+      if (app == null) {
+        UiUtil.showErrorPopup("Couldn't find running instance of Rhapsody.");
+        return false;
+      }
+
+      IRPProject project = app.activeProject();
+      if (project == null) {
+        UiUtil.showErrorPopup(
+            "Rhapsody " + app.version() + " is running. Couldn't find active Rhapsody project.");
+        return false;
+      }
+
+      RhpPlugin.isValidLanguage = false;
+      String language = project.getLanguage();
+      if ("C".equals(language)) {
+        RhpPlugin.isValidLanguage = true;
+        return true;
+      } else {
+        boolean response = UiUtil.showQuestionPopup(
+            String.format(
+                "Expected Rhapsody project type is \"C\" but found \"%s\". \nUML diagram generation in rhapsody will be disabled.\n\n Do you want to continue?",
+                language));
+        if (response) {
+          return true;
+        }
+      }
+      return false;
+    } catch (Exception e) {
+      String msg = "Can't get active object".equals(e.getMessage())
+          ? "Couldn't find running instance of Rhapsody. \n\nHence terminating GenAI plugin."
+          : e.getMessage();
+      UiUtil.showErrorPopup(msg);
+      return false;
     }
   }
 

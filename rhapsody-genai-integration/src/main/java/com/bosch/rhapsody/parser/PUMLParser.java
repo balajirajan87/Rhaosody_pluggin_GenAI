@@ -51,7 +51,7 @@ public class PUMLParser {
             }
         } else {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "PUML not found, Make sure valid PUML exist in chat window");
+                    "PUML not found, Make sure valid PUML exist in chat window.\n");
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
             messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
             messageBox.open();

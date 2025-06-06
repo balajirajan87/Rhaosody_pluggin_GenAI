@@ -33,6 +33,7 @@ import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
 import com.bosch.rhapsody.integrator.RhpPlugin;
 import com.bosch.rhapsody.parser.PUMLParser;
+import com.bosch.rhapsody.util.UiUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
@@ -64,37 +65,15 @@ public class UI {
     ui.createUI();
   }
 
-  /**
-   * @param shell   - shell input
-   * @param isOnTop - boolean to show shell in the top of the display
-   */
-  public void toggleAlwaysOnTop(Shell shell, boolean isOnTop) {
-    long handle = shell.handle;
-    org.eclipse.swt.graphics.Point location = shell.getLocation();
-    org.eclipse.swt.graphics.Point dimension = shell.getSize();
-    OS.SetWindowPos(handle, isOnTop ? OS.HWND_TOPMOST : OS.HWND_NOTOPMOST, location.x, location.y, dimension.x,
-        dimension.y, 0);
-  }
 
-  /**
-   * @param display - display input
-   * @param shell   - shell input
-   */
-  public static void setShellLocation(Display display, Shell shell) {
-    org.eclipse.swt.widgets.Monitor primary = display.getPrimaryMonitor();
-    org.eclipse.swt.graphics.Rectangle bounds = primary.getBounds();
-    int centerX = bounds.x + (bounds.width - shell.getSize().x) / 2;
-    int centerY = bounds.y + (bounds.height - shell.getSize().y) / 2;
-    shell.setLocation(centerX, centerY);
-  }
 
   public void createUI() {
 
     Map<String, ArrayList<String>> dropdownFileMapping = new HashMap<>();
     display = new Display();
     shell = new Shell(display);
-    setShellLocation(display, shell);
-    toggleAlwaysOnTop(shell, true);
+    UiUtil.setShellLocation(display, shell);
+    UiUtil.toggleAlwaysOnTop(shell, true);
 
     shell.setText("UML diagram generator");
     shell.setSize(1000, 700);

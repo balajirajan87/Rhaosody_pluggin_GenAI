@@ -1,6 +1,7 @@
 package com.bosch.rhapsody.util;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -33,6 +34,8 @@ public class UiUtil {
             display = new Display();
         }
         Shell shell = new Shell(display);
+        UiUtil.setShellLocation(display, shell);
+        UiUtil.toggleAlwaysOnTop(shell, true);
         try {
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             messageBox.setMessage(msg);
@@ -46,4 +49,28 @@ public class UiUtil {
         }
         return false;
     }
+
+      /**
+   * @param shell   - shell input
+   * @param isOnTop - boolean to show shell in the top of the display
+   */
+   public static void toggleAlwaysOnTop(Shell shell, boolean isOnTop) {
+    long handle = shell.handle;
+    org.eclipse.swt.graphics.Point location = shell.getLocation();
+    org.eclipse.swt.graphics.Point dimension = shell.getSize();
+    OS.SetWindowPos(handle, isOnTop ? OS.HWND_TOPMOST : OS.HWND_NOTOPMOST, location.x, location.y, dimension.x,
+        dimension.y, 0);
+  }
+
+  /**
+   * @param display - display input
+   * @param shell   - shell input
+   */
+  public static void setShellLocation(Display display, Shell shell) {
+    org.eclipse.swt.widgets.Monitor primary = display.getPrimaryMonitor();
+    org.eclipse.swt.graphics.Rectangle bounds = primary.getBounds();
+    int centerX = bounds.x + (bounds.width - shell.getSize().x) / 2;
+    int centerY = bounds.y + (bounds.height - shell.getSize().y) / 2;
+    shell.setLocation(centerX, centerY);
+  }
 }
