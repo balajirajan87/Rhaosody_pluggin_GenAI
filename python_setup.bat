@@ -16,21 +16,21 @@ if %ERRORLEVEL% NEQ 0 (
     echo Python 3 is already installed.
 )
 
-REM Check if OPENAI_API_KEY is set
-echo Checking for OPENAI_API_KEY...
-set "OPENAI_API_KEY" >NUL
-if "%OPENAI_API_KEY%"=="" (
+REM Check if OPENAI_API_KEY is set in the current session or permanently
+REM First, check if it's set in the current session
+IF "%OPENAI_API_KEY%"=="" (
+    REM If not, check if it's set permanently (in registry)
+    for /f "tokens=2*" %%A in ('reg query "HKCU\Environment" /v OPENAI_API_KEY 2^>nul') do set "OPENAI_API_KEY=%%B"
+)
+
+IF "!OPENAI_API_KEY!"=="" (
     echo OPENAI_API_KEY is not set. Setting it now...
     set /p OPENAI_API_KEY="Enter your OpenAI API key: "
-    setx OPENAI_API_KEY "%OPENAI_API_KEY%"
-    if %ERRORLEVEL% EQU 0 (
-        echo OPENAI_API_KEY has been set successfully.
-    ) else (
-        echo Failed to set OPENAI_API_KEY. Exiting script.
-        exit /b 1
-    )
+    setx OPENAI_API_KEY "!OPENAI_API_KEY!"
+    set "OPENAI_API_KEY=!OPENAI_API_KEY!"
+    echo OPENAI_API_KEY has been set successfully.
 ) else (
-    echo OPENAI_API_KEY is already set.
+    echo OPENAI_API_KEY is already set: !OPENAI_API_KEY!
 )
 
 echo %PATH% | findstr /C:%PYTHON_DIR%
