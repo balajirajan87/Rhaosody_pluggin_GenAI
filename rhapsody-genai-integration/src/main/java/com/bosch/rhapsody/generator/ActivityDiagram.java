@@ -1,0 +1,255 @@
+package com.bosch.rhapsody.generator;
+
+import com.telelogic.rhapsody.core.IRPApplication;
+import com.telelogic.rhapsody.core.IRPConnector;
+import com.telelogic.rhapsody.core.IRPFlowchart;
+import com.telelogic.rhapsody.core.IRPObjectNode;
+import com.telelogic.rhapsody.core.IRPPackage;
+import com.telelogic.rhapsody.core.IRPProject;
+import com.telelogic.rhapsody.core.IRPState;
+import com.telelogic.rhapsody.core.IRPStereotype;
+import com.telelogic.rhapsody.core.IRPSwimlane;
+import com.telelogic.rhapsody.core.IRPTransition;
+import com.telelogic.rhapsody.core.RhapsodyAppServer;
+
+public class ActivityDiagram {
+
+    /**
+     * Creates a swimlane in a Rhapsody activity diagram.
+     *
+     * @param diagram      The IRPFlowchart (activity diagram) where the swimlane will be created.
+     * @param swimlaneName The name of the swimlane to create.
+     * @return The created IRPSwimlane object, or null if creation failed.
+     */
+    public IRPSwimlane createSwimlane(IRPFlowchart diagram, String swimlaneName) {
+
+        IRPSwimlane swimlane = null;
+        try {
+            swimlane = diagram.addSwimlane(swimlaneName);
+            if (swimlane == null) {
+                throw new Exception("Failed to create swimlane: " + swimlaneName);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to create swimlane " + swimlaneName + ex.getMessage() + "\n");
+        }
+        return swimlane;
+    }
+
+    /**
+     * Retrieves the "ControlFlow" stereotype from the given project.
+     *
+     * @param project The IRPProject from which to retrieve the stereotype.
+     */
+    public void getActivitySpecificStereotypes(IRPProject project) {
+        IRPStereotype controlFlow = (IRPStereotype) project.findNestedElementRecursive("ControlFlow", "Stereotype");
+    }
+
+
+    /**
+     * Creates an activity diagram in the specified Rhapsody package.
+     *
+     * @param pkg         The IRPPackage object where the activity diagram will be created.
+     * @param diagramName The name to assign to the new activity diagram.
+     * @return The created IRPFlowchart (activity diagram) object, or null if creation failed.
+     */
+    public IRPFlowchart createActivityDiagram(IRPPackage pkg, String diagramName) {
+        IRPFlowchart flowChart = null;
+        try {
+            flowChart = pkg.addActivityDiagram();
+            flowChart.setName(diagramName);
+            flowChart.setPropertyValue("Activity_diagram.ControlFlow.line_style", "rectilinear_arrows");
+            flowChart.setPropertyValue("Activity_diagram.DefaultTransition.line_style", "rectilinear_arrows");
+        } catch (Exception ex) {
+            System.out.println("Failed to create ActivityDiagram " + diagramName + ex.getMessage() + "\n");
+        }
+        return flowChart;
+    }
+
+    /**
+     * Creates an action (state) in the given activity diagram and assigns it to a swimlane.
+     *
+     * @param diagram    The IRPFlowchart (activity diagram) where the action will be created.
+     * @param actionName The name of the action.
+     * @param swimlane   The IRPSwimlane to assign the action to (can be null).
+     * @return The created IRPState object, or null if creation failed.
+     */
+    public IRPState createAction(IRPFlowchart diagram, String actionName, IRPSwimlane swimlane) {
+        IRPState action = null;
+        try {
+            action = diagram.getRootState().addState(actionName);
+            action.setStateType("Action");
+            if (swimlane != null) {
+                action.setItsSwimlane(swimlane);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to create action " + actionName + ": " + ex.getMessage());
+        }
+        return action;
+    }
+
+    /**
+     * Creates an object node in the given activity diagram.
+     *
+     * @param diagram  The IRPFlowchart (activity diagram) where the object node will be created.
+     * @param nodeName The name of the object node.
+     * @return The created IRPObjectNode object, or null if creation failed.
+     */
+    public IRPObjectNode createObjectNode(IRPFlowchart diagram, String nodeName) {
+        IRPObjectNode objNode = null;
+        try {
+            objNode = (IRPObjectNode) diagram.addNewAggr("ObjectNode", nodeName);
+        } catch (Exception ex) {
+            System.out.println("Failed to create object node " + nodeName + ": " + ex.getMessage());
+        }
+        return objNode;
+    }
+
+    /**
+     * Creates a connector (e.g., Condition) in the activity diagram.
+     * 
+     * @param diagram       The IRPFlowchart (activity diagram) where the connector
+     *                      will be created.
+     * @param connectorType The type of connector (e.g., "Condition").
+     * @param swimlane      The IRPSwimlane to assign the connector to (can be null).
+     * @return The created IRPConnector object, or null if creation failed.
+     */
+    public IRPConnector createConnector(IRPFlowchart diagram, String connectorType, IRPSwimlane swimlane) {
+        IRPConnector connector = null;
+        try {
+            connector = diagram.getRootState().addConnector(connectorType);
+            if (swimlane != null) {
+                connector.setItsSwimlane(swimlane);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to create connector " + connectorType + ": " + ex.getMessage());
+        }
+        return connector;
+    }
+
+    /**
+     * Creates a flow final node in the activity diagram.
+     *
+     * @param diagram  The IRPFlowchart (activity diagram) where the flow final node will be created.
+     * @param nodeName The name of the flow final node.
+     * @param swimlane The IRPSwimlane to assign the flow final node to (can be null).
+     * @return The created IRPState object, or null if creation failed.
+     */
+    public IRPState createFlowFinal(IRPFlowchart diagram, String nodeName, IRPSwimlane swimlane) {
+        IRPState finalNode = null;
+        try {
+            finalNode = diagram.getRootState().addState(nodeName);
+            finalNode.setStateType("FlowFinal");
+            if (swimlane != null) {
+                finalNode.setItsSwimlane(swimlane);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to create flow final node " + nodeName + ": " + ex.getMessage());
+        }
+        return finalNode;
+    }
+
+    /**
+     * Adds a transition between two elements (states or connectors) in the activity diagram.
+     *
+     * @param fromElement    The source IRPState or IRPConnector where the transition starts.
+     * @param toElement      The target IRPState or IRPConnector where the transition ends.
+     * @param guard          (Optional) The guard condition for the transition (can be null or empty).
+     * @param transitionType (Optional) The IRPStereotype to assign to the transition (can be null).
+     * @return The created IRPTransition object, or null if creation failed.
+     */
+    public IRPTransition createTransition(Object fromElement, Object toElement, String guard,
+            IRPStereotype transitionType) {
+        IRPTransition transition = null;
+        try {
+            // Convert toElement to IRPState or IRPConnector (typed, not generic Object)
+            if (!(toElement instanceof IRPState) && !(toElement instanceof IRPConnector)) {
+                throw new IllegalArgumentException("toElement must be IRPState or IRPConnector");
+            }
+
+            // Check if fromElement has addTransition method and call with correct type
+            if (fromElement instanceof IRPState && toElement instanceof IRPState) {
+                transition = ((IRPState) fromElement).addTransition((IRPState) toElement);
+            } else if (fromElement instanceof IRPState && toElement instanceof IRPConnector) {
+                transition = ((IRPState) fromElement).addTransition((IRPConnector) toElement);
+            } else if (fromElement instanceof IRPConnector && toElement instanceof IRPState) {
+                transition = ((IRPConnector) fromElement).addTransition((IRPState) toElement);
+            } else if (fromElement instanceof IRPConnector && toElement instanceof IRPConnector) {
+                transition = ((IRPConnector) fromElement).addTransition((IRPConnector) toElement);
+            } else {
+                throw new IllegalArgumentException("fromElement must be IRPState or IRPConnector");
+            }
+
+            if (transitionType != null) {
+                transition.addSpecificStereotype(transitionType);
+            }
+            if (guard != null && !guard.isEmpty()) {
+                transition.setItsGuard(guard);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to add transition: " + ex.getMessage());
+        }
+        return transition;
+    }
+
+    /**
+     * Creates diagram graphics for all elements in the given activity diagram.
+     * This method should be called after adding all model elements to the diagram.
+     * 
+     * @param flowchart The IRPFlowchart (activity diagram) for which to create
+     *                  graphics.
+     */
+    public static void createDiagramGraphics(IRPFlowchart flowchart) {
+        if (flowchart != null) {
+            flowchart.createGraphics();
+            flowchart.setShowDiagramFrame(1);
+        }
+    }
+
+    /**
+     * Creates a default transition from the given source state to the target state
+     * in the activity diagram.
+     * 
+     * @param diagram The IRPFlowchart (activity diagram)
+     * @param toState The target IRPState where the transition ends.
+     * @return The created IRPTransition object, or null if creation failed.
+     */
+    public IRPTransition createDefaultTransition(IRPFlowchart diagram, IRPState toState) {
+        IRPTransition transition = null;
+        try {
+            if (null != diagram) {
+                IRPState rootState = diagram.getRootState();
+                if (null != rootState) {
+                    transition = toState.createDefaultTransition(rootState);
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to create default transition: " + ex.getMessage());
+        }
+        return transition;
+    }
+
+    /**
+     * Main method for demonstration and testing purposes.
+     * Creates a sample activity diagram with swimlanes, actions, connectors, transitions, and graphics.
+     *
+     * @param args Command-line arguments (not used).
+     */
+    public static void main(String[] args) {
+        IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+        IRPPackage pkg = app.activeProject().addPackage("aPackage");
+        ActivityDiagram createActivityDiagram = new ActivityDiagram();
+        IRPFlowchart fc = createActivityDiagram.createActivityDiagram(pkg, "new");
+        IRPSwimlane sw = createActivityDiagram.createSwimlane(fc, "New");
+        IRPSwimlane sw_2 = createActivityDiagram.createSwimlane(fc, "New_2");
+        IRPState ac = createActivityDiagram.createAction(fc, "action_new", sw);
+        IRPTransition trans= createActivityDiagram.createDefaultTransition(fc, ac);
+        IRPConnector cond = createActivityDiagram.createConnector(fc, "Condition",sw);
+        IRPState ff = createActivityDiagram.createFlowFinal(fc, "abc", sw);
+        IRPStereotype controlFlow = (IRPStereotype) app.activeProject().findNestedElementRecursive("ControlFlow",
+                "Stereotype");
+        createActivityDiagram.createTransition(ac, cond, "if", controlFlow);
+        createActivityDiagram.createTransition(cond, ff, "else", controlFlow);
+        createDiagramGraphics(fc);
+    }
+
+}

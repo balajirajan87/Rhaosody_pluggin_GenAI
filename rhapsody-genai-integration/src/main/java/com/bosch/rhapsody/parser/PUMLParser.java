@@ -17,7 +17,7 @@ import com.bosch.rhapsody.generator.*;
 
 public class PUMLParser {
 
-    public void generatePUML(String chatContent, Shell shell, String diagramType) throws IOException {
+    public void generateJsonFromPuml(String chatContent, Shell shell, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
             String inputFile = "C:\\temp\\GenAI\\chatContent.puml";
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
@@ -27,7 +27,7 @@ public class PUMLParser {
                         Constants.PUML_PARSER_PATH,
                         "-i", inputFile,
                         "-o", outputFile,
-                        "-t", "classdiagram");
+                        "-t", diagramType);
                 processBuilder.redirectErrorStream(true);
                 Process pythonBackendProcess = processBuilder.start();
                 int exitCode = pythonBackendProcess.waitFor();
@@ -37,10 +37,7 @@ public class PUMLParser {
                 if (!Files.exists(Paths.get(outputFile))) {
                     throw new IOException("Output file was not generated: " + outputFile);
                 }
-                if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
-                    ClassDiagram diagramHandler = new ClassDiagram();
-                    diagramHandler.createClassDiagram(outputFile, shell);
-                }
+                createDiagram(shell, diagramType, outputFile);
                 if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
                     pythonBackendProcess.destroy();
                 }
@@ -55,6 +52,15 @@ public class PUMLParser {
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
             messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
             messageBox.open();
+        }
+    }
+
+    private void createDiagram(Shell shell, String diagramType, String outputFile) {
+        if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
+            ClassDiagram diagramHandler = new ClassDiagram();
+            diagramHandler.createClassDiagram(outputFile, shell);
+        }else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
+            //Activity diagram creation
         }
     }
 

@@ -420,7 +420,7 @@ public class UI {
       new Thread(() -> {
         display.asyncExec(() -> {
           try {
-            parserHandler.generatePUML(chatContent, shell, Constants.userMessageDiagramType);
+            parserHandler.generateJsonFromPuml(chatContent, shell, Constants.userMessageDiagramType);
             // chatArea.append("Diagram generated successfully: " + "\n");
           } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Error while generating " + e.getMessage());
