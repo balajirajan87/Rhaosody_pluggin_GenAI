@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sys import argv
 import logging
-from __init__ import process_class_diagram
+from __init__ import process_diagram
 import tkinter as tk
 from tkinter import messagebox
 
@@ -42,11 +42,9 @@ if __name__ == '__main__':
         
 
         try:
-            if diagram_type == "classdiagram":
-                process_class_diagram(input_file, output_file)
+            if diagram_type == "classdiagram" or diagram_type == "activitydiagram" :
+                process_diagram(input_file, output_file,diagram_type)
             else:
-                print(f"Unsupported diagram type: {diagram_type}")
-                print_usage()
                 root = tk.Tk()
                 root.withdraw()  # Hide the root window
                 messagebox.showerror("Error", f"Unsupported diagram type: {diagram_type}")

@@ -2,17 +2,35 @@ import os
 import json
 from lark import Lark, exceptions
 from transformer.ClassDiagramTransformer import ClassDiagramTransformer
+from transformer.ActivityDiagramTransformer import ActivityDiagramTransformer
 
-def process_class_diagram(input_file, output_file):
+def process_diagram(input_file, output_file, diagram_type):
+    """
+    Processes a diagram file (class or activity) and writes the parsed output as JSON.
+
+    Args:
+        input_file (str): Path to the input .puml file.
+        output_file (str): Path to the output .json file.
+        diagram_type (str): Type of diagram ('class' or 'activity').
+    """
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    grammar_file_path = os.path.join(dir_path,  "grammar","classdiagram.lark")
+    if diagram_type == "classdiagram":
+        grammar_file = "classdiagram.lark"
+        transformer = ClassDiagramTransformer()
+    elif diagram_type == "activitydiagram":
+        grammar_file = "activitydiagram.lark"
+        transformer = ActivityDiagramTransformer()
+    else:
+        raise ValueError("Unsupported diagram_type. Use 'class' or 'activity'.")
+
+    grammar_file_path = os.path.join(dir_path, "grammar", grammar_file)
 
     with open(grammar_file_path, encoding="utf-8") as grammar_file:
         try:
             parser = Lark(
                 grammar_file.read(),
                 parser='lalr',
-                transformer=ClassDiagramTransformer(),
+                transformer=transformer,
                 start='start'
             )
 
@@ -24,7 +42,7 @@ def process_class_diagram(input_file, output_file):
                         with open(output_file, 'w', encoding="utf-8") as outfile:
                             outfile.write(json_like_output)
                     except (json.JSONDecodeError) as e:
-                        raise Exception(e)                
+                        raise Exception(e)
             except (OSError) as e:
                 raise Exception(e)
 

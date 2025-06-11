@@ -454,7 +454,9 @@ public class UI {
     });
 
     // Open the Shell
+    LoggerUtil.info("Starting GenAI UI...");
     shell.open();
+
     while (!shell.isDisposed()) {
       if (!display.readAndDispatch()) {
         display.sleep();

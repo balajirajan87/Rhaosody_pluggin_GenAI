@@ -81,10 +81,16 @@ public class RhpPlugin extends RPUserPlugin {
                 "Python command is not accessible. Please ensure Python is installed and added to the system PATH.");
             return;
           }
+          LoggerUtil.info("Python command is accessible. Proceeding with GenAI...");
           String response = genAiHandler.startPythonBackend();
-
+          LoggerUtil.info("Python backend started successfully.");
+          if (response == null || response.isEmpty()) {
+            LoggerUtil.error("Failed to start Python backend. Please check the logs for details.");
+            return;
+          }
           ui = new UI(genAiHandler, response);
           try {
+            LoggerUtil.info("Creating UI...");
             ui.createUI();
           } catch (Exception e) {
             LoggerUtil.error(e.getMessage());
