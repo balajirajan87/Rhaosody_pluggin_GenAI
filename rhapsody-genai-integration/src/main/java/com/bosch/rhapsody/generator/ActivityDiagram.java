@@ -14,6 +14,8 @@ import com.telelogic.rhapsody.core.RhapsodyAppServer;
 
 public class ActivityDiagram {
 
+    private IRPStereotype controlFlow=null;
+
     /**
      * Creates a swimlane in a Rhapsody activity diagram.
      *
@@ -41,7 +43,7 @@ public class ActivityDiagram {
      * @param project The IRPProject from which to retrieve the stereotype.
      */
     public void getActivitySpecificStereotypes(IRPProject project) {
-        IRPStereotype controlFlow = (IRPStereotype) project.findNestedElementRecursive("ControlFlow", "Stereotype");
+        controlFlow = (IRPStereotype) project.findNestedElementRecursive("ControlFlow", "Stereotype");
     }
 
 
@@ -238,17 +240,16 @@ public class ActivityDiagram {
         IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
         IRPPackage pkg = app.activeProject().addPackage("aPackage");
         ActivityDiagram createActivityDiagram = new ActivityDiagram();
+        createActivityDiagram.getActivitySpecificStereotypes(app.activeProject());
         IRPFlowchart fc = createActivityDiagram.createActivityDiagram(pkg, "new");
         IRPSwimlane sw = createActivityDiagram.createSwimlane(fc, "New");
         IRPSwimlane sw_2 = createActivityDiagram.createSwimlane(fc, "New_2");
         IRPState ac = createActivityDiagram.createAction(fc, "action_new", sw);
-        IRPTransition trans= createActivityDiagram.createDefaultTransition(fc, ac);
+        createActivityDiagram.createDefaultTransition(fc, ac);
         IRPConnector cond = createActivityDiagram.createConnector(fc, "Condition",sw);
         IRPState ff = createActivityDiagram.createFlowFinal(fc, "abc", sw);
-        IRPStereotype controlFlow = (IRPStereotype) app.activeProject().findNestedElementRecursive("ControlFlow",
-                "Stereotype");
-        createActivityDiagram.createTransition(ac, cond, "if", controlFlow);
-        createActivityDiagram.createTransition(cond, ff, "else", controlFlow);
+        createActivityDiagram.createTransition(ac, cond, "if", createActivityDiagram.controlFlow);
+        createActivityDiagram.createTransition(cond, ff, "else", createActivityDiagram.controlFlow);
         createDiagramGraphics(fc);
     }
 
