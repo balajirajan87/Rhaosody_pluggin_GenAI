@@ -1,6 +1,7 @@
 package com.bosch.rhapsody.generator;
 
 import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.parser.ActivityTransitionAdder;
 import com.bosch.rhapsody.util.ActivityDiagramUtil;
 import com.bosch.rhapsody.util.CommonUtil;
 import com.telelogic.rhapsody.core.*;
@@ -20,14 +21,15 @@ public class ActivityDiagram {
     IRPConnector connector = null;
     Object state = null;
     private Map<String,IRPConnector> MergeNodeMap = new HashMap<>();
-    private Object MergeNodeState = null;
-
+    private Map<String, IRPSwimlane> swimlaneMap = new HashMap<>();
+     private Object MergeNodeState = null;
 
     public void createActivityDiagram(String outputFile, Shell shell) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell,Constants.RHAPSODY_ACTIVITY_DIAGRAM);
+            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell,
+                    Constants.RHAPSODY_ACTIVITY_DIAGRAM);
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                         "\nERROR: Could not create/find base package for activity diagram.");
@@ -38,30 +40,25 @@ public class ActivityDiagram {
             IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
             JSONArray sections = json.optJSONArray("sections");
             if (sections != null) {
-                int swimlaneCount = 0;
-                for (int j = 0; j < sections.length(); j++) {
-                    JSONObject section_val = sections.getJSONObject(j);
-                    JSONObject swimlane_val = section_val.optJSONObject("swimlane");
-                    if (swimlane_val != null) {
-                        swimlaneCount++;
-                        if (swimlaneCount >= 2)
-                            break;
+                IRPSwimlane firstSwimlaneElem = null;
+                boolean isFirst = true;
+                if (ActivityTransitionAdder.swimlane.size() >= 2) {
+                    for (String swimlan : ActivityTransitionAdder.swimlane) {
+                        IRPSwimlane swimlaneElem = ActivityDiagramUtil.createSwimlane(fc, swimlan);
+                        swimlaneMap.put(swimlan, swimlaneElem);
+                        if (isFirst) {
+                            firstSwimlaneElem = swimlaneElem;
+                            isFirst = false;
+                        }
                     }
+                    state = null;
                 }
+
                 for (int i = 0; i < sections.length(); i++) {
                     JSONObject section = sections.getJSONObject(i);
-                    JSONObject swimlane = section.optJSONObject("swimlane");
-                    String swimlaneId = swimlane != null
-                            ? swimlane.optString("identifier", "Swimlane" + i).replaceAll("[^a-zA-Z0-9]", "_")
-                            : "Swimlane" + i;
-                    IRPSwimlane swimlaneElem = null;
-                    if (swimlaneCount >= 2) {
-                        swimlaneElem = ActivityDiagramUtil.createSwimlane(fc, swimlaneId);
-                        state = null;
-                    }
                     JSONArray statements = section.optJSONArray("statements");
                     if (statements != null) {
-                        createStatementsRecursive(fc, swimlaneElem, statements, false, null);
+                        createStatementsRecursive(fc, firstSwimlaneElem, statements, false, null);
                     }
                 }
             }
@@ -140,16 +137,15 @@ public class ActivityDiagram {
                         break;
                     case "MergeNode":
                         String MergeNodeText = stmt.optString("text");
-                        if(MergeNodeText != null && !MergeNodeText.isEmpty())
-                        {
+                        if (MergeNodeText != null && !MergeNodeText.isEmpty()) {
                             IRPConnector MergeNode;
-                            if(MergeNodeMap.containsKey(MergeNodeText)){
+                            if (MergeNodeMap.containsKey(MergeNodeText)) {
                                 MergeNode = MergeNodeMap.get(MergeNodeText);
-                            }else{
+                            } else {
                                 MergeNode = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", MergeNodeText,
                                     swimlaneElem);
                                 MergeNodeMap.put(MergeNodeText, MergeNode); 
-                            } 
+                            }  
                             MergeNodeState = state;
                             ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,ActivityDiagramUtil.controlFlow);
                             state = MergeNode;
@@ -215,6 +211,15 @@ public class ActivityDiagram {
                         state = loopcond;
                         gaurd = loop_else_label;
                         break;
+                    case "swimlane":
+                        String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
+                        if (!swimlane_name.isEmpty()) {
+                            IRPSwimlane swim = swimlaneMap.get(swimlane_name);
+                            if (null != swim) {
+                                swimlaneElem = swim;
+                            }
+                        }
+
                 }
             } catch (Exception e) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",

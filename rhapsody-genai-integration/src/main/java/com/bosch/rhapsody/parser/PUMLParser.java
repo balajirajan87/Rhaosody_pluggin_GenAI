@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,7 @@ public class PUMLParser {
     public static void main(String[] args) throws IOException {
         IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
         Constants.rhapsodyApp = app;
+        Constants.project = Constants.rhapsodyApp.activeProject();
         Display display = new Display();
         Shell shell = new Shell(display);
         //new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell, "classdiagram");
@@ -32,6 +34,8 @@ public class PUMLParser {
         //diagramHandler.createClassDiagram(outputFile,shell);
         String outputFileActivity = "";
         ActivityDiagram diagramHandler = new ActivityDiagram();
+            ActivityTransitionAdder.swimlane =new HashSet<>();
+        ActivityTransitionAdder.AddMergeNode(outputFileActivity);
         diagramHandler.createActivityDiagram(outputFileActivity,shell);
     }
 
@@ -74,6 +78,7 @@ public class PUMLParser {
     }
 
     private void createDiagram(Shell shell, String diagramType, String outputFile) {
+        ActivityTransitionAdder.swimlane =new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
             ClassDiagram diagramHandler = new ClassDiagram();

@@ -1,4 +1,4 @@
-start: "@startuml" (title | skinparam | section)* "@enduml"
+start: "@startuml" (title | skinparam | section )* "@enduml"
 
 title: "title" description
 
@@ -17,6 +17,7 @@ statement: start_activity
          | break_statement
          | transition
          | stop
+         | note
 
 start_activity: "start"
 
@@ -24,7 +25,7 @@ action: ":" action_statement ";"
 
 decision: "if" "(" condition ")" "then" "(" then_label ")" (statement | partition)+ else_if_block* else_block? "endif"
 
-else_if_block: "else if" "(" condition ")" "then" "(" then_label ")" (statement | partition)+
+else_if_block:("else if" | "elseif") "(" condition ")" "then" "(" then_label ")" (statement | partition)+
 
 else_block: "else" ("(" else_label ")")? (statement | partition)+
 
@@ -42,8 +43,16 @@ stop: "stop"
 
 end: "end"
 
+note: "note" note_position? ":"? note_content
+
+note_position: "left"  -> left
+             | "right"  -> right
+             | "top"  -> top
+             | "bottom" -> bottom
+
 partition: "partition" partition_name "{" statement* "}"
 
+note_content: /.+/
 description: /.+/
 sparam: CNAME
 svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
@@ -53,7 +62,7 @@ while_condition: /[^)]+/
 then_label:/[^)]+/
 else_label:/[^)]+/
 COLOR: /#[a-zA-Z0-9]+/
-IDENTIFIER: /[a-zA-Z0-9_]+/
+IDENTIFIER: /[^|]+/
 action_statement: /[^;]+/
 transition_label: /[^;]+/
 COMMENT: "'" /[^\n]*/

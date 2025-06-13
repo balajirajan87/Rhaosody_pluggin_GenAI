@@ -5,26 +5,33 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ActivityTransitionAdder {
 
+
+public static Set<String> swimlane = new HashSet<>();
     public static void main(String[] args) throws Exception {
-        String filePath = "c:/Users/xav1cob/Rapsody/Crowdsourcing/Rhaosody_pluggin_GenAI/puml-parser-py/data/processed/activity_4.json";
+        String filePath = "";
+
         AddMergeNode(filePath);
+        System.out.println();
     }
 
-    public static void AddMergeNode(String filePath){
-        try{
+    @SuppressWarnings("unchecked")
+    public static void AddMergeNode(String filePath) {
+        try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             // Read as LinkedHashMap to preserve order
             LinkedHashMap<String, Object> json = mapper.readValue(
-                Files.readAllBytes(Paths.get(filePath)),
-                new TypeReference<LinkedHashMap<String, Object>>() {}
-            );
+                    Files.readAllBytes(Paths.get(filePath)),
+                    new TypeReference<LinkedHashMap<String, Object>>() {
+                    });
             List<Map<String, Object>> sections = (List<Map<String, Object>>) json.get("sections");
             if (sections != null) {
                 for (Map<String, Object> section : sections) {
@@ -32,17 +39,25 @@ public class ActivityTransitionAdder {
                     if (statements != null) {
                         processStatements(statements, null);
                     }
+
+                    Object obj = section.get("swimlane");
+                    if (obj instanceof Map) {
+                        Object identifier = ((Map<?, ?>) obj).get("identifier");
+                        swimlane.add(identifier.toString().replaceAll("[^a-zA-Z0-9]", "_"));
+                    }
                 }
             }
             // Write back to file (preserves object key order)
             mapper.writeValue(Paths.get(filePath).toFile(), json);
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             return;
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void processStatements(List<Map<String, Object>> statements, String decisionCondition) {
-        if (statements == null || statements.isEmpty()) return;
+        if (statements == null || statements.isEmpty())
+            return;
 
         for (Map<String, Object> stmt : statements) {
             String type = (String) stmt.get("type");
@@ -92,8 +107,14 @@ public class ActivityTransitionAdder {
             }
             if ("repeat_loop".equals(type) || "while_loop".equals(type)) {
                 List<Map<String, Object>> body = (List<Map<String, Object>>) stmt.get("body");
-                if (body != null) processStatements(body, decisionCondition);
+                if (body != null)
+                    processStatements(body, decisionCondition);
             }
+            if ("swimlane".equals(type)) {
+                 String iden = (String) stmt.get("identifier");
+                swimlane.add(iden.replaceAll("[^a-zA-Z0-9]", "_"));
+            }
+
         }
 
         // Add a new transition block if last is not stop
@@ -103,8 +124,8 @@ public class ActivityTransitionAdder {
             LinkedHashMap<String, Object> transitionBlock = new LinkedHashMap<>();
             transitionBlock.put("type", "MergeNode");
             transitionBlock.put("text", decisionCondition != null
-                ? "Transition after decision: " + decisionCondition
-                : "");
+                    ? "Transition after decision: " + decisionCondition
+                    : "");
             statements.add(transitionBlock);
         }
     }

@@ -177,8 +177,6 @@ class ActivityDiagramTransformer(Transformer):
 
     @v_args(inline=True)
     def repeat_loop(self, *args):
-        if len(args) < 3:
-            raise ValueError("repeat_loop expects at least 3 arguments")
         
         statements = []
         else_label = None
@@ -211,6 +209,13 @@ class ActivityDiagramTransformer(Transformer):
             "else_label": str(else_label) if else_label else None,
         }
     
+    @v_args(inline=True)
+    def note(self, description=None):
+        return {
+            "type": "note",
+            "description": str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
+        }
+
     @v_args(inline=True)
     def partition(self, partition_name, *statements):
         return {

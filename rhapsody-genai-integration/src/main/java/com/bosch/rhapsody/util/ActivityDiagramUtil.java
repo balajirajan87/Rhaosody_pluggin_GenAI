@@ -128,6 +128,7 @@ public class ActivityDiagramUtil {
         try {
             connector = diagram.getRootState().addConnector(connectorType);
             connector.setDisplayName(name);
+            connector.setDescription(name);
             if (swimlane != null) {
                 connector.setItsSwimlane(swimlane);
             }
