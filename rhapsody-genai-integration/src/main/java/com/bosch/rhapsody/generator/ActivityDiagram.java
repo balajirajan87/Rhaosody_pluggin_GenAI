@@ -1,256 +1,173 @@
 package com.bosch.rhapsody.generator;
 
-import com.telelogic.rhapsody.core.IRPApplication;
-import com.telelogic.rhapsody.core.IRPConnector;
-import com.telelogic.rhapsody.core.IRPFlowchart;
-import com.telelogic.rhapsody.core.IRPObjectNode;
-import com.telelogic.rhapsody.core.IRPPackage;
-import com.telelogic.rhapsody.core.IRPProject;
-import com.telelogic.rhapsody.core.IRPState;
-import com.telelogic.rhapsody.core.IRPStereotype;
-import com.telelogic.rhapsody.core.IRPSwimlane;
-import com.telelogic.rhapsody.core.IRPTransition;
-import com.telelogic.rhapsody.core.RhapsodyAppServer;
+import com.bosch.rhapsody.constants.Constants;
+import com.bosch.rhapsody.util.ActivityDiagramUtil;
+import com.bosch.rhapsody.util.CommonUtil;
+import com.telelogic.rhapsody.core.*;
+import org.json.JSONObject;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
+import org.json.JSONArray;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class ActivityDiagram {
 
-    private IRPStereotype controlFlow=null;
+    private IRPApplication rhapsodyApp;
+    private IRPProject project;
+    private int actionNameIndex = 1;
+    IRPConnector connector = null;
+    Object state = null;
 
-    /**
-     * Creates a swimlane in a Rhapsody activity diagram.
-     *
-     * @param diagram      The IRPFlowchart (activity diagram) where the swimlane will be created.
-     * @param swimlaneName The name of the swimlane to create.
-     * @return The created IRPSwimlane object, or null if creation failed.
-     */
-    public IRPSwimlane createSwimlane(IRPFlowchart diagram, String swimlaneName) {
-
-        IRPSwimlane swimlane = null;
+    public void createActivityDiagram(String outputFile, Shell shell) {
         try {
-            swimlane = diagram.addSwimlane(swimlaneName);
-            if (swimlane == null) {
-                throw new Exception("Failed to create swimlane: " + swimlaneName);
+            rhapsodyApp = Constants.rhapsodyApp;
+            String content = new String(Files.readAllBytes(Paths.get(outputFile)));
+            JSONObject json = new JSONObject(content);
+            project = CommonUtil.getActiveProject(rhapsodyApp);
+            if (project == null) {
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin",
+                        "\nERROR: Rhapsody project not found.Hence diagram will not be generated");
             }
-        } catch (Exception ex) {
-            System.out.println("Failed to create swimlane " + swimlaneName + ex.getMessage() + "\n");
-        }
-        return swimlane;
-    }
-
-    /**
-     * Retrieves the "ControlFlow" stereotype from the given project.
-     *
-     * @param project The IRPProject from which to retrieve the stereotype.
-     */
-    public void getActivitySpecificStereotypes(IRPProject project) {
-        controlFlow = (IRPStereotype) project.findNestedElementRecursive("ControlFlow", "Stereotype");
-    }
-
-
-    /**
-     * Creates an activity diagram in the specified Rhapsody package.
-     *
-     * @param pkg         The IRPPackage object where the activity diagram will be created.
-     * @param diagramName The name to assign to the new activity diagram.
-     * @return The created IRPFlowchart (activity diagram) object, or null if creation failed.
-     */
-    public IRPFlowchart createActivityDiagram(IRPPackage pkg, String diagramName) {
-        IRPFlowchart flowChart = null;
-        try {
-            flowChart = pkg.addActivityDiagram();
-            flowChart.setName(diagramName);
-            flowChart.setPropertyValue("Activity_diagram.ControlFlow.line_style", "rectilinear_arrows");
-            flowChart.setPropertyValue("Activity_diagram.DefaultTransition.line_style", "rectilinear_arrows");
-        } catch (Exception ex) {
-            System.out.println("Failed to create ActivityDiagram " + diagramName + ex.getMessage() + "\n");
-        }
-        return flowChart;
-    }
-
-    /**
-     * Creates an action (state) in the given activity diagram and assigns it to a swimlane.
-     *
-     * @param diagram    The IRPFlowchart (activity diagram) where the action will be created.
-     * @param actionName The name of the action.
-     * @param swimlane   The IRPSwimlane to assign the action to (can be null).
-     * @return The created IRPState object, or null if creation failed.
-     */
-    public IRPState createAction(IRPFlowchart diagram, String actionName, IRPSwimlane swimlane) {
-        IRPState action = null;
-        try {
-            action = diagram.getRootState().addState(actionName);
-            action.setStateType("Action");
-            if (swimlane != null) {
-                action.setItsSwimlane(swimlane);
-            }
-        } catch (Exception ex) {
-            System.out.println("Failed to create action " + actionName + ": " + ex.getMessage());
-        }
-        return action;
-    }
-
-    /**
-     * Creates an object node in the given activity diagram.
-     *
-     * @param diagram  The IRPFlowchart (activity diagram) where the object node will be created.
-     * @param nodeName The name of the object node.
-     * @return The created IRPObjectNode object, or null if creation failed.
-     */
-    public IRPObjectNode createObjectNode(IRPFlowchart diagram, String nodeName) {
-        IRPObjectNode objNode = null;
-        try {
-            objNode = (IRPObjectNode) diagram.addNewAggr("ObjectNode", nodeName);
-        } catch (Exception ex) {
-            System.out.println("Failed to create object node " + nodeName + ": " + ex.getMessage());
-        }
-        return objNode;
-    }
-
-    /**
-     * Creates a connector (e.g., Condition) in the activity diagram.
-     * 
-     * @param diagram       The IRPFlowchart (activity diagram) where the connector
-     *                      will be created.
-     * @param connectorType The type of connector (e.g., "Condition").
-     * @param swimlane      The IRPSwimlane to assign the connector to (can be null).
-     * @return The created IRPConnector object, or null if creation failed.
-     */
-    public IRPConnector createConnector(IRPFlowchart diagram, String connectorType, IRPSwimlane swimlane) {
-        IRPConnector connector = null;
-        try {
-            connector = diagram.getRootState().addConnector(connectorType);
-            if (swimlane != null) {
-                connector.setItsSwimlane(swimlane);
-            }
-        } catch (Exception ex) {
-            System.out.println("Failed to create connector " + connectorType + ": " + ex.getMessage());
-        }
-        return connector;
-    }
-
-    /**
-     * Creates a flow final node in the activity diagram.
-     *
-     * @param diagram  The IRPFlowchart (activity diagram) where the flow final node will be created.
-     * @param nodeName The name of the flow final node.
-     * @param swimlane The IRPSwimlane to assign the flow final node to (can be null).
-     * @return The created IRPState object, or null if creation failed.
-     */
-    public IRPState createFlowFinal(IRPFlowchart diagram, String nodeName, IRPSwimlane swimlane) {
-        IRPState finalNode = null;
-        try {
-            finalNode = diagram.getRootState().addState(nodeName);
-            finalNode.setStateType("FlowFinal");
-            if (swimlane != null) {
-                finalNode.setItsSwimlane(swimlane);
-            }
-        } catch (Exception ex) {
-            System.out.println("Failed to create flow final node " + nodeName + ": " + ex.getMessage());
-        }
-        return finalNode;
-    }
-
-    /**
-     * Adds a transition between two elements (states or connectors) in the activity diagram.
-     *
-     * @param fromElement    The source IRPState or IRPConnector where the transition starts.
-     * @param toElement      The target IRPState or IRPConnector where the transition ends.
-     * @param guard          (Optional) The guard condition for the transition (can be null or empty).
-     * @param transitionType (Optional) The IRPStereotype to assign to the transition (can be null).
-     * @return The created IRPTransition object, or null if creation failed.
-     */
-    public IRPTransition createTransition(Object fromElement, Object toElement, String guard,
-            IRPStereotype transitionType) {
-        IRPTransition transition = null;
-        try {
-            // Convert toElement to IRPState or IRPConnector (typed, not generic Object)
-            if (!(toElement instanceof IRPState) && !(toElement instanceof IRPConnector)) {
-                throw new IllegalArgumentException("toElement must be IRPState or IRPConnector");
-            }
-
-            // Check if fromElement has addTransition method and call with correct type
-            if (fromElement instanceof IRPState && toElement instanceof IRPState) {
-                transition = ((IRPState) fromElement).addTransition((IRPState) toElement);
-            } else if (fromElement instanceof IRPState && toElement instanceof IRPConnector) {
-                transition = ((IRPState) fromElement).addTransition((IRPConnector) toElement);
-            } else if (fromElement instanceof IRPConnector && toElement instanceof IRPState) {
-                transition = ((IRPConnector) fromElement).addTransition((IRPState) toElement);
-            } else if (fromElement instanceof IRPConnector && toElement instanceof IRPConnector) {
-                transition = ((IRPConnector) fromElement).addTransition((IRPConnector) toElement);
-            } else {
-                throw new IllegalArgumentException("fromElement must be IRPState or IRPConnector");
-            }
-
-            if (transitionType != null) {
-                transition.addSpecificStereotype(transitionType);
-            }
-            if (guard != null && !guard.isEmpty()) {
-                transition.setItsGuard(guard);
-            }
-        } catch (Exception ex) {
-            System.out.println("Failed to add transition: " + ex.getMessage());
-        }
-        return transition;
-    }
-
-    /**
-     * Creates diagram graphics for all elements in the given activity diagram.
-     * This method should be called after adding all model elements to the diagram.
-     * 
-     * @param flowchart The IRPFlowchart (activity diagram) for which to create
-     *                  graphics.
-     */
-    public static void createDiagramGraphics(IRPFlowchart flowchart) {
-        if (flowchart != null) {
-            flowchart.createGraphics();
-            flowchart.setShowDiagramFrame(1);
-        }
-    }
-
-    /**
-     * Creates a default transition from the given source state to the target state
-     * in the activity diagram.
-     * 
-     * @param diagram The IRPFlowchart (activity diagram)
-     * @param toState The target IRPState where the transition ends.
-     * @return The created IRPTransition object, or null if creation failed.
-     */
-    public IRPTransition createDefaultTransition(IRPFlowchart diagram, IRPState toState) {
-        IRPTransition transition = null;
-        try {
-            if (null != diagram) {
-                IRPState rootState = diagram.getRootState();
-                if (null != rootState) {
-                    transition = toState.createDefaultTransition(rootState);
+            String language = CommonUtil.getProjectLanguage(project);
+            if (language.equals("C")) {
+                IRPPackage basePackage = CommonUtil.createBasePackage(project, shell, rhapsodyApp);
+                if (basePackage == null) {
+                    rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Could not create/find base package for activity diagram.");
+                    return;
                 }
+                ActivityDiagramUtil.getActivitySpecificStereotypes(project);
+                String diagramName = json.optString("title", "ActivityDiagram").replaceAll("[^a-zA-Z0-9]", "_");
+                IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
+                JSONArray sections = json.optJSONArray("sections");
+                if (sections != null) {
+                    int swimlaneCount = 0;
+                    for (int j = 0; j < sections.length(); j++) {
+                        JSONObject section_val = sections.getJSONObject(j);
+                        JSONObject swimlane_val = section_val.optJSONObject("swimlane");
+                        if(swimlane_val != null){
+                            swimlaneCount++;
+                            if(swimlaneCount >= 2)
+                                break;
+                        }
+                    }
+                    for (int i = 0; i < sections.length(); i++) {
+                        JSONObject section = sections.getJSONObject(i);
+                        JSONObject swimlane = section.optJSONObject("swimlane");
+                        String swimlaneId = swimlane != null ? swimlane.optString("identifier", "Swimlane" + i).replaceAll("[^a-zA-Z0-9]", "_") : "Swimlane" + i;
+                        IRPSwimlane swimlaneElem = null;
+                        if(swimlaneCount >= 2){
+                            swimlaneElem = ActivityDiagramUtil.createSwimlane(fc, swimlaneId);
+                            state = null;
+                        }
+                        JSONArray statements = section.optJSONArray("statements");
+                        if (statements != null) {
+                            createStatementsRecursive(fc,swimlaneElem, statements,false,null);
+                        }
+                    }
+                }
+                JSONArray partitions = json.optJSONArray("partitions");
+                if (partitions != null) {
+                    for (int i = 0; i < partitions.length(); i++) {
+                        JSONObject partition = partitions.getJSONObject(i);
+                        JSONArray statements = partition.optJSONArray("statements");
+                        if (statements != null) {
+                            state = null;
+                            createStatementsRecursive(fc,null, statements,false,null);
+                        }
+                    }
+                }
+                ActivityDiagramUtil.createDiagramGraphics(fc);
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nActivity Diagram generated successfully.");
+                MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
+                messageBox.setMessage("Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
+                messageBox.open();
+            }else{
+                MessageBox messageBox = new MessageBox(shell, SWT.ERROR | SWT.OK);
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nExpected Rhapsody project type is \"C\" but found \""
+                        + language + "\". Hence diagram will not be generated.");
+                messageBox.setMessage("Expected Rhapsody project type is \"C\" but found \"" + language
+                        + "\". Hence diagram will not be generated.");
+                messageBox.open();
+                return;
             }
-        } catch (Exception ex) {
-            System.out.println("Failed to create default transition: " + ex.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                java.nio.file.Path outputPath = java.nio.file.Paths.get(outputFile);
+                if (java.nio.file.Files.exists(outputPath)) {
+                    java.nio.file.Files.delete(outputPath);
+                }
+            } catch (Exception ex) {
+                rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Could not delete output file: " + ex.getMessage());
+            }
+        
         }
-        return transition;
     }
 
-    /**
-     * Main method for demonstration and testing purposes.
-     * Creates a sample activity diagram with swimlanes, actions, connectors, transitions, and graphics.
-     *
-     * @param args Command-line arguments (not used).
-     */
-    public static void main(String[] args) {
-        IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
-        IRPPackage pkg = app.activeProject().addPackage("aPackage");
-        ActivityDiagram createActivityDiagram = new ActivityDiagram();
-        createActivityDiagram.getActivitySpecificStereotypes(app.activeProject());
-        IRPFlowchart fc = createActivityDiagram.createActivityDiagram(pkg, "new");
-        IRPSwimlane sw = createActivityDiagram.createSwimlane(fc, "New");
-        IRPSwimlane sw_2 = createActivityDiagram.createSwimlane(fc, "New_2");
-        IRPState ac = createActivityDiagram.createAction(fc, "action_new", sw);
-        createActivityDiagram.createDefaultTransition(fc, ac);
-        IRPConnector cond = createActivityDiagram.createConnector(fc, "Condition",sw);
-        IRPState ff = createActivityDiagram.createFlowFinal(fc, "abc", sw);
-        createActivityDiagram.createTransition(ac, cond, "if", createActivityDiagram.controlFlow);
-        createActivityDiagram.createTransition(cond, ff, "else", createActivityDiagram.controlFlow);
-        createDiagramGraphics(fc);
-    }
+   
 
+
+    // Helper method to handle nested statements (actions, decisions, etc.)
+    private void createStatementsRecursive(IRPFlowchart flowChart, IRPSwimlane swimlaneElem, JSONArray statements,Boolean hasStart,String gaurd) {
+        IRPState newState = null;
+        for (int i = 0; i < statements.length(); i++) {
+            try{
+                JSONObject stmt = statements.getJSONObject(i);
+                String type = stmt.optString("type", "");
+                switch (type) {
+                    case "start":
+                        hasStart = true;
+                        break;
+                    case "stop":
+                        newState = ActivityDiagramUtil.createActivityFinal(flowChart, swimlaneElem);
+                        ActivityDiagramUtil.createTransition(state,newState,gaurd,ActivityDiagramUtil.controlFlow);
+                        state = newState;
+                        break;
+                    case "action":
+                        String actionText = stmt.optString("text", "");
+                        newState  = ActivityDiagramUtil.createAction(flowChart, actionText,"action_"+actionNameIndex,swimlaneElem);
+                        actionNameIndex++;
+                        if(hasStart){
+                            ActivityDiagramUtil.createDefaultTransition(flowChart, newState);
+                            hasStart = false;
+                        }
+                        if (state != null)
+                            ActivityDiagramUtil.createTransition(state, newState, gaurd,ActivityDiagramUtil.controlFlow);
+                        state = newState;
+                        break;
+                    case "transition":
+                        String text = stmt.optString("text", "transition");
+                        IRPConnector MergeNode = ActivityDiagramUtil.createConnector(flowChart, "Join",text,swimlaneElem);
+                            if (state != null)
+                                ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,ActivityDiagramUtil.controlFlow);
+                        state = MergeNode;
+                        break;
+                    case "decision":
+                        String condition = stmt.optString("condition", "decision");
+                        String then_label = stmt.optString("then_label", "yes");
+                        String else_label = stmt.optString("else_label", "no");
+                        IRPConnector cond = ActivityDiagramUtil.createConnector(flowChart, "Condition",condition,swimlaneElem);
+                        ActivityDiagramUtil.createTransition(state, cond,gaurd, ActivityDiagramUtil.controlFlow); 
+                        JSONArray thenArr = stmt.optJSONArray("then");
+                        if (thenArr != null) {
+                            state = cond;
+                            createStatementsRecursive(flowChart,swimlaneElem, thenArr,false,then_label);
+                        }
+                        JSONArray elseArr = stmt.optJSONArray("else");
+                        if (elseArr != null) {
+                            state = cond;
+                            createStatementsRecursive(flowChart,swimlaneElem, elseArr,false,else_label);
+                        }
+                        break;
+                }
+            }catch (Exception e) {
+                    rhapsodyApp.writeToOutputWindow("GenAIPlugin",
+                            "\nERROR: Error while creating element " + e.getMessage());
+            }
+            gaurd = null;
+        }
+    }
 }

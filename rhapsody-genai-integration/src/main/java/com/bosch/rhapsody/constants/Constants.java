@@ -63,6 +63,7 @@ public class Constants {
     public static final String JSON_EXTENDS = "extends";
 
     public static final String RHAPSODY_CLASS_DIAGRAM = "ClassDiagram";
+    public static final String RHAPSODY_ACTIVITY_DIAGRAM = "ActivityDiagram";
     public static final String RHAPSODY_CLASS_DIAGRAM_STEREOTYPE = "Class Diagram";
     public static final String RHAPSODY_OBJECT_MODEL_DIAGRAM = "ObjectModelDiagram";
     public static final String RHAPSODY_ALL_RELATIONS = "AllRelations";
@@ -80,7 +81,9 @@ public class Constants {
     public static final String RHAPSODY_NOTE = "Note";
     public static final String RHAPSODY_ASSOCIATION = "association";
     public static final String RHAPSODY_DIRECTED_ASSOCIATION = "directed_association";
+    public static final String RHAPSODY_REVERSE_DIRECTED_ASSOCIATION = "reverse_directed_association";
     public static final String RHAPSODY_DEPENDENCY = "dependency";
+    public static final String RHAPSODY_REVERSE_DEPENDENCY = "reverse_dependency";
     public static final String RHAPSODY_DOTTED_DEPENDENCY = "dotted_dependency";
     public static final String RHAPSODY_REALIZATION = "realization";
     public static final String RHAPSODY_REVERSE_REALIZATION = "reverse_realization";

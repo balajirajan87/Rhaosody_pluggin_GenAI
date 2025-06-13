@@ -9,13 +9,31 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.generator.*;
+import com.telelogic.rhapsody.core.IRPApplication;
+import com.telelogic.rhapsody.core.RhapsodyAppServer;
+
 
 public class PUMLParser {
+
+    public static void main(String[] args) throws IOException {
+        IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
+        Constants.rhapsodyApp = app;
+        Display display = new Display();
+        Shell shell = new Shell(display);
+        //new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell, "classdiagram");
+        //String outputFile = "";
+        //ClassDiagram diagramHandler = new ClassDiagram();
+        //diagramHandler.createClassDiagram(outputFile,shell);
+        String outputFileActivity = "";
+        ActivityDiagram diagramHandler = new ActivityDiagram();
+        diagramHandler.createActivityDiagram(outputFileActivity,shell);
+    }
 
     public void generateJsonFromPuml(String chatContent, Shell shell, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
@@ -60,7 +78,8 @@ public class PUMLParser {
             ClassDiagram diagramHandler = new ClassDiagram();
             diagramHandler.createClassDiagram(outputFile, shell);
         }else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
-            //Activity diagram creation
+             ActivityDiagram diagramHandler = new ActivityDiagram();
+             diagramHandler.createActivityDiagram(outputFile,shell);
         }
     }
 

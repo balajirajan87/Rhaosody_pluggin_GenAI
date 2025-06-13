@@ -3,34 +3,8 @@ package com.bosch.rhapsody.util;
 import com.telelogic.rhapsody.core.*;
 import com.bosch.rhapsody.constants.Constants;
 
-public class RhapsodyUtil {
+public class ClassDiagramUtil {
 
-    public static IRPProject getActiveProject(IRPApplication app) {
-        try {
-            return app.activeProject();
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getActiveProject: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public static String getProjectLanguage(IRPProject project) {
-        try {
-            return project.getLanguage();
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getProjectLanguage: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public static IRPPackage addPackage(IRPProject project, String packageName) {
-        try {
-            return project.addPackage(packageName);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (project): " + e.getMessage());
-        }
-        return null;
-    }
 
     public static IRPPackage addPackage(IRPPackage pkg, String packageName, IRPPackage basePackage) {
         try {
