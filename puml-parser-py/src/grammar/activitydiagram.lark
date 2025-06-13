@@ -4,11 +4,12 @@ title: "title" description
 
 skinparam: "skinparam" sparam svalue
 
-section: swimlane? statement+
+section: swimlane? (statement | partition) +
 
-swimlane: "|" COLOR? "|" IDENTIFIER "|"
+swimlane: "|"? COLOR? "|" IDENTIFIER "|"
 
 statement: start_activity
+         | swimlane
          | action
          | decision
          | while_loop
@@ -21,11 +22,17 @@ start_activity: "start"
 
 action: ":" action_statement ";"
 
-decision: "if" "(" condition ")" "then" "(" then_label ")" statement+ ("else" "(" else_label ")" statement+)? "endif"
+decision: "if" "(" condition ")" "then" "(" then_label ")" (statement | partition)+ else_if_block* else_block? "endif"
 
-while_loop: "while" "(" condition ")" statement+ "endwhile"
+else_if_block: "else if" "(" condition ")" "then" "(" then_label ")" (statement | partition)+
 
-repeat_loop: "repeat" statement+ "repeat" "while" "(" condition ")" "is" "(" then_label ")" "not" "(" else_label ")"
+else_block: "else" ("(" else_label ")")? (statement | partition)+
+
+while_loop: "while" "(" while_condition ")" ("is" "(" then_label ")")? statement+ "endwhile" ("(" else_label ")")?
+
+repeat_loop: "repeat" (statement | partition)+ "repeat while" "(" while_condition ")" repeat_loop_labels?
+
+repeat_loop_labels: "is" "(" then_label ")" "not" "(" else_label ")"
 
 break_statement: "break"
 
@@ -35,16 +42,22 @@ stop: "stop"
 
 end: "end"
 
+partition: "partition" partition_name "{" statement* "}"
+
 description: /.+/
 sparam: CNAME
 svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+ | 
-condition: /[^)]+/
-then_label:IDENTIFIER
-else_label:IDENTIFIER
+condition: /.+?(?=\)\s+then)/
+repeat_while_condition: /[^)]+/
+while_condition: /[^)]+/
+then_label:/[^)]+/
+else_label:/[^)]+/
 COLOR: /#[a-zA-Z0-9]+/
 IDENTIFIER: /[a-zA-Z0-9_]+/
 action_statement: /[^;]+/
 transition_label: /[^;]+/
+COMMENT: "'" /[^\n]*/
+partition_name: ESCAPED_STRING
 
 %import common.CNAME
 %import common.ESCAPED_STRING
@@ -53,3 +66,6 @@ transition_label: /[^;]+/
 %import common.DIGIT
 %import common.WS
 %ignore WS
+%ignore /\!define[^\n]*/
+%ignore /\|\*[^\n]*/
+%ignore COMMENT
