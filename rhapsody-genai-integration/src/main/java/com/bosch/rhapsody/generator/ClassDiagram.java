@@ -33,7 +33,7 @@ public class ClassDiagram {
                 return;
             JSONObject json = new JSONObject(jsonString);
 
-            basePackage = CommonUtil.createBasePackage(Constants.project, shell);
+            basePackage = CommonUtil.createBasePackage(Constants.project, shell,Constants.RHAPSODY_CLASS_DIAGRAM);
             if (basePackage == null) {
                 return;
             }

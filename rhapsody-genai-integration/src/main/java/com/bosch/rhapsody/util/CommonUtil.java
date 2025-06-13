@@ -39,26 +39,26 @@ public class CommonUtil {
         return null;
     }
 
-    public static IRPPackage createBasePackage(IRPProject project, Shell shell) {
-        IRPModelElement newPackage = project.findNestedElementRecursive(Constants.RHAPSODY_ACTIVITY_DIAGRAM,
+    public static IRPPackage createBasePackage(IRPProject project, Shell shell, String packageName) {
+        IRPModelElement newPackage = project.findNestedElementRecursive(packageName,
                 Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
             newPackage.locateInBrowser();
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             messageBox.setText("Package Exists");
-            messageBox.setMessage("The package '" + Constants.RHAPSODY_ACTIVITY_DIAGRAM
+            messageBox.setMessage("The package '" + packageName
                     + "' already exists. Do you want to overwrite it?");
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "\nThe package '" + Constants.RHAPSODY_ACTIVITY_DIAGRAM + "' already exists.");
+                    "\nThe package '" + packageName + "' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
                 newPackage.deleteFromProject();
-                return CommonUtil.addPackage(project, Constants.RHAPSODY_ACTIVITY_DIAGRAM);
+                return CommonUtil.addPackage(project, packageName);
             } else {
                 return null;
             }
         } else {
-            return CommonUtil.addPackage(project, Constants.RHAPSODY_ACTIVITY_DIAGRAM);
+            return CommonUtil.addPackage(project, packageName);
         }
     }
 

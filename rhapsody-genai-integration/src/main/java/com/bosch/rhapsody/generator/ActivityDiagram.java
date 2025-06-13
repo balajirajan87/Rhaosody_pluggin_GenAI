@@ -25,7 +25,7 @@ public class ActivityDiagram {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell);
+            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell,Constants.RHAPSODY_ACTIVITY_DIAGRAM);
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                         "\nERROR: Could not create/find base package for activity diagram.");
