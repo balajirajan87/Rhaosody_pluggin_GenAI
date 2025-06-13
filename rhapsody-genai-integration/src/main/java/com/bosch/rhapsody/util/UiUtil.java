@@ -18,6 +18,8 @@ public class UiUtil {
             display = new Display();
         }
         Shell shell = new Shell(display);
+        UiUtil.setShellLocation(display, shell);
+        UiUtil.toggleAlwaysOnTop(shell, true);
         try {
             MessageBox messageBox = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
             messageBox.setMessage(msg);
