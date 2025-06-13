@@ -74,6 +74,7 @@ public class PUMLParser {
     }
 
     private void createDiagram(Shell shell, String diagramType, String outputFile) {
+        ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
             ClassDiagram diagramHandler = new ClassDiagram();
             diagramHandler.createClassDiagram(outputFile, shell);

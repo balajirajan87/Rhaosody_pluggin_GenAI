@@ -11,18 +11,20 @@ import org.eclipse.swt.widgets.Shell;
 import org.json.JSONArray;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ActivityDiagram {
 
     private int actionNameIndex = 1;
     IRPConnector connector = null;
     Object state = null;
+    private Map<String,IRPConnector> MergeNodeMap = new HashMap<>();
 
     public void createActivityDiagram(String outputFile, Shell shell) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-
             IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell);
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
@@ -127,12 +129,28 @@ public class ActivityDiagram {
                         break;
                     case "transition":
                         String text = stmt.optString("text", "transition");
-                        IRPConnector MergeNode = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", text,
+                        IRPConnector transition = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", text,
                                 swimlaneElem);
                         if (state != null)
-                            ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,
+                            ActivityDiagramUtil.createTransition(state, transition, gaurd,
                                     ActivityDiagramUtil.controlFlow);
-                        state = MergeNode;
+                        state = transition;
+                        break;
+                    case "MergeNode":
+                        String MergeNodeText = stmt.optString("text");
+                        if(MergeNodeText != null && !MergeNodeText.isEmpty())
+                        {
+                            IRPConnector MergeNode;
+                            if(MergeNodeMap.containsKey(MergeNodeText)){
+                                MergeNode = MergeNodeMap.get(MergeNodeText);
+                            }else{
+                                MergeNode = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", MergeNodeText,
+                                    swimlaneElem);
+                                MergeNodeMap.put(MergeNodeText, MergeNode); 
+                            }  
+                            ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,ActivityDiagramUtil.controlFlow);
+                            state = MergeNode;
+                        }
                         break;
                     case "decision":
                         String condition = stmt.optString("condition", "decision");
