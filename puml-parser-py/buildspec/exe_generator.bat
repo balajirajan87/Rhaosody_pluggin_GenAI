@@ -22,7 +22,7 @@ echo Starting conversion...
 echo.
 
 Rem Command to call the pyinstaller for the conversion of python file to executable file
-call nuitka --standalone --onefile --output-filename=%FileName% %RunFile% --enable-plugin=tk-inter --include-data-files=../src/grammar/classdiagram.lark=grammar\classdiagram.lark
+call nuitka --standalone --onefile --output-filename=%FileName% %RunFile% --enable-plugin=tk-inter --include-data-files=../src/grammar/classdiagram.lark=grammar\classdiagram.lark --include-data-files=../src/grammar/activitydiagram.lark=grammar\activitydiagram.lark
 
 echo.
 echo Conversion completed!...
