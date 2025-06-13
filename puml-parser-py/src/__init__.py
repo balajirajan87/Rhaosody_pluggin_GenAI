@@ -14,10 +14,10 @@ def process_diagram(input_file, output_file, diagram_type):
         diagram_type (str): Type of diagram ('class' or 'activity').
     """
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    if diagram_type == "classdiagram":
+    if  "class" in diagram_type:
         grammar_file = "classdiagram.lark"
         transformer = ClassDiagramTransformer()
-    elif diagram_type == "activitydiagram":
+    elif "activity" in diagram_type:
         grammar_file = "activitydiagram.lark"
         transformer = ActivityDiagramTransformer()
     else:

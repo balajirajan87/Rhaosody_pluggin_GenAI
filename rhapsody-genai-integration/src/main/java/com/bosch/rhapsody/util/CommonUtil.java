@@ -12,7 +12,7 @@ import com.telelogic.rhapsody.core.IRPProject;
 
 public class CommonUtil {
 
-     public static IRPProject getActiveProject(IRPApplication app) {
+    public static IRPProject getActiveProject(IRPApplication app) {
         try {
             return app.activeProject();
         } catch (Exception e) {
@@ -30,7 +30,7 @@ public class CommonUtil {
         return null;
     }
 
-     public static IRPPackage addPackage(IRPProject project, String packageName) {
+    public static IRPPackage addPackage(IRPProject project, String packageName) {
         try {
             return project.addPackage(packageName);
         } catch (Exception e) {
@@ -39,8 +39,7 @@ public class CommonUtil {
         return null;
     }
 
-
-     public static IRPPackage createBasePackage(IRPProject project, Shell shell, IRPApplication rhapsodyApp) {
+    public static IRPPackage createBasePackage(IRPProject project, Shell shell) {
         IRPModelElement newPackage = project.findNestedElementRecursive(Constants.RHAPSODY_ACTIVITY_DIAGRAM,
                 Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
@@ -49,7 +48,7 @@ public class CommonUtil {
             messageBox.setText("Package Exists");
             messageBox.setMessage("The package '" + Constants.RHAPSODY_ACTIVITY_DIAGRAM
                     + "' already exists. Do you want to overwrite it?");
-            rhapsodyApp.writeToOutputWindow("GenAIPlugin",
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                     "\nThe package '" + Constants.RHAPSODY_ACTIVITY_DIAGRAM + "' already exists.");
             int response = messageBox.open();
             if (response == SWT.YES) {
@@ -62,5 +61,5 @@ public class CommonUtil {
             return CommonUtil.addPackage(project, Constants.RHAPSODY_ACTIVITY_DIAGRAM);
         }
     }
-    
+
 }

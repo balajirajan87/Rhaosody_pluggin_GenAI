@@ -42,7 +42,7 @@ if __name__ == '__main__':
         
 
         try:
-            if diagram_type == "classdiagram" or diagram_type == "activitydiagram" :
+            if "class" in diagram_type or "activity" in diagram_type:
                 process_diagram(input_file, output_file,diagram_type)
             else:
                 root = tk.Tk()
