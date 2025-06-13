@@ -12,7 +12,7 @@ import java.util.Map;
 public class ActivityTransitionAdder {
 
     public static void main(String[] args) throws Exception {
-        String filePath = "c:/Users/xav1cob/Rapsody/Crowdsourcing/Rhaosody_pluggin_GenAI/puml-parser-py/data/processed/activity_11.json";
+        String filePath = "c:/Users/xav1cob/Rapsody/Crowdsourcing/Rhaosody_pluggin_GenAI/puml-parser-py/data/processed/activity_4.json";
         AddMergeNode(filePath);
     }
 
@@ -76,6 +76,18 @@ public class ActivityTransitionAdder {
                         processStatements(elseStmts, condition);
                         setTransitionText(elseStmts, condition);
                     }
+                } else {
+                    // If else_block is null, create it and add a MergeNode inside
+                    LinkedHashMap<String, Object> newElseBlock = new LinkedHashMap<>();
+                    List<Map<String, Object>> elseStmts = new java.util.ArrayList<>();
+                    LinkedHashMap<String, Object> mergeNode = new LinkedHashMap<>();
+                    mergeNode.put("type", "MergeNode");
+                    mergeNode.put("text", condition != null
+                        ? "Transition after decision: " + condition
+                        : "");
+                    elseStmts.add(mergeNode);
+                    newElseBlock.put("statements", elseStmts);
+                    stmt.put("else_block", newElseBlock);
                 }
             }
             if ("repeat_loop".equals(type) || "while_loop".equals(type)) {

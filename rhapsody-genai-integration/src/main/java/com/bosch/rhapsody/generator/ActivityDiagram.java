@@ -20,6 +20,8 @@ public class ActivityDiagram {
     IRPConnector connector = null;
     Object state = null;
     private Map<String,IRPConnector> MergeNodeMap = new HashMap<>();
+    private Object MergeNodeState = null;
+
 
     public void createActivityDiagram(String outputFile, Shell shell) {
         try {
@@ -111,7 +113,7 @@ public class ActivityDiagram {
                     case "stop":
                         newState = ActivityDiagramUtil.createActivityFinal(flowChart, swimlaneElem);
                         ActivityDiagramUtil.createTransition(state, newState, gaurd, ActivityDiagramUtil.controlFlow);
-                        state = newState;
+                        state = MergeNodeState;
                         break;
                     case "action":
                         String actionText = stmt.optString("text", "");
@@ -147,7 +149,8 @@ public class ActivityDiagram {
                                 MergeNode = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", MergeNodeText,
                                     swimlaneElem);
                                 MergeNodeMap.put(MergeNodeText, MergeNode); 
-                            }  
+                            } 
+                            MergeNodeState = state;
                             ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,ActivityDiagramUtil.controlFlow);
                             state = MergeNode;
                         }
