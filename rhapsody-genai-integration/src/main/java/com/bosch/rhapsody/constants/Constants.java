@@ -8,7 +8,7 @@ import com.telelogic.rhapsody.core.IRPProject;
  */
 public class Constants {
 
-        public static final String VERSION = " v1.4.0_2025-06-13";
+        public static final String VERSION = " v1.4.1_2025-06-18";
 
         public static final String RHP_VERSION = " 10.0.1";
 
@@ -40,7 +40,7 @@ public class Constants {
         public static String[] reqExtension = { "*.pdf" };
         public static String[] refExtension = { "*.pdf" };
         public static String[] refCodeExtension = {
-                        "*.c, *.cpp, *.h, *.hpp, *.xml, *.arxml, *.json, *.py, *.ipynb, *.yaml, *.sh, *.bat, *.puml, *.xmi, *.md, *.j2, *.yml, *.java" };
+                        "*.c", "*.cpp", "*.h", "*.hpp", "*.xml", "*.arxml", "*.json", "*.py", "*.ipynb", "*.yaml", "*.sh", "*.bat", "*.puml", "*.xmi", "*.md", "*.j2", "*.yml", "*.java" };
         public static String[] guideExtension = { "*.pdf" };
 
         public static final String JSON_CLASSES = "classes";
