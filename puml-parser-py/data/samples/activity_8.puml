@@ -1,0 +1,59 @@
+@startuml
+|System Initialization|
+start
+
+:Emcem_Init();
+note right: Enable FCCU alarms for NCF 91–97
+
+:Configure FCCU alarm timeout (50ms);
+note right: Ensure timeout is set
+
+:ISR Registration;
+note right: Register FCCU_ALARM_ISR for NCF 91,93,94,95,96,97
+
+:Enable NMI Routing;
+: rbsfty_eMcem_EnableRoutingNMI();
+
+:Start Monitoring NCF Channels;
+: rbsfty_LLCENcfChannel_Monitoring();
+
+stop
+
+|Fault Detection & Handling|
+start
+
+:Fault detected on NCF channel 91-97;
+
+:Invoke FCCU_ALARM_ISR();
+
+:Invoke eMcemUserAlarmHandler(nFaultId);
+
+switch (nFaultId)
+  case (91)
+    :rbsfty_ErrMgt_ReportError(91, "BOSCH_LLCE_FAILURE", "0000 0000", DEM_EVENT_STATUS_FAILED);
+    break
+  case (92)
+    :rbsfty_ErrMgt_ReportError(92, "BOSCH_LLCE_FAILURE", "0000 0001", DEM_EVENT_STATUS_FAILED);
+    break
+  case (93)
+    :rbsfty_ErrMgt_ReportError(93, "BOSCH_LLCE_FAILURE", "0000 0010", DEM_EVENT_STATUS_FAILED);
+    break
+  case (94)
+    :rbsfty_ErrMgt_ReportError(94, "BOSCH_LLCE_FAILURE", "0000 0011", DEM_EVENT_STATUS_FAILED);
+    break
+  case (95)
+    :rbsfty_ErrMgt_ReportError(95, "BOSCH_LLCE_FAILURE", "0000 0100", DEM_EVENT_STATUS_FAILED);
+    :Perform Functional Reset;
+    break
+  case (96)
+    :rbsfty_ErrMgt_ReportError(96, "BOSCH_LLCE_FAILURE", "0000 0101", DEM_EVENT_STATUS_FAILED);
+    :Perform Functional Reset;
+    break
+  case (97)
+    :rbsfty_ErrMgt_ReportError(97, "BOSCH_CORE_LOCKUP", "0000 0001", DEM_EVENT_STATUS_FAILED);
+    :Perform Functional Reset;
+    break
+endswitch
+
+stop
+@enduml

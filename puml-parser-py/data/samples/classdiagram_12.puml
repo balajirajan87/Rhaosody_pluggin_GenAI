@@ -1,0 +1,109 @@
+@startuml
+' Packages represent SW Components
+ 
+package cl_VoltMon {
+    class cl_VoltMon {
+        - voltageBuffer: uint16[]
+        - debounceCounter: uint8
+        - uvThresholds: uint16[]
+        - ovThresholds: uint16[]
+        + MonitorVoltages(): void
+        + CheckDebounce(): bool
+        + ForwardFaultToErrMgmt(faultType: uint8): void
+    }
+}
+ 
+package cl_adc {
+    class cl_adc {
+        + Adc_GetGroupStatus(group: uint8): AdcStatus
+        + Adc_StartGroupConversion(group: uint8): void
+        + Adc_ReadGroup(group: uint8, buffer: uint16[]): void
+    }
+}
+ 
+package cl_ErrMgmt {
+    class cl_ErrMgmt {
+        + rbsfty_ErrMgt_ReportError(ErrInfo_u16: uint16, Add_info_u32: uint32, Dem_status: uint8): void
+        + StoreDTCEvent(dtcId: uint16, info: uint32): void
+    }
+}
+ 
+package cl_RTAOS {
+    class cl_RTAOS {
+        + Schedule10msTask(): void
+        + init_task(): void
+    }
+}
+ 
+package cl_Dio {
+    class cl_Dio {
+        + Dio_ReadChannel(channel: uint8): uint8
+        + Diochannel_Read(channel: uint8): uint8
+    }
+}
+ 
+package rbsfty_BladeDiscovery {
+    class rbsfty_BladeDiscovery {
+        - slotId: uint8
+        - bladeType: uint8
+        + ReadSlotId(): uint8
+        + MatchSlotId(): bool
+        + HandleBladeDiscovery(): void
+        + TriggerDegradation(): void
+    }
+}
+ 
+package cl_Communication {
+    class cl_Communication {
+        + Write_Com_SafetyInterbladeSignal(bladeType: uint8, slotId: uint8): void
+        + Get_Com_SafetyInterBlade_Signal(): (uint8, uint8)
+    }
+}
+ 
+package rbsfty_BldAuthenticate {
+    class rbsfty_BldAuthenticate {
+        + rbsfty_BldAuthenticate_Init(): void
+        + rbsfty_BldAuthenticate(): bool
+    }
+}
+ 
+' External interface for DTC logging
+class DCM_if <<external>> {
+    + StoreDTCEvent(dtcId: uint16, info: uint32): void
+}
+ 
+' Safe State handler (external)
+class SafeStateHandler <<external>> {
+    + TriggerSafeState(): void
+}
+ 
+' cl_EcuM for initialization (details not shown)
+package cl_EcuM {
+    class cl_EcuM {
+        + Init(): void
+    }
+}
+ 
+' Relationships
+ 
+cl_VoltMon ..> cl_adc : uses
+cl_VoltMon ..> cl_ErrMgmt : forwards fault
+cl_VoltMon ..> SafeStateHandler : triggers
+cl_VoltMon ..> cl_RTAOS : scheduled by
+ 
+cl_RTAOS ..> cl_VoltMon : schedules MonitorVoltages()
+ 
+cl_ErrMgmt ..> DCM_if : logs DTC
+ 
+rbsfty_BladeDiscovery ..> cl_Dio : reads GPIO
+rbsfty_BladeDiscovery ..> cl_Communication : sends/receives slot info
+rbsfty_BladeDiscovery ..> cl_ErrMgmt : triggers DTC on failure
+rbsfty_BladeDiscovery ..> rbsfty_BldAuthenticate : triggers authentication
+ 
+cl_Communication ..> cl_Communication : communicates with other blades
+ 
+rbsfty_BldAuthenticate ..> cl_ErrMgmt : triggers DTC on auth failure
+ 
+cl_EcuM ..> cl_RTAOS : initializes
+ 
+@enduml
