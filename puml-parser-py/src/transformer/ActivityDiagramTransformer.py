@@ -21,10 +21,10 @@ class ActivityDiagramTransformer(Transformer):
         for section in sections:
             if "title" in section:
                 result["title"] = section["title"]
-            elif "skinparam" in section:
-                param = section["skinparam"]["param"]
-                value = section["skinparam"]["value"]
-                result["skinparam"][param] = value
+            # elif "skinparam" in section:
+            #     param = section["skinparam"]["param"]
+            #     value = section["skinparam"]["value"]
+            #     result["skinparam"][param] = value
             elif "type" in section and section["type"] == "section":
                 result["sections"].append(section)
             elif "type" in section and section["type"] == "partition":
@@ -38,11 +38,11 @@ class ActivityDiagramTransformer(Transformer):
         return {"title": ParsingUtil.parse_tree(description)}
 
     @v_args(inline=True)
-    def skinparam(self, sparam, value):
+    def skinparam(self,*args):
         return {
             "skinparam": {
-                "param": str(ParsingUtil.parse_tree(sparam)),
-                "value": str(ParsingUtil.parse_tree(value)),
+                # "param": str(ParsingUtil.parse_tree(sparam)),
+                # "value": str(ParsingUtil.parse_tree(value)),
             }
         }
 
@@ -209,6 +209,44 @@ class ActivityDiagramTransformer(Transformer):
             "else_label": str(else_label) if else_label else None,
         }
     
+    @v_args(inline=True)
+    def switch(self, switch_condition, *case_blocks):
+        """
+        Parses a switch block.
+        - switch_condition: the condition/expression for the switch
+        - case_blocks: one or more case_block dicts
+        """
+        cases = []
+        for case in case_blocks:
+            if isinstance(case, dict):
+                cases.append(case)
+            elif isinstance(case, Tree) and hasattr(self, 'transform'):
+                cases.append(self.transform(case))
+        return {
+            "type": "switch",
+            "condition": str(ParsingUtil.parse_tree(switch_condition)),
+            "cases": cases
+        }
+
+    @v_args(inline=True)
+    def case_block(self, case_value, *statements):
+        """
+        Parses a case block inside a switch.
+        - case_value: the value for the case
+        - statements: statements inside the case, ending with a break
+        """
+        stmts = []
+        for stmt in statements:
+            # Exclude the break statement from the statements list, but mark if present
+            if isinstance(stmt, dict) and stmt.get("type") == "break":
+                continue
+            stmts.append(stmt)
+        return {
+            "type": "case",
+            "value": str(ParsingUtil.parse_tree(case_value)),
+            "statements": stmts
+        }
+
     @v_args(inline=True)
     def note(self, description=None):
         return {

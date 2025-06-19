@@ -2,7 +2,9 @@ start: "@startuml" (title | skinparam | package | class | interface | struct| en
 
 title: "title" description
 
-skinparam: "skinparam" sparam svalue
+skinparam: "skinparam" (sparam stereotype? svalue | sparam "{" skinparam_entry* "}")
+
+skinparam_entry: sparam stereotype? svalue
 
 package: "package" package_name stereotype? "{" (class | interface | struct| enum | relationship | note)* "}"
 

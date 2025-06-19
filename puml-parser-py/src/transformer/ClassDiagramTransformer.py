@@ -35,11 +35,11 @@ class ClassDiagramTransformer(Transformer):
         return {"title": ParsingUtil.parse_tree(description)}
 
     @v_args(inline=True)
-    def skinparam(self, sparam, value):
+    def skinparam(self, *args):
         return {
             "skinparam": {
-                "param": str(ParsingUtil.parse_tree(sparam)),
-                "value": str(ParsingUtil.parse_tree(value)),
+                # "param": str(ParsingUtil.parse_tree(sparam)),
+                # "value": str(ParsingUtil.parse_tree(value)),
             }
         }
 
@@ -214,10 +214,10 @@ class ClassDiagramTransformer(Transformer):
     def _process_dict_item(self, item, result):
         if "title" in item:
             result["title"] = item["title"]
-        elif "skinparam" in item:
-            param = item["skinparam"]["param"]
-            value = item["skinparam"]["value"]
-            result["skinparam"][param] = value
+        # elif "skinparam" in item:
+        #     param = item["skinparam"]["param"]
+        #     value = item["skinparam"]["value"]
+        #     result["skinparam"][param] = value
         elif "package" in item:
             result["packages"].append(item["package"])
         elif "class" in item:
