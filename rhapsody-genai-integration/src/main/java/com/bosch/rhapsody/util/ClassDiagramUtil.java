@@ -5,21 +5,6 @@ import com.bosch.rhapsody.constants.Constants;
 
 public class ClassDiagramUtil {
 
-
-    public static IRPPackage addPackage(IRPPackage pkg, String packageName, IRPPackage basePackage) {
-        try {
-            IRPModelElement element = basePackage.findNestedElementRecursive(packageName, Constants.RHAPSODY_PACKAGE);
-            if (element != null && element instanceof IRPPackage) {
-                return (IRPPackage) element;
-            } else {
-                return (IRPPackage) pkg.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
-            }
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (pkg): " + e.getMessage());
-        }
-        return null;
-    }
-
     public static IRPClass addClass(IRPPackage pkg, String className, IRPPackage basePackage) {
         try {
             IRPModelElement element = basePackage.findNestedElementRecursive(className, Constants.RHAPSODY_CLASS);

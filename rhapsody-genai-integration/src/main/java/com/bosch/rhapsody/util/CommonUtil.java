@@ -2,9 +2,13 @@ package com.bosch.rhapsody.util;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.telelogic.rhapsody.core.IRPApplication;
+import com.telelogic.rhapsody.core.IRPCollection;
 import com.telelogic.rhapsody.core.IRPModelElement;
 import com.telelogic.rhapsody.core.IRPPackage;
 import com.telelogic.rhapsody.core.IRPProject;
+import com.telelogic.rhapsody.core.IRPStereotype;
+
+import java.util.Map;
 
 public class CommonUtil {
 
@@ -33,6 +37,39 @@ public class CommonUtil {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (project): " + e.getMessage());
         }
         return null;
+    }
+
+    public static IRPPackage createOrGetPackage(IRPModelElement project, String packageName) {
+        try {
+           IRPModelElement newPackage = project.findNestedElement(packageName,
+                Constants.RHAPSODY_PACKAGE);
+            if (newPackage != null) {
+                    return (IRPPackage)newPackage;
+                } else {
+                     return (IRPPackage)project.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
+                }
+        } catch (Exception e) {
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (pkg): " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static Map<String, IRPStereotype> getStereotypes(IRPModelElement pkg) {
+        Map<String, IRPStereotype> stereotypeMap = new java.util.HashMap<>();
+        try {
+            IRPCollection stereotypes = pkg.getNestedElementsByMetaClass(Constants.RHAPSODY_STEREOTYPE, 1);
+            if (stereotypes != null) {
+                for (int i = 1; i <= stereotypes.getCount(); i++) {
+                    IRPStereotype stereotype = (IRPStereotype) stereotypes.getItem(i);
+                    if (stereotype != null && stereotype.getName() != null) {
+                        stereotypeMap.put(stereotype.getName(), stereotype);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getStereotypes: " + e.getMessage());
+        }
+        return stereotypeMap;
     }
 
     public static IRPPackage createBasePackage(IRPProject project, String packageName) {

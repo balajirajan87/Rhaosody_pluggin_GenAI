@@ -22,7 +22,10 @@ public class ClassDiagram {
     private Map<IRPModelElement, String> realizations = new HashMap<>();
     private Map<IRPModelElement, String> generalizations = new HashMap<>();
     private Map<IRPComment, String> anchors = new HashMap<>();
+    private Map<String, IRPStereotype> stereotypeMap = new HashMap<>();
     IRPPackage basePackage;
+    IRPPackage baseStereotypePackage;
+
 
     public void createClassDiagram(String outputFile) {
         try {
@@ -35,6 +38,10 @@ public class ClassDiagram {
             if (basePackage == null) {
                 return;
             }
+
+            baseStereotypePackage = CommonUtil.createOrGetPackage(Constants.project, Constants.RHAPSODY_STEREOTYPE);
+            stereotypeMap = CommonUtil.getStereotypes(baseStereotypePackage);
+
             elementsToPopulate = Constants.rhapsodyApp.createNewCollection();
 
             // Handle root-level elements (outside packages)
@@ -83,6 +90,20 @@ public class ClassDiagram {
         }
     }
 
+    private void addStereotype(IRPModelElement element, String stereotypeName) {
+        if(stereotypeName != null){
+            IRPStereotype stereotype = null;
+            String metaType = element.getMetaClass();
+            stereotype = stereotypeMap.get(stereotypeName);
+            if(stereotype == null){
+                stereotype = (IRPStereotype) baseStereotypePackage.addNewAggr(Constants.RHAPSODY_STEREOTYPE, stereotypeName);
+                stereotypeMap.put(stereotypeName, stereotype);
+            }
+            stereotype.addMetaClass(metaType);
+            element.addSpecificStereotype(stereotype);
+        }
+    }
+
     private void createPackage(JSONObject jsonObject) {
         JSONArray packages = jsonObject.optJSONArray(Constants.JSON_PACKAGES);
         if (packages != null) {
@@ -90,9 +111,13 @@ public class ClassDiagram {
                 try {
                     JSONObject packageObject = packages.getJSONObject(i);
                     String packageName = packageObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
+                    String stereotype = packageObject.has(Constants.JSON_STEREOTYPE) && !packageObject.isNull(Constants.JSON_STEREOTYPE)
+                            ? packageObject.getString(Constants.JSON_STEREOTYPE)
+                            : null;
                     if (packageName != null) {
-                        IRPPackage rhapsodyPackage = ClassDiagramUtil.addPackage(basePackage, packageName, basePackage);
+                        IRPPackage rhapsodyPackage = CommonUtil.createOrGetPackage(basePackage, packageName);
                         if (rhapsodyPackage != null) {
+                            addStereotype(rhapsodyPackage,stereotype);
                             elementMap.put(packageName, rhapsodyPackage);
                             createElements(rhapsodyPackage, packageObject);
                         }
@@ -130,13 +155,23 @@ public class ClassDiagram {
             for (int i = 0; i < classes.length(); i++) {
                 try {
                     JSONObject classObject = classes.getJSONObject(i);
-                    String className = classObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
-                    IRPClass rhapsodyClass = ClassDiagramUtil.addClass((IRPPackage) container, className, basePackage);
-                    if (rhapsodyClass != null) {
-                        elementMap.put(className, rhapsodyClass);
-                        elementsToPopulate.addItem(rhapsodyClass);
-                        addAttributesAndMethods(rhapsodyClass, classObject);
-                        setRealizationsAndGeneralizations(rhapsodyClass, classObject);
+                    String stereotype = classObject.has(Constants.JSON_STEREOTYPE) && !classObject.isNull(Constants.JSON_STEREOTYPE)
+                            ? classObject.getString(Constants.JSON_STEREOTYPE)
+                            : null;
+                    if(stereotype != null && ("enum".equals(stereotype.toLowerCase()) || "enumeration".equals(stereotype.toLowerCase()))){
+                        createSingleEnum(container, classObject);
+                    }else if(stereotype != null && "struct".equals(stereotype.toLowerCase())){
+                        createSingleStruct(container, classObject);
+                    }else{
+                        String className = classObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
+                        IRPClass rhapsodyClass = ClassDiagramUtil.addClass((IRPPackage) container, className, basePackage);
+                        if (rhapsodyClass != null) {
+                            addStereotype(rhapsodyClass,stereotype);
+                            elementMap.put(className, rhapsodyClass);
+                            elementsToPopulate.addItem(rhapsodyClass);
+                            addAttributesAndMethods(rhapsodyClass, classObject);
+                            setRealizationsAndGeneralizations(rhapsodyClass, classObject);
+                        }
                     }
                 } catch (Exception e) {
                     Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
@@ -153,11 +188,15 @@ public class ClassDiagram {
             for (int i = 0; i < interfaces.length(); i++) {
                 try {
                     JSONObject interfaceObject = interfaces.getJSONObject(i);
+                    String stereotype = interfaceObject.has(Constants.JSON_STEREOTYPE) && !interfaceObject.isNull(Constants.JSON_STEREOTYPE)
+                            ? interfaceObject.getString(Constants.JSON_STEREOTYPE)
+                            : null;
                     String interfaceName = interfaceObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]",
                             "_");
                     IRPClass rhapsodyInterface = ClassDiagramUtil.addInterface((IRPPackage) container, interfaceName,
                             basePackage);
                     if (rhapsodyInterface != null) {
+                        addStereotype(rhapsodyInterface,stereotype);
                         elementMap.put(interfaceName, rhapsodyInterface);
                         elementsToPopulate.addItem(rhapsodyInterface);
                         addAttributesAndMethods(rhapsodyInterface, interfaceObject);
@@ -243,24 +282,30 @@ public class ClassDiagram {
         }
     }
 
+    private void createSingleEnum(IRPModelElement container, JSONObject enumObject) {
+        String enumName = enumObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
+        IRPType rhapsodyEnum = ClassDiagramUtil.addEnum((IRPPackage) container, enumName, basePackage);
+        if (rhapsodyEnum != null) {
+            elementMap.put(enumName, rhapsodyEnum);
+            elementsToPopulate.addItem(rhapsodyEnum);
+            JSONArray literals = enumObject.optJSONArray(Constants.JSON_VALUES);
+            if (literals != null) {
+                for (int j = 0; j < literals.length(); j++) {
+                    String literal = literals.getString(j);
+                    ClassDiagramUtil.addEnumLiteral(rhapsodyEnum, literal, j);
+                }
+            }
+        }
+    }
+
+
     private void createEnum(IRPModelElement container, JSONObject obj) {
         JSONArray enums = obj.optJSONArray(Constants.JSON_ENUMS);
         if (enums != null) {
             for (int i = 0; i < enums.length(); i++) {
                 try {
                     JSONObject enumObject = enums.getJSONObject(i);
-                    String enumName = enumObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
-                    IRPType rhapsodyEnum = ClassDiagramUtil.addEnum((IRPPackage) container, enumName, basePackage);
-                    if (rhapsodyEnum != null) {
-                        elementMap.put(enumName, rhapsodyEnum);
-                        JSONArray literals = enumObject.optJSONArray(Constants.JSON_VALUES);
-                        if (literals != null) {
-                            for (int j = 0; j < literals.length(); j++) {
-                                String literal = literals.getString(j);
-                                ClassDiagramUtil.addEnumLiteral(rhapsodyEnum, literal, j);
-                            }
-                        }
-                    }
+                    createSingleEnum(container, enumObject);
                 } catch (Exception e) {
                     Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                             "\nERROR: Error while creating enum " + e.getMessage());
@@ -270,19 +315,24 @@ public class ClassDiagram {
 
     }
 
+    private void createSingleStruct(IRPModelElement container, JSONObject structObject) {
+        String structName = structObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
+        IRPType rhapsodyStruct = ClassDiagramUtil.addStruct((IRPPackage) container, structName,
+                basePackage);
+        if (rhapsodyStruct != null) {
+            elementMap.put(structName, rhapsodyStruct);
+            addAttributes(rhapsodyStruct, structObject);
+            elementsToPopulate.addItem(rhapsodyStruct);
+        }
+    }
+
     private void createStruct(IRPModelElement container, JSONObject obj) {
         JSONArray structs = obj.optJSONArray(Constants.JSON_STRUCTS);
         if (structs != null) {
             for (int i = 0; i < structs.length(); i++) {
                 try {
                     JSONObject structObject = structs.getJSONObject(i);
-                    String structName = structObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
-                    IRPType rhapsodyStruct = ClassDiagramUtil.addStruct((IRPPackage) container, structName,
-                            basePackage);
-                    if (rhapsodyStruct != null) {
-                        elementMap.put(structName, rhapsodyStruct);
-                        addAttributes(rhapsodyStruct, structObject);
-                    }
+                    createSingleStruct(container, structObject);
                 } catch (Exception e) {
                     Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                             "\nERROR: Error while creating struct " + e.getMessage());
