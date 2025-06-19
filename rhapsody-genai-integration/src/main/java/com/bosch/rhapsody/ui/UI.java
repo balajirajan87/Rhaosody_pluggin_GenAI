@@ -20,7 +20,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -62,8 +61,6 @@ public class UI {
     UI ui = new UI(aiHandler, "abc");
     ui.createUI();
   }
-
-
 
   public void createUI() {
 
@@ -219,9 +216,7 @@ public class UI {
       String selectedFile = fileDialog.open();
       if (selectedFile != null) {
         if (selectedOption.isEmpty()) {
-          MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-          messageBox.setMessage("Please select an option from the dropdown before selecting a file.");
-          messageBox.open();
+          UiUtil.showWarnPopup("Please select an option from the dropdown before selecting a file.");
         } else {
           String[] selectedFiles = fileDialog.getFileNames();
           String dir = fileDialog.getFilterPath();
@@ -261,17 +256,13 @@ public class UI {
           fileList.select(fileList.getItemCount() - 1); // Select the last item if no next item
         }
       } else {
-        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-        messageBox.setMessage("No file selected to remove.");
-        messageBox.open();
+        UiUtil.showWarnPopup("No file selected to remove.");
       }
     });
 
     uploadTextButton.addListener(SWT.Selection, e -> {
       if (fileList.getItemCount() == 0) { // Check if no files are uploaded
-        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-        messageBox.setMessage("Please upload/select at least one file before submitting.");
-        messageBox.open();
+        UiUtil.showWarnPopup("Please upload/select at least one file before submitting.");
         return; // Stop further execution
       }
 
@@ -402,12 +393,12 @@ public class UI {
         // Clear user input
         userInput.setText("");
         if (dropdown.getText().equals("create_uml_design")) {
-          if(!RhpPlugin.isValidLanguage){
+          if (!RhpPlugin.isValidLanguage) {
             generateButton.setToolTipText("Disabled due to invalid language support.");
-          }else{
-          generateButton.setEnabled(true);
-          generateButton.setToolTipText("Generate UML diagram in Rhapsody");
-          Constants.userMessageDiagramType = userMessage;
+          } else {
+            generateButton.setEnabled(true);
+            generateButton.setToolTipText("Generate UML diagram in Rhapsody");
+            Constants.userMessageDiagramType = userMessage;
           }
         }
       }
@@ -420,10 +411,11 @@ public class UI {
       new Thread(() -> {
         display.asyncExec(() -> {
           try {
-            parserHandler.generateJsonFromPuml(chatContent, shell, Constants.userMessageDiagramType);
+            parserHandler.generateJsonFromPuml(chatContent, Constants.userMessageDiagramType);
             // chatArea.append("Diagram generated successfully: " + "\n");
           } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Error while generating " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
+                "\nERROR: Error while generating " + e.getMessage());
           }
         });
       }).start();

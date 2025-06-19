@@ -1,9 +1,5 @@
 package com.bosch.rhapsody.util;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
-
 import com.bosch.rhapsody.constants.Constants;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.IRPModelElement;
@@ -39,19 +35,16 @@ public class CommonUtil {
         return null;
     }
 
-    public static IRPPackage createBasePackage(IRPProject project, Shell shell, String packageName) {
+    public static IRPPackage createBasePackage(IRPProject project, String packageName) {
         IRPModelElement newPackage = project.findNestedElementRecursive(packageName,
                 Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
             newPackage.locateInBrowser();
-            MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            messageBox.setText("Package Exists");
-            messageBox.setMessage("The package '" + packageName
-                    + "' already exists. Do you want to overwrite it?");
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                     "\nThe package '" + packageName + "' already exists.");
-            int response = messageBox.open();
-            if (response == SWT.YES) {
+            boolean response = UiUtil.showQuestionPopup("The package '" + packageName
+                    + "' already exists. Do you want to overwrite it?");
+            if (response) {
                 newPackage.deleteFromProject();
                 return CommonUtil.addPackage(project, packageName);
             } else {

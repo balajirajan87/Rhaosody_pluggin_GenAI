@@ -1,13 +1,11 @@
 package com.bosch.rhapsody.generator;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.util.ClassDiagramUtil;
 import com.bosch.rhapsody.util.CommonUtil;
+import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.*;
 
 import java.nio.file.Files;
@@ -26,14 +24,14 @@ public class ClassDiagram {
     private Map<IRPComment, String> anchors = new HashMap<>();
     IRPPackage basePackage;
 
-    public void createClassDiagram(String outputFile, Shell shell) {
+    public void createClassDiagram(String outputFile) {
         try {
             String jsonString = readJsonFile(outputFile);
             if (jsonString == null)
                 return;
             JSONObject json = new JSONObject(jsonString);
 
-            basePackage = CommonUtil.createBasePackage(Constants.project, shell, Constants.RHAPSODY_CLASS_DIAGRAM);
+            basePackage = CommonUtil.createBasePackage(Constants.project, Constants.RHAPSODY_CLASS_DIAGRAM);
             if (basePackage == null) {
                 return;
             }
@@ -58,10 +56,8 @@ public class ClassDiagram {
             createBDD(basePackage, json);
 
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nClass Diagram generated successfully");
-            MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
-            messageBox.setMessage(
+            UiUtil.showInfoPopup(
                     "Class Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
-            messageBox.open();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {

@@ -9,16 +9,11 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
-
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.generator.*;
+import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
-
 
 public class PUMLParser {
 
@@ -26,20 +21,19 @@ public class PUMLParser {
         IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
         Constants.rhapsodyApp = app;
         Constants.project = Constants.rhapsodyApp.activeProject();
-        Display display = new Display();
-        Shell shell = new Shell(display);
-        //new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell, "classdiagram");
-        //String outputFile = "";
-        //ClassDiagram diagramHandler = new ClassDiagram();
-        //diagramHandler.createClassDiagram(outputFile,shell);
+        // new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell,
+        // "classdiagram");
+        // String outputFile = "";
+        // ClassDiagram diagramHandler = new ClassDiagram();
+        // diagramHandler.createClassDiagram(outputFile,shell);
         String outputFileActivity = "";
         ActivityDiagram diagramHandler = new ActivityDiagram();
-            ActivityTransitionAdder.swimlane =new HashSet<>();
+        ActivityTransitionAdder.swimlane = new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFileActivity);
-        diagramHandler.createActivityDiagram(outputFileActivity,shell);
+        diagramHandler.createActivityDiagram(outputFileActivity);
     }
 
-    public void generateJsonFromPuml(String chatContent, Shell shell, String diagramType) throws IOException {
+    public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
             String inputFile = "C:\\temp\\GenAI\\chatContent.puml";
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
@@ -59,7 +53,7 @@ public class PUMLParser {
                 if (!Files.exists(Paths.get(outputFile))) {
                     throw new IOException("Output file was not generated: " + outputFile);
                 }
-                createDiagram(shell, diagramType, outputFile);
+                createDiagram( diagramType, outputFile);
                 if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
                     pythonBackendProcess.destroy();
                 }
@@ -71,21 +65,19 @@ public class PUMLParser {
         } else {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                     "PUML not found, Make sure valid PUML exist in chat window.\n");
-            MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-            messageBox.setMessage("PUML not found, Make sure valid PUML exist in chat window");
-            messageBox.open();
+            UiUtil.showWarnPopup("PUML not found, Make sure valid PUML exist in chat window");
         }
     }
 
-    private void createDiagram(Shell shell, String diagramType, String outputFile) {
-        ActivityTransitionAdder.swimlane =new HashSet<>();
+    private void createDiagram( String diagramType, String outputFile) {
+        ActivityTransitionAdder.swimlane = new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
             ClassDiagram diagramHandler = new ClassDiagram();
-            diagramHandler.createClassDiagram(outputFile, shell);
-        }else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
-             ActivityDiagram diagramHandler = new ActivityDiagram();
-             diagramHandler.createActivityDiagram(outputFile,shell);
+            diagramHandler.createClassDiagram(outputFile);
+        } else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
+            ActivityDiagram diagramHandler = new ActivityDiagram();
+            diagramHandler.createActivityDiagram(outputFile);
         }
     }
 

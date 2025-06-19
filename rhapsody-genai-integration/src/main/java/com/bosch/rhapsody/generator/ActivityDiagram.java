@@ -4,11 +4,9 @@ import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.parser.ActivityTransitionAdder;
 import com.bosch.rhapsody.util.ActivityDiagramUtil;
 import com.bosch.rhapsody.util.CommonUtil;
+import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.*;
 import org.json.JSONObject;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
 import org.json.JSONArray;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,11 +22,11 @@ public class ActivityDiagram {
     private Map<String, IRPSwimlane> swimlaneMap = new HashMap<>();
      private Object MergeNodeState = null;
 
-    public void createActivityDiagram(String outputFile, Shell shell) {
+    public void createActivityDiagram(String outputFile) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, shell,
+            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, 
                     Constants.RHAPSODY_ACTIVITY_DIAGRAM);
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
@@ -75,10 +73,7 @@ public class ActivityDiagram {
             }
             ActivityDiagramUtil.createDiagramGraphics(fc);
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nActivity Diagram generated successfully.");
-            MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
-            messageBox.setMessage(
-                    "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
-            messageBox.open();
+            UiUtil.showInfoPopup("Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
