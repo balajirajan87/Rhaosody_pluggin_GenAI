@@ -1,10 +1,10 @@
 @startuml
 !define RECTANGLE class
-' skinparam activity {
-'     BackgroundColor<<API>> #E3F6FF
-'     BackgroundColor<<Manager>> #E8F6E8
-'     BackgroundColor<<Callback>> #FFF6E3
-' }
+skinparam activity {
+    BackgroundColor<<API>> #E3F6FF
+    BackgroundColor<<Manager>> #E8F6E8
+    BackgroundColor<<Callback>> #FFF6E3
+}
 
 title Activity Diagram: RingBuffManag API Layer
  
