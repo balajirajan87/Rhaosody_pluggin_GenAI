@@ -341,18 +341,21 @@ public class ClassDiagram {
                     String to = call.getString(Constants.JSON_TARGET);
                     String type = call.optString(Constants.JSON_TYPE, Constants.RHAPSODY_ASSOCIATION);
                     String description = call.optString(Constants.JSON_DESCRIPTION, "");
+                    String end1_multiplicity = call.optString(Constants.JSON_END1_MULTIPLICITY, "1");
+                    String end2_multiplicity = call.optString(Constants.JSON_END2_MULTIPLICITY, "1");
+
                     IRPModelElement fromElem = elementMap.get(from);
                     IRPModelElement toElem = elementMap.get(to);
                     if (fromElem != null && toElem != null && fromElem instanceof IRPClass
                             && toElem instanceof IRPClass) {
                         if (Constants.RHAPSODY_ASSOCIATION.equals(type)) {
-                            ClassDiagramUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description);
+                            ClassDiagramUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description,end1_multiplicity,end2_multiplicity);
                         } else if (Constants.RHAPSODY_DIRECTED_ASSOCIATION.equals(type)) {
                             ClassDiagramUtil.createDirectedAssociation((IRPClass) fromElem, (IRPClass) toElem,
-                                    description);
+                                    description,end1_multiplicity);
                         } else if (Constants.RHAPSODY_REVERSE_DIRECTED_ASSOCIATION.equals(type)) {
                             ClassDiagramUtil.createDirectedAssociation((IRPClass) toElem, (IRPClass) fromElem,
-                                    description);
+                                    description,end2_multiplicity);
                         } else if (Constants.RHAPSODY_DEPENDENCY.equals(type)) {
                             ClassDiagramUtil.createDependency(fromElem, toElem, description);
                         } else if (Constants.RHAPSODY_REVERSE_DEPENDENCY.equals(type)) {
@@ -368,9 +371,9 @@ public class ClassDiagram {
                             ClassDiagramUtil.createInheritance((IRPClass) toElem, (IRPClassifier) fromElem,
                                     description);
                         } else if (Constants.RHAPSODY_AGGREGATION.equals(type)) {
-                            ClassDiagramUtil.createAggregation((IRPClass) toElem, (IRPClass) fromElem, description);
+                            ClassDiagramUtil.createAggregation((IRPClass) toElem, (IRPClass) fromElem, description,end1_multiplicity,end2_multiplicity);
                         } else if (Constants.RHAPSODY_COMPOSITION.equals(type)) {
-                            ClassDiagramUtil.createComposition((IRPClass) fromElem, (IRPClass) toElem, description);
+                            ClassDiagramUtil.createComposition((IRPClass) fromElem, (IRPClass) toElem, description,end1_multiplicity,end2_multiplicity);
                         }
                     }
                 } catch (Exception e) {
@@ -431,7 +434,7 @@ public class ClassDiagram {
                     ClassDiagramUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
                     ClassDiagramUtil.populateDiagram(diagram, elementsToPopulate, relTypes,
                             Constants.RHAPSODY_POPULATE_MODE);
-                    setDiagramProperties(diagram);
+                    // setDiagramProperties(diagram);
                     diagram.openDiagram();
                 }
             }
@@ -442,17 +445,25 @@ public class ClassDiagram {
     }
 
     private void setRelationProperties(IRPObjectModelDiagram diagram) {
-        diagram.setPropertyValue("ObjectModelGe.Aggregation.line_style", "rectilinear_arrows");
-        diagram.setPropertyValue("ObjectModelGe.Association.line_style", "rectilinear_arrows");
-        diagram.setPropertyValue("ObjectModelGe.Composition.line_style", "rectilinear_arrows");
-        diagram.setPropertyValue("ObjectModelGe.Depends.line_style", "rectilinear_arrows");
-        diagram.setPropertyValue("ObjectModelGe.Realization.line_style", "rectilinear_arrows");
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_NAME, Constants.NAME_ONLY);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_ATTRIBUTES, Constants.RHAPSODY_DISPLAY_ALL);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_OPERATIONS, Constants.RHAPSODY_DISPLAY_ALL);
 
-        diagram.setPropertyValue("ObjectModelGe.Association.ShowName", "Name");
-        diagram.setPropertyValue("ObjectModelGe.Depends.ShowName", "Name");
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_AGGREGATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_ASSOCIATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_COMPOSITION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_DEPENDS_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_REALIZATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
+
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_AGGREGATION_SHOW_NAME, Constants.NAME);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_ASSOCIATION_SHOW_NAME, Constants.NAME);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_COMPOSITION_SHOW_NAME, Constants.NAME);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_DEPENDS_SHOW_NAME, Constants.NAME);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_REALIZATION_SHOW_NAME, Constants.NAME);
     }
 
     private void setDiagramProperties(IRPObjectModelDiagram diagram) {
+
         java.util.List<?> graphicalElements = ClassDiagramUtil.getGraphicalElements(diagram);
         if (graphicalElements != null) {
             for (Object diagramElement : graphicalElements) {

@@ -40,7 +40,8 @@ public class Constants {
         public static String[] reqExtension = { "*.pdf" };
         public static String[] refExtension = { "*.pdf" };
         public static String[] refCodeExtension = {
-                        "*.c", "*.cpp", "*.h", "*.hpp", "*.xml", "*.arxml", "*.json", "*.py", "*.ipynb", "*.yaml", "*.sh", "*.bat", "*.puml", "*.xmi", "*.md", "*.j2", "*.yml", "*.java" };
+                        "*.c", "*.cpp", "*.h", "*.hpp", "*.xml", "*.arxml", "*.json", "*.py", "*.ipynb", "*.yaml",
+                        "*.sh", "*.bat", "*.puml", "*.xmi", "*.md", "*.j2", "*.yml", "*.java" };
         public static String[] guideExtension = { "*.pdf" };
 
         public static final String JSON_CLASSES = "classes";
@@ -56,6 +57,8 @@ public class Constants {
         public static final String JSON_VALUES = "values";
         public static final String JSON_NAME = "name";
         public static final String JSON_TYPE = "type";
+        public static final String JSON_END1_MULTIPLICITY = "end1_multiplicity";
+        public static final String JSON_END2_MULTIPLICITY = "end2_multiplicity";
         public static final String JSON_VISIBILITY = "visibility";
         public static final String JSON_RETURN_TYPE = "return_type";
         public static final String JSON_DESCRIPTION = "description";
@@ -100,5 +103,22 @@ public class Constants {
         public static final String RHAPSODY_REALIZATION_TYPE = "Realization";
         public static final String RHAPSODY_AGGREGATION_TYPE = "Aggregation";
         public static final String RHAPSODY_COMPOSITION_TYPE = "Composition";
+
+        public static final String NAME_ONLY = "name_only";
+        public static final String NAME = "Name";
+        public static final String RECTILINEAR_ARROWS = "rectilinear_arrows";
+        public static final String OBJECT_MODEL_GE_REALIZATION_SHOW_NAME = "ObjectModelGe.Realization.ShowName";
+        public static final String OBJECT_MODEL_GE_DEPENDS_SHOW_NAME = "ObjectModelGe.Depends.ShowName";
+        public static final String OBJECT_MODEL_GE_COMPOSITION_SHOW_NAME = "ObjectModelGe.Composition.ShowName";
+        public static final String OBJECT_MODEL_GE_ASSOCIATION_SHOW_NAME = "ObjectModelGe.Association.ShowName";
+        public static final String OBJECT_MODEL_GE_AGGREGATION_SHOW_NAME = "ObjectModelGe.Aggregation.ShowName";
+        public static final String OBJECT_MODEL_GE_REALIZATION_LINE_STYLE = "ObjectModelGe.Realization.line_style";
+        public static final String OBJECT_MODEL_GE_DEPENDS_LINE_STYLE = "ObjectModelGe.Depends.line_style";
+        public static final String OBJECT_MODEL_GE_COMPOSITION_LINE_STYLE = "ObjectModelGe.Composition.line_style";
+        public static final String OBJECT_MODEL_GE_ASSOCIATION_LINE_STYLE = "ObjectModelGe.Association.line_style";
+        public static final String OBJECT_MODEL_GE_AGGREGATION_LINE_STYLE = "ObjectModelGe.Aggregation.line_style";
+        public static final String OBJECT_MODEL_GE_CLASS_SHOW_OPERATIONS = "ObjectModelGe.Class.ShowOperations";
+        public static final String OBJECT_MODEL_GE_CLASS_SHOW_ATTRIBUTES = "ObjectModelGe.Class.ShowAttributes";
+        public static final String OBJECT_MODEL_GE_CLASS_SHOW_NAME = "ObjectModelGe.Class.ShowName";
 
 }

@@ -183,18 +183,18 @@ public class ClassDiagramUtil {
         return null;
     }
 
-    public static void createAssociation(IRPClass from, IRPClass to, String description) {
+    public static void createAssociation(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
         try {
-            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    "", description);
+            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "", Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAssociation: " + e.getMessage());
         }
     }
 
-    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description) {
+    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description,String end1_multiplicity) {
         try {
-            IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "",
+            IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"",  "",
                     Constants.RHAPSODY_ASSOCIATION_TYPE, "", description);
             if (null != association) {
                 association.makeUnidirect();
@@ -237,19 +237,20 @@ public class ClassDiagramUtil {
         }
     }
 
-    public static void createAggregation(IRPClass from, IRPClass to, String description) {
+    public static void createAggregation(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
+
         try {
-            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "", Constants.RHAPSODY_AGGREGATION_TYPE,
-                    "", description);
+            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "", Constants.RHAPSODY_AGGREGATION_TYPE,
+                    isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAggregation: " + e.getMessage());
         }
     }
 
-    public static void createComposition(IRPClass from, IRPClass to, String description) {
+    public static void createComposition(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
         try {
-            IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, "", "",
-                    Constants.RHAPSODY_AGGREGATION_TYPE, "", description);
+            IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "",
+                    Constants.RHAPSODY_AGGREGATION_TYPE, isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
             if (null != comp) {
                 comp.setRelationType(Constants.RHAPSODY_COMPOSITION_TYPE);
             }
@@ -315,6 +316,27 @@ public class ClassDiagramUtil {
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setGraphicalProperty: " + e.getMessage());
         }
+    }
+
+        /**
+     * Validates if the given multiplicity string is allowed.
+     * Allowed values:  "1", "*", "1..*", "0..*", or any whole number.
+     * @param multiplicity the multiplicity string to validate
+     * @return true if valid, false otherwise
+     */
+    public static boolean isValidMultiplicity(String multiplicity) {
+        if (multiplicity == null) return false;
+        multiplicity = multiplicity.trim();
+        // Allowed literals
+        if ( multiplicity.equals("1") || multiplicity.equals("*") ||
+            multiplicity.equals("1..*") || multiplicity.equals("0..*")) {
+            return true;
+        }
+        // Whole number
+        if (multiplicity.matches("\\d+")) {
+            return true;
+        }
+        return false;
     }
 
 }
