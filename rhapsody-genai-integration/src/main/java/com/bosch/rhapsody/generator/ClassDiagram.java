@@ -33,7 +33,7 @@ public class ClassDiagram {
                 return;
             JSONObject json = new JSONObject(jsonString);
 
-            basePackage = CommonUtil.createBasePackage(Constants.project, shell,Constants.RHAPSODY_CLASS_DIAGRAM);
+            basePackage = CommonUtil.createBasePackage(Constants.project, shell, Constants.RHAPSODY_CLASS_DIAGRAM);
             if (basePackage == null) {
                 return;
             }
@@ -427,6 +427,8 @@ public class ClassDiagram {
             if (diagram != null) {
                 ClassDiagramUtil.addStereotype(diagram, Constants.RHAPSODY_CLASS_DIAGRAM_STEREOTYPE,
                         Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM);
+                setRelationProperties(diagram);
+
                 IRPCollection relTypes = ClassDiagramUtil.createNewCollection(Constants.rhapsodyApp);
                 if (relTypes != null) {
                     ClassDiagramUtil.setCollectionSize(relTypes, 1);
@@ -441,6 +443,17 @@ public class ClassDiagram {
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
                     "\nERROR: Error while creating diagram " + e.getMessage());
         }
+    }
+
+    private void setRelationProperties(IRPObjectModelDiagram diagram) {
+        diagram.setPropertyValue("ObjectModelGe.Aggregation.line_style", "rectilinear_arrows");
+        diagram.setPropertyValue("ObjectModelGe.Association.line_style", "rectilinear_arrows");
+        diagram.setPropertyValue("ObjectModelGe.Composition.line_style", "rectilinear_arrows");
+        diagram.setPropertyValue("ObjectModelGe.Depends.line_style", "rectilinear_arrows");
+        diagram.setPropertyValue("ObjectModelGe.Realization.line_style", "rectilinear_arrows");
+
+        diagram.setPropertyValue("ObjectModelGe.Association.ShowName", "Name");
+        diagram.setPropertyValue("ObjectModelGe.Depends.ShowName", "Name");
     }
 
     private void setDiagramProperties(IRPObjectModelDiagram diagram) {
