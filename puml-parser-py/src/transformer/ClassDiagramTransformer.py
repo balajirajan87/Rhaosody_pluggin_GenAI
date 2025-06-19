@@ -48,6 +48,7 @@ class ClassDiagramTransformer(Transformer):
         package_name = str(ParsingUtil.parse_tree(name)).replace("\"", "")
         package_dict = {
             "name": package_name,
+            "stereotype": None,
             "classes": [],
             "interfaces": [], 
             "structs": [],
@@ -244,6 +245,8 @@ class ClassDiagramTransformer(Transformer):
             result["enums"].append(self._parse_enum_tree(item))
         elif rule == "note":
             result["notes"].append(self._parse_note_tree(item))
+        elif rule == "stereotype_name":
+            result["stereotype"] = ParsingUtil.parse_tree(item)
 
     def _parse_class_tree(self, item):
         class_data = ParsingUtil.parse_class(item)

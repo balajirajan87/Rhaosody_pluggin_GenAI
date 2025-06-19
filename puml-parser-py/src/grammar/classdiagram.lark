@@ -4,7 +4,7 @@ title: "title" description
 
 skinparam: "skinparam" sparam svalue
 
-package: "package" package_name "{" (class | interface | struct| enum | relationship | note)* "}"
+package: "package" package_name stereotype? "{" (class | interface | struct| enum | relationship | note)* "}"
 
 class: class_modifier? "class" class_name stereotype? class_extends? class_implements? ("{" (attribute | method | enum_value+ )* "}")?
 
@@ -103,7 +103,7 @@ interface_name: CNAME
 struct_name: CNAME
 enum_value: CNAME
 enum_name: CNAME
-package_name: ESCAPED_STRING
+package_name: ESCAPED_STRING | CNAME
 stereotype_name: CNAME | ALPHANUM_SPECIAL_STEREOTYPE
 relation_text: (WORD|ESCAPED_STRING|DIGIT|">"|"<")*
 COMMENT: "'" /[^\n]*/
