@@ -7,133 +7,50 @@ This Project demonstrates the plugin for Rhapsody that can offer Generative AI S
 ![alt text](images/image.png)
 
 # Python Environment Setup for Windows
-Step1: 
-install Anaconda Distribution for Windows from ITSP:
-https://service-management.bosch.tech/sp?id=sc_cat_item&sys_id=b08ed16c1b83c91078087403dd4bcbb1
-![alt text](images/Anaconda_installation.png)
-Step2:
-Activate your Conda to enable python:
-```
-Conda list <command to list your conda environments>
-conda create --name <command to create your own conda env>
-conda activate <your env / base>
-```
-Step3
-create a python virtual Environment (local to your project)
-```
-python -m venv myvenv
-```
-Step2:
-Activate your Virtual Environment:
-```
-./myvenv/Scripts/activate
-```
-Step4:
-install the pip packages available as listed in the requirements.txt
-```
-pip install -r requirements.txt
-```
-Step4 (optional: only if you are using Jupyter notebook):
-create a new Jupyter kernel to run your jupyter notebook.
-```
-python3 -m ipykernel install --user --name=<your_env_name>
-```
-Step5 (optional: only if you are using Jupyter notebook):
-Select the newly created kernel in your notebook and run.
+Step1: first setup your proxy by following the below link:
+https://inside-docupedia.bosch.com/confluence/display/DEVCORNER/Px
 
-# Steps for JAVA Setup in Linux (for Rhapsody plugin Compilation), and Rhapsody Pluggin Execution.
-Step1:
-Copy the rhapsody.jar file located in your Rhapsody installation folder in windows:
-```
-C:/Program Files/IBM/Rhapsody/Share/JavaAPI
-```
-and paste it in 
-```
-rhapsody-plugin/lib/<your rhapsody.jar file>
-```
-Step2:
-in Linux install Java Development Kit.
-Install the same version of JDK that you plan to use on Windows (e.g., JDK 11).
-```
-sudo apt install openjdk-11-jdk
-```
-Step3:
-Install Maven
-(Required to build the plugin)
-```
-sudo apt install maven
-```
-Step4:
-Install the following extensions in VSCode:
-```
-Java Extension Pack (for Java development).
-Maven for Java (for Maven integration).
-```
-Step5:
-Run the following command to build the plugin
-```
-cd rhapsody-plugin/
-mvn clean install
-```
-The resulting JAR file will be in the target/ directory.
+Step2: Subscribe to the OPENAI AZURE Instance as below:
+https://rb-xorder.bosch.com/o/xplatform-services/get-access-to-azure-openai. 
 
-Step6:
-Transfer to Windows:
-Transfer the compiled JAR file (e.g., rhapsody-plugin-1.0-SNAPSHOT.jar) to the Windows machine.Place the JAR file in the Rhapsody plugins directory 
-```
-(e.g., C:\Program Files\IBM\Rhapsody\Plugins). 
-```
-Update the Rhapsody configuration to load the plugin. Open rhapsody.ini (usually located in the Rhapsody installation directory). Add the plugin JAR file to the AddIns section.
-```
-AddIns=rhapsody-plugin-1.0-SNAPSHOT.jar
-```
-# Steps for Python Backend Execution in Windows
-Step1:
-Download Ollama for Windows:
-https://ollama.com/download
+OpenAI Instance Link: "MS-EPB1-XC OpenAI Instance"
 
-Step2:
-Configure your Windows proxy by following this:
-https://inside-docupedia.bosch.com/confluence/display/DEVCORNER/Local+Proxy
+Step3: execute the provided bat script.
+```
+.\python_setup.bat
+```
+This script will install python and it will ask for OPENAI_API_KEY. Pass the OPENAI_API_KEY you had obtained from the step2. 
 
-Step3:
-Start the Ollama Server: The below command would start the ollama server in your [localhost:11434](http://localhost:11434/)
-```
-ollama serve
-```
-Step4:
-download the below Chat Model and Embedding Model from Ollama:
-```
-Chat model: llama3.2
-Embedding Model: bge-m3
-```
-Step5:
-Execute the Python file:
-```
-python .\ollama.py
-```
-Or alternatively use the below launch.json to execute the python file in Debug mode
-```
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: Debug ollama.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/ollama.py",
-            "console": "integratedTerminal",
-            "args": [],
-            "justMyCode": true
-        }
-    ]
-}
-```
-ensure the backend starts without errors and listens on the expected port (e.g., http://localhost:5000).
 
-Step8: Verify Backend Endpoints:
-Use tools like Postman, cURL, or a Browser to test the backend endpoints.
-```
-curl -X POST http://localhost:5000/summarize_requirements -H "Content-Type: application/json" -d '{"feature_query": "Extract requirements related to a <feature>"}'
-```
+# Configuration in Rhapsody:
+Step1: Create a New Rhapsody project or open an Existing Rhapsody Project.
+<div align="left">
+  <img src="images/New_Rhp_Project.png" alt="New Rhapsody Project" />
+</div>
 
+Step2: Once you create this new project, in the File Explorer go to the path of your project. Within your project folder you will notice a folder with name: "<Project_name>_rpy" being created. Now download our Release and extract the contents within the above created folder.
+<div align="left">
+  <img src="images/Folder_Structure.png" alt="Folder Structure" />
+</div>
+
+Step3: Now you need to configure your project. For the created / available project go to file > Add to Model
+<div align="left">
+  <img src="images/Rhp_Configuration.png" alt="Rhapsody Configuration" />
+</div>
+
+This will ask to load .sbsx file. This file will be available from our release. Go to the release Download folder and select the "GenAiIntegrationProfile.sbsx" file. After selection you can see the Rhapsody plugin for GenAI being enabled. 
+<div align="left">
+  <img src="images/GenAI_Plugin_Enabled.png" alt="GenAI Plugin Enabled" />
+</div>
+
+Now you can see your plugin working:
+<div align="left">
+  <img src="images/Plugin_loaded.png" alt="Plugin Loaded" />
+</div>
+
+Cheers!!
+Now you can feed in your Documents and start Chatting with your Documents. 
+
+<div align="left">
+  <img src="images/Document_Selection.png" alt="Document Selection" />
+</div>
