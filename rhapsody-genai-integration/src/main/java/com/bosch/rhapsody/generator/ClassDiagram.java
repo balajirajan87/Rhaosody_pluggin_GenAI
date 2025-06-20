@@ -25,6 +25,8 @@ public class ClassDiagram {
     private Map<String, IRPStereotype> stereotypeMap = new HashMap<>();
     IRPPackage basePackage;
     IRPPackage baseStereotypePackage;
+    JSONObject relations  = new JSONObject();
+    
 
     public void createClassDiagram(String outputFile) {
         try {
@@ -51,6 +53,9 @@ public class ClassDiagram {
 
             // Handle calls/relations if present
             createRelation(json);
+
+            // Handle calls/relations inside packages 
+            createRelation(relations);
 
             // Handle implements and extends
             createRealizationsAndGeneralizations();
@@ -122,6 +127,7 @@ public class ClassDiagram {
                         if (rhapsodyPackage != null) {
                             addStereotype(rhapsodyPackage, stereotype);
                             elementMap.put(packageName, rhapsodyPackage);
+                            collectRelations(packageObject);
                             createElements(rhapsodyPackage, packageObject);
                         }
                     }
@@ -133,6 +139,22 @@ public class ClassDiagram {
             }
         }
     }
+
+    private void collectRelations(JSONObject obj) {
+        JSONArray relationsArray = obj.optJSONArray(Constants.JSON_RELATIONSHIPS);
+        if (relationsArray != null && relationsArray.length() > 0) {
+            JSONArray targetArray = relations.optJSONArray(Constants.JSON_RELATIONSHIPS);
+            if (targetArray == null) {
+                targetArray = new JSONArray();
+                relations.put(Constants.JSON_RELATIONSHIPS, targetArray);
+            }
+            // Use Java Streams for efficient appending
+            java.util.stream.IntStream.range(0, relationsArray.length())
+                .mapToObj(relationsArray::getJSONObject)
+                .forEach(targetArray::put);
+        }
+    }
+
 
     private void createElements(IRPModelElement container, JSONObject obj) {
         // Classes
