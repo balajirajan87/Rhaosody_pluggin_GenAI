@@ -23,9 +23,9 @@ public class PUMLParser {
         Constants.project = Constants.rhapsodyApp.activeProject();
         // new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell,
         // "classdiagram");
-        String outputFile = "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhapsody_Pluggin_UML_Designs_to_Project_Window\\Rhaosody_pluggin_GenAI\\puml-parser-py\\data\\processed\\classdiagram.json";
-        ClassDiagram diagramHandler = new ClassDiagram();
-        diagramHandler.createClassDiagram(outputFile);
+        // String outputFile = "";
+        // ClassDiagram diagramHandler = new ClassDiagram();
+        // diagramHandler.createClassDiagram(outputFile);
         // String outputFileActivity = "";
         // ActivityDiagram diagramHandler = new ActivityDiagram();
         // ActivityTransitionAdder.swimlane = new HashSet<>();
