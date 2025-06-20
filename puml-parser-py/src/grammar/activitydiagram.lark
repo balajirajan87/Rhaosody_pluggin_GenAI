@@ -32,7 +32,7 @@ decision: "if" "(" condition ")" "then" "(" then_label ")" (statement | partitio
 
 else_if_block:("else if" | "elseif") "(" condition ")" "then" "(" then_label ")" (statement | partition)+
 
-else_block: "else" ("(" else_label ")")? (statement | partition)+
+else_block: "else" ("(" else_label ")")? ((statement | partition)+)?
 
 while_loop: "while" "(" while_condition ")" ("is" "(" then_label ")")? statement+ "endwhile" ("(" else_label ")")?
 
