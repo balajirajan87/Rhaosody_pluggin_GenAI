@@ -29,6 +29,13 @@ def getopts(argvalues):
         argvalues = argvalues[1:]
     return opts
 
+def show_error_messagebox(message):
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost', True)
+    messagebox.showerror("Error", message, parent=root)
+    root.destroy()
+
 if __name__ == '__main__':
     myargs = getopts(argv)
 
@@ -39,19 +46,16 @@ if __name__ == '__main__':
         input_file = myargs['-i']
         output_file = myargs['-o']
         diagram_type = myargs['-t']
+        diagram_type = diagram_type.lower()
         
 
         try:
             if "class" in diagram_type or "activity" in diagram_type:
                 process_diagram(input_file, output_file,diagram_type)
             else:
-                root = tk.Tk()
-                root.withdraw()  # Hide the root window
-                messagebox.showerror("Error", f"Unsupported diagram type: {diagram_type}")
+                show_error_messagebox(f"Unsupported diagram type: {diagram_type}")
         except Exception as e:
-            root = tk.Tk()
-            root.withdraw()  # Hide the root window
-            messagebox.showerror("Error", f"An error occurred while processing the diagram: {e}")
+            show_error_messagebox(f"An error occurred while processing the diagram: {e}")
 
         
 

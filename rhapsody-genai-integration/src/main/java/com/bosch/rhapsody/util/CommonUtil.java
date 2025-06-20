@@ -97,4 +97,13 @@ public class CommonUtil {
         }
     }
 
+    
+    public static void pause(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 }

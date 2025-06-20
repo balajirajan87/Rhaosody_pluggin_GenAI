@@ -45,10 +45,14 @@ public class ActivityDiagram {
                     JSONObject section = sections.getJSONObject(i);
                     JSONObject swimlaneobj = section.getJSONObject("swimlane");
                     IRPSwimlane firstSwimlaneElem = null;
-                    if(swimlaneobj != null){
-                        String identifier = swimlaneobj.optString("identifier","").replaceAll("[^a-zA-Z0-9]", "_");
-                        if(identifier != null && !identifier.isEmpty()){
-                            firstSwimlaneElem = ActivityDiagramUtil.createSwimlane(fc, identifier);
+                    if (swimlaneobj != null) {
+                        String identifier = swimlaneobj.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
+                        if (identifier != null && !identifier.isEmpty()) {
+                            firstSwimlaneElem = swimlaneMap.get(identifier);
+                            if (null == firstSwimlaneElem) {
+                                firstSwimlaneElem = ActivityDiagramUtil.createSwimlane(fc, identifier);
+                                swimlaneMap.put(identifier, firstSwimlaneElem);
+                            }
                         }
                     }
                     JSONArray statements = section.optJSONArray("statements");
@@ -69,11 +73,12 @@ public class ActivityDiagram {
                 }
             }
             ActivityDiagramUtil.createDiagramGraphics(fc);
-            fc.getFlowchartDiagram().openDiagram();
+            CommonUtil.pause(3000);
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
                     "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
+            fc.getFlowchartDiagram().openDiagram();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -209,8 +214,10 @@ public class ActivityDiagram {
                         break;
                     case "switch":
                         String caseCondition = stmt.optString("condition", "");
-                        IRPConnector caseConnector = ActivityDiagramUtil.createConnector(flowChart, "Condition", caseCondition,swimlaneElem);
-                        ActivityDiagramUtil.createTransition(state, caseConnector, gaurd, ActivityDiagramUtil.controlFlow);
+                        IRPConnector caseConnector = ActivityDiagramUtil.createConnector(flowChart, "Condition",
+                                caseCondition, swimlaneElem);
+                        ActivityDiagramUtil.createTransition(state, caseConnector, gaurd,
+                                ActivityDiagramUtil.controlFlow);
                         JSONArray cases = stmt.optJSONArray("cases");
                         if (cases != null) {
                             for (int j = 0; j < cases.length(); j++) {
@@ -224,9 +231,13 @@ public class ActivityDiagram {
                         break;
                     case "swimlane":
                         String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
-                        IRPSwimlane swim  = ActivityDiagramUtil.createSwimlane(flowChart, swimlane_name);
+                        IRPSwimlane swim = swimlaneMap.get(swimlane_name);
+                        if (null == swim) {
+                            swim = ActivityDiagramUtil.createSwimlane(flowChart, swimlane_name);
+                            swimlaneMap.put(swimlane_name, swim);
+                        }
                         if (null != swim) {
-                                swimlaneElem = swim;
+                            swimlaneElem = swim;
                         }
                 }
             } catch (Exception e) {
