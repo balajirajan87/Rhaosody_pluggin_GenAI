@@ -206,6 +206,9 @@ public class ActivityDiagram {
                         state = loopcond;
                         gaurd = loop_else_label;
                         break;
+                    case "switch":
+                        Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Switch case is not handled.");
+                        break;
                     case "swimlane":
                         String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
                         if (!swimlane_name.isEmpty()) {
