@@ -16,7 +16,8 @@ public class CommonUtil {
         try {
             return app.activeProject();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getActiveProject: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: getActiveProject: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -25,7 +26,8 @@ public class CommonUtil {
         try {
             return project.getLanguage();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getProjectLanguage: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: getProjectLanguage: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -34,22 +36,24 @@ public class CommonUtil {
         try {
             return project.addPackage(packageName);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (project): " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addPackage (project): " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
 
     public static IRPPackage createOrGetPackage(IRPModelElement project, String packageName) {
         try {
-           IRPModelElement newPackage = project.findNestedElement(packageName,
-                Constants.RHAPSODY_PACKAGE);
+            IRPModelElement newPackage = project.findNestedElement(packageName,
+                    Constants.RHAPSODY_PACKAGE);
             if (newPackage != null) {
-                    return (IRPPackage)newPackage;
-                } else {
-                     return (IRPPackage)project.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
-                }
+                return (IRPPackage) newPackage;
+            } else {
+                return (IRPPackage) project.addNewAggr(Constants.RHAPSODY_PACKAGE, packageName);
+            }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addPackage (pkg): " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addPackage (pkg): " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -67,7 +71,8 @@ public class CommonUtil {
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getStereotypes: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: getStereotypes: " + e.getMessage() + Constants.NEW_LINE);
         }
         return stereotypeMap;
     }
@@ -77,8 +82,8 @@ public class CommonUtil {
                 Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
             newPackage.locateInBrowser();
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "\nThe package '" + packageName + "' already exists.");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "INFO: The package '" + packageName + "' already exists." + Constants.NEW_LINE);
             boolean response = UiUtil.showQuestionPopup("The package '" + packageName
                     + "' already exists. Do you want to overwrite it?");
             if (response) {

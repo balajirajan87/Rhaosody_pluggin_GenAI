@@ -414,8 +414,8 @@ public class UI {
             parserHandler.generateJsonFromPuml(chatContent, Constants.userMessageDiagramType);
             // chatArea.append("Diagram generated successfully: " + "\n");
           } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                "\nERROR: Error while generating " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "ERROR: Error while generating " + e.getMessage() + Constants.NEW_LINE);
           }
         });
       }).start();

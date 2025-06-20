@@ -26,7 +26,6 @@ public class ClassDiagram {
     IRPPackage basePackage;
     IRPPackage baseStereotypePackage;
 
-
     public void createClassDiagram(String outputFile) {
         try {
             String jsonString = readJsonFile(outputFile);
@@ -62,9 +61,10 @@ public class ClassDiagram {
             // Create class diagram
             createBDD(basePackage, json);
 
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nClass Diagram generated successfully");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "INFO: Class Diagram generated successfully" + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
-                    "Class Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
+                    "Class Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -74,8 +74,8 @@ public class ClassDiagram {
                     java.nio.file.Files.delete(outputPath);
                 }
             } catch (Exception ex) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Could not delete output file: " + ex.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Could not delete output file: " + ex.getMessage() + Constants.NEW_LINE);
             }
         }
     }
@@ -84,19 +84,21 @@ public class ClassDiagram {
         try {
             return new String(Files.readAllBytes(Paths.get(filePath)));
         } catch (IOException e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nError reading json file.");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "Error reading json file." + Constants.NEW_LINE);
             e.printStackTrace();
             return null;
         }
     }
 
     private void addStereotype(IRPModelElement element, String stereotypeName) {
-        if(stereotypeName != null){
+        if (stereotypeName != null) {
             IRPStereotype stereotype = null;
             String metaType = element.getMetaClass();
             stereotype = stereotypeMap.get(stereotypeName);
-            if(stereotype == null){
-                stereotype = (IRPStereotype) baseStereotypePackage.addNewAggr(Constants.RHAPSODY_STEREOTYPE, stereotypeName);
+            if (stereotype == null) {
+                stereotype = (IRPStereotype) baseStereotypePackage.addNewAggr(Constants.RHAPSODY_STEREOTYPE,
+                        stereotypeName);
                 stereotypeMap.put(stereotypeName, stereotype);
             }
             stereotype.addMetaClass(metaType);
@@ -111,20 +113,21 @@ public class ClassDiagram {
                 try {
                     JSONObject packageObject = packages.getJSONObject(i);
                     String packageName = packageObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
-                    String stereotype = packageObject.has(Constants.JSON_STEREOTYPE) && !packageObject.isNull(Constants.JSON_STEREOTYPE)
-                            ? packageObject.getString(Constants.JSON_STEREOTYPE)
-                            : null;
+                    String stereotype = packageObject.has(Constants.JSON_STEREOTYPE)
+                            && !packageObject.isNull(Constants.JSON_STEREOTYPE)
+                                    ? packageObject.getString(Constants.JSON_STEREOTYPE)
+                                    : null;
                     if (packageName != null) {
                         IRPPackage rhapsodyPackage = CommonUtil.createOrGetPackage(basePackage, packageName);
                         if (rhapsodyPackage != null) {
-                            addStereotype(rhapsodyPackage,stereotype);
+                            addStereotype(rhapsodyPackage, stereotype);
                             elementMap.put(packageName, rhapsodyPackage);
                             createElements(rhapsodyPackage, packageObject);
                         }
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating package " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating package " + e.getMessage() + Constants.NEW_LINE);
                 }
 
             }
@@ -155,18 +158,21 @@ public class ClassDiagram {
             for (int i = 0; i < classes.length(); i++) {
                 try {
                     JSONObject classObject = classes.getJSONObject(i);
-                    String stereotype = classObject.has(Constants.JSON_STEREOTYPE) && !classObject.isNull(Constants.JSON_STEREOTYPE)
-                            ? classObject.getString(Constants.JSON_STEREOTYPE)
-                            : null;
-                    if(stereotype != null && ("enum".equals(stereotype.toLowerCase()) || "enumeration".equals(stereotype.toLowerCase()))){
+                    String stereotype = classObject.has(Constants.JSON_STEREOTYPE)
+                            && !classObject.isNull(Constants.JSON_STEREOTYPE)
+                                    ? classObject.getString(Constants.JSON_STEREOTYPE)
+                                    : null;
+                    if (stereotype != null && ("enum".equals(stereotype.toLowerCase())
+                            || "enumeration".equals(stereotype.toLowerCase()))) {
                         createSingleEnum(container, classObject);
-                    }else if(stereotype != null && "struct".equals(stereotype.toLowerCase())){
+                    } else if (stereotype != null && "struct".equals(stereotype.toLowerCase())) {
                         createSingleStruct(container, classObject);
-                    }else{
+                    } else {
                         String className = classObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]", "_");
-                        IRPClass rhapsodyClass = ClassDiagramUtil.addClass((IRPPackage) container, className, basePackage);
+                        IRPClass rhapsodyClass = ClassDiagramUtil.addClass((IRPPackage) container, className,
+                                basePackage);
                         if (rhapsodyClass != null) {
-                            addStereotype(rhapsodyClass,stereotype);
+                            addStereotype(rhapsodyClass, stereotype);
                             elementMap.put(className, rhapsodyClass);
                             elementsToPopulate.addItem(rhapsodyClass);
                             addAttributesAndMethods(rhapsodyClass, classObject);
@@ -174,8 +180,8 @@ public class ClassDiagram {
                         }
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating class " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating class " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -188,23 +194,24 @@ public class ClassDiagram {
             for (int i = 0; i < interfaces.length(); i++) {
                 try {
                     JSONObject interfaceObject = interfaces.getJSONObject(i);
-                    String stereotype = interfaceObject.has(Constants.JSON_STEREOTYPE) && !interfaceObject.isNull(Constants.JSON_STEREOTYPE)
-                            ? interfaceObject.getString(Constants.JSON_STEREOTYPE)
-                            : null;
+                    String stereotype = interfaceObject.has(Constants.JSON_STEREOTYPE)
+                            && !interfaceObject.isNull(Constants.JSON_STEREOTYPE)
+                                    ? interfaceObject.getString(Constants.JSON_STEREOTYPE)
+                                    : null;
                     String interfaceName = interfaceObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]",
                             "_");
                     IRPClass rhapsodyInterface = ClassDiagramUtil.addInterface((IRPPackage) container, interfaceName,
                             basePackage);
                     if (rhapsodyInterface != null) {
-                        addStereotype(rhapsodyInterface,stereotype);
+                        addStereotype(rhapsodyInterface, stereotype);
                         elementMap.put(interfaceName, rhapsodyInterface);
                         elementsToPopulate.addItem(rhapsodyInterface);
                         addAttributesAndMethods(rhapsodyInterface, interfaceObject);
                         setRealizationsAndGeneralizations(rhapsodyInterface, interfaceObject);
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating interface " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating interface " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -243,8 +250,8 @@ public class ClassDiagram {
                         ClassDiagramUtil.addAttributeToType((IRPType) element, attrName, attrType, visibility);
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating attributes " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating attributes " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -275,8 +282,8 @@ public class ClassDiagram {
                         }
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating methods " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating methods " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -298,7 +305,6 @@ public class ClassDiagram {
         }
     }
 
-
     private void createEnum(IRPModelElement container, JSONObject obj) {
         JSONArray enums = obj.optJSONArray(Constants.JSON_ENUMS);
         if (enums != null) {
@@ -307,8 +313,8 @@ public class ClassDiagram {
                     JSONObject enumObject = enums.getJSONObject(i);
                     createSingleEnum(container, enumObject);
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating enum " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating enum " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -334,8 +340,8 @@ public class ClassDiagram {
                     JSONObject structObject = structs.getJSONObject(i);
                     createSingleStruct(container, structObject);
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating struct " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating struct " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -357,8 +363,8 @@ public class ClassDiagram {
                         elementsToPopulate.addItem(comment);
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating note " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating note " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -375,8 +381,8 @@ public class ClassDiagram {
                     fromElem.addAnchor(toElem);
                 }
             } catch (Exception e) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Error while creating note relations " + e.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error while creating note relations " + e.getMessage() + Constants.NEW_LINE);
             }
         }
     }
@@ -399,13 +405,14 @@ public class ClassDiagram {
                     if (fromElem != null && toElem != null && fromElem instanceof IRPClass
                             && toElem instanceof IRPClass) {
                         if (Constants.RHAPSODY_ASSOCIATION.equals(type)) {
-                            ClassDiagramUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description,end1_multiplicity,end2_multiplicity);
+                            ClassDiagramUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description,
+                                    end1_multiplicity, end2_multiplicity);
                         } else if (Constants.RHAPSODY_DIRECTED_ASSOCIATION.equals(type)) {
                             ClassDiagramUtil.createDirectedAssociation((IRPClass) fromElem, (IRPClass) toElem,
-                                    description,end1_multiplicity);
+                                    description, end1_multiplicity);
                         } else if (Constants.RHAPSODY_REVERSE_DIRECTED_ASSOCIATION.equals(type)) {
                             ClassDiagramUtil.createDirectedAssociation((IRPClass) toElem, (IRPClass) fromElem,
-                                    description,end2_multiplicity);
+                                    description, end2_multiplicity);
                         } else if (Constants.RHAPSODY_DEPENDENCY.equals(type)) {
                             ClassDiagramUtil.createDependency(fromElem, toElem, description);
                         } else if (Constants.RHAPSODY_REVERSE_DEPENDENCY.equals(type)) {
@@ -421,14 +428,16 @@ public class ClassDiagram {
                             ClassDiagramUtil.createInheritance((IRPClass) toElem, (IRPClassifier) fromElem,
                                     description);
                         } else if (Constants.RHAPSODY_AGGREGATION.equals(type)) {
-                            ClassDiagramUtil.createAggregation((IRPClass) toElem, (IRPClass) fromElem, description,end1_multiplicity,end2_multiplicity);
+                            ClassDiagramUtil.createAggregation((IRPClass) toElem, (IRPClass) fromElem, description,
+                                    end1_multiplicity, end2_multiplicity);
                         } else if (Constants.RHAPSODY_COMPOSITION.equals(type)) {
-                            ClassDiagramUtil.createComposition((IRPClass) fromElem, (IRPClass) toElem, description,end1_multiplicity,end2_multiplicity);
+                            ClassDiagramUtil.createComposition((IRPClass) fromElem, (IRPClass) toElem, description,
+                                    end1_multiplicity, end2_multiplicity);
                         }
                     }
                 } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating relations " + e.getMessage());
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: Error while creating relations " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
         }
@@ -445,8 +454,8 @@ public class ClassDiagram {
                     ClassDiagramUtil.createRealization((IRPClass) fromElem, (IRPClassifier) toElem);
                 }
             } catch (Exception e) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Error while creating realizations " + e.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error while creating realizations " + e.getMessage() + Constants.NEW_LINE);
             }
         }
         // Generalizations (extends)
@@ -459,8 +468,8 @@ public class ClassDiagram {
                     ClassDiagramUtil.createInheritance((IRPClass) fromElem, (IRPClassifier) toElem, "");
                 }
             } catch (Exception e) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Error while creating generalization " + e.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error while creating generalization " + e.getMessage() + Constants.NEW_LINE);
             }
         }
     }
@@ -484,13 +493,12 @@ public class ClassDiagram {
                     ClassDiagramUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
                     ClassDiagramUtil.populateDiagram(diagram, elementsToPopulate, relTypes,
                             Constants.RHAPSODY_POPULATE_MODE);
-                    // setDiagramProperties(diagram);
                     diagram.openDiagram();
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "\nERROR: Error while creating diagram " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Error while creating diagram " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -498,6 +506,7 @@ public class ClassDiagram {
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_NAME, Constants.NAME_ONLY);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_ATTRIBUTES, Constants.RHAPSODY_DISPLAY_ALL);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_OPERATIONS, Constants.RHAPSODY_DISPLAY_ALL);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_TYPE_COMPARTMENTS, "Attribute,EnumerationLiteral");
 
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_AGGREGATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_ASSOCIATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
@@ -510,34 +519,6 @@ public class ClassDiagram {
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_COMPOSITION_SHOW_NAME, Constants.NAME);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_DEPENDS_SHOW_NAME, Constants.NAME);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_REALIZATION_SHOW_NAME, Constants.NAME);
-    }
-
-    private void setDiagramProperties(IRPObjectModelDiagram diagram) {
-
-        java.util.List<?> graphicalElements = ClassDiagramUtil.getGraphicalElements(diagram);
-        if (graphicalElements != null) {
-            for (Object diagramElement : graphicalElements) {
-                try {
-                    if (diagramElement instanceof IRPGraphNode) {
-                        IRPGraphElement diagramGraphElement = (IRPGraphElement) diagramElement;
-                        IRPModelElement element = diagramGraphElement.getModelObject();
-                        if (element != null) {
-                            String metaClass = element.getMetaClass();
-                            if (metaClass.equals(Constants.RHAPSODY_INTERFACE)
-                                    || metaClass.equals(Constants.RHAPSODY_CLASS)) {
-                                ClassDiagramUtil.setGraphicalProperty(diagramGraphElement,
-                                        Constants.RHAPSODY_OPERATIONS_DISPLAY, Constants.RHAPSODY_DISPLAY_ALL);
-                                ClassDiagramUtil.setGraphicalProperty(diagramGraphElement,
-                                        Constants.RHAPSODY_ATTRIBUTES_DISPLAY, Constants.RHAPSODY_DISPLAY_ALL);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                            "\nERROR: Error while creating diagram properties " + e.getMessage());
-                }
-            }
-        }
     }
 
 }

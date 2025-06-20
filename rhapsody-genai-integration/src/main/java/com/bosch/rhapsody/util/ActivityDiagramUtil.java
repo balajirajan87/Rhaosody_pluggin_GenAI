@@ -1,5 +1,6 @@
 package com.bosch.rhapsody.util;
 
+import com.bosch.rhapsody.constants.Constants;
 import com.telelogic.rhapsody.core.IRPConnector;
 import com.telelogic.rhapsody.core.IRPFlowchart;
 import com.telelogic.rhapsody.core.IRPObjectNode;
@@ -28,10 +29,12 @@ public class ActivityDiagramUtil {
         try {
             swimlane = diagram.addSwimlane(swimlaneName);
             if (swimlane == null) {
-                throw new Exception("Failed to create swimlane: " + swimlaneName);
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Failed to create swimlane: " + swimlaneName + Constants.NEW_LINE);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create swimlane " + swimlaneName + ex.getMessage() + "\n");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create swimlane " + swimlaneName + ex.getMessage() + Constants.NEW_LINE);
         }
         return swimlane;
     }
@@ -62,7 +65,8 @@ public class ActivityDiagramUtil {
             flowChart.setPropertyValue("Activity_diagram.ControlFlow.line_style", "rectilinear_arrows");
             flowChart.setPropertyValue("Activity_diagram.DefaultTransition.line_style", "rectilinear_arrows");
         } catch (Exception ex) {
-            System.out.println("Failed to create ActivityDiagram " + diagramName + ex.getMessage() + "\n");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create ActivityDiagram " + diagramName + ex.getMessage() + Constants.NEW_LINE);
         }
         return flowChart;
     }
@@ -89,7 +93,8 @@ public class ActivityDiagramUtil {
                 action.setItsSwimlane(swimlane);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create action " + actionName + ": " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create action " + actionName + ": " + ex.getMessage() + Constants.NEW_LINE);
         }
         return action;
     }
@@ -107,7 +112,8 @@ public class ActivityDiagramUtil {
         try {
             objNode = (IRPObjectNode) diagram.addNewAggr("ObjectNode", nodeName);
         } catch (Exception ex) {
-            System.out.println("Failed to create object node " + nodeName + ": " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create object node " + nodeName + ": " + ex.getMessage() + Constants.NEW_LINE);
         }
         return objNode;
     }
@@ -133,7 +139,8 @@ public class ActivityDiagramUtil {
                 connector.setItsSwimlane(swimlane);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create connector " + connectorType + ": " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create connector " + connectorType + ": " + ex.getMessage() + Constants.NEW_LINE);
         }
         return connector;
     }
@@ -157,7 +164,9 @@ public class ActivityDiagramUtil {
                 finalNode.setItsSwimlane(swimlane);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create flow final node " + nodeName + ": " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create flow final node " + nodeName + ": " + ex.getMessage()
+                            + Constants.NEW_LINE);
         }
         return finalNode;
     }
@@ -170,7 +179,8 @@ public class ActivityDiagramUtil {
                 finalNode.setItsSwimlane(swimlane);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create flow final node  : " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create flow final node  : " + ex.getMessage() + Constants.NEW_LINE);
         }
         return finalNode;
     }
@@ -195,7 +205,8 @@ public class ActivityDiagramUtil {
         try {
             // Convert toElement to IRPState or IRPConnector (typed, not generic Object)
             if (!(toElement instanceof IRPState) && !(toElement instanceof IRPConnector)) {
-                throw new IllegalArgumentException("toElement must be IRPState or IRPConnector");
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: toElement must be IRPState or IRPConnector");
             }
 
             // Check if fromElement has addTransition method and call with correct type
@@ -208,7 +219,8 @@ public class ActivityDiagramUtil {
             } else if (fromElement instanceof IRPConnector && toElement instanceof IRPConnector) {
                 transition = ((IRPConnector) fromElement).addTransition((IRPConnector) toElement);
             } else {
-                throw new IllegalArgumentException("fromElement must be IRPState or IRPConnector");
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: fromElement must be IRPState or IRPConnector" + Constants.NEW_LINE);
             }
 
             if (transitionType != null) {
@@ -218,7 +230,8 @@ public class ActivityDiagramUtil {
                 transition.setItsGuard(guard);
             }
         } catch (Exception ex) {
-            System.out.println("Failed to add transition: " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to add transition: " + ex.getMessage() + Constants.NEW_LINE);
         }
         return transition;
     }
@@ -255,7 +268,8 @@ public class ActivityDiagramUtil {
                 }
             }
         } catch (Exception ex) {
-            System.out.println("Failed to create default transition: " + ex.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create default transition: " + ex.getMessage() + Constants.NEW_LINE);
         }
         return transition;
     }

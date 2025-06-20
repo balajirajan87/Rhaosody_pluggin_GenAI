@@ -18,19 +18,19 @@ public class ActivityDiagram {
     private int actionNameIndex = 1;
     IRPConnector connector = null;
     Object state = null;
-    private Map<String,IRPConnector> MergeNodeMap = new HashMap<>();
+    private Map<String, IRPConnector> MergeNodeMap = new HashMap<>();
     private Map<String, IRPSwimlane> swimlaneMap = new HashMap<>();
-     private Object MergeNodeState = null;
+    private Object MergeNodeState = null;
 
     public void createActivityDiagram(String outputFile) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project, 
+            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project,
                     Constants.RHAPSODY_ACTIVITY_DIAGRAM);
             if (basePackage == null) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Could not create/find base package for activity diagram.");
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Could not create/find base package for activity diagram." + Constants.NEW_LINE);
                 return;
             }
             ActivityDiagramUtil.getActivitySpecificStereotypes(Constants.project);
@@ -69,9 +69,11 @@ public class ActivityDiagram {
                 }
             }
             ActivityDiagramUtil.createDiagramGraphics(fc);
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nActivity Diagram generated successfully.");
-            UiUtil.showInfoPopup("Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
             fc.getFlowchartDiagram().openDiagram();
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
+            UiUtil.showInfoPopup(
+                    "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -81,8 +83,8 @@ public class ActivityDiagram {
                     java.nio.file.Files.delete(outputPath);
                 }
             } catch (Exception ex) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Could not delete output file: " + ex.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Could not delete output file: " + ex.getMessage() + Constants.NEW_LINE);
             }
 
         }
@@ -136,11 +138,12 @@ public class ActivityDiagram {
                                 MergeNode = MergeNodeMap.get(MergeNodeText);
                             } else {
                                 MergeNode = ActivityDiagramUtil.createConnector(flowChart, "MergeNode", MergeNodeText,
-                                    swimlaneElem);
-                                MergeNodeMap.put(MergeNodeText, MergeNode); 
-                            }  
+                                        swimlaneElem);
+                                MergeNodeMap.put(MergeNodeText, MergeNode);
+                            }
                             MergeNodeState = state;
-                            ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,ActivityDiagramUtil.controlFlow);
+                            ActivityDiagramUtil.createTransition(state, MergeNode, gaurd,
+                                    ActivityDiagramUtil.controlFlow);
                             state = MergeNode;
                         }
                         break;
@@ -227,8 +230,8 @@ public class ActivityDiagram {
                         }
                 }
             } catch (Exception e) {
-                Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                        "\nERROR: Error while creating element " + e.getMessage());
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error while creating element " + e.getMessage() + Constants.NEW_LINE);
             }
             gaurd = null;
         }

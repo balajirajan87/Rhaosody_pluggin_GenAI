@@ -44,6 +44,8 @@ public class Constants {
                         "*.sh", "*.bat", "*.puml", "*.xmi", "*.md", "*.j2", "*.yml", "*.java" };
         public static String[] guideExtension = { "*.pdf" };
 
+        public static final String LOG_TITLE_GEN_AI_PLUGIN = "GenAIPlugin";
+
         public static final String JSON_CLASSES = "classes";
         public static final String JSON_INTERFACES = "interfaces";
         public static final String JSON_ENUMS = "enums";
@@ -80,6 +82,7 @@ public class Constants {
         public static final String RHAPSODY_CLASS = "Class";
         public static final String RHAPSODY_OPERATIONS_DISPLAY = "OperationsDisplay";
         public static final String RHAPSODY_ATTRIBUTES_DISPLAY = "AttributesDisplay";
+        public static final String RHAPSODY_LITERAL_DISPLAY = "EnumerationLiteralsDisplay";
         public static final String RHAPSODY_DISPLAY_ALL = "All";
         public static final String RHAPSODY_PACKAGE = "Package";
         public static final String RHAPSODY_TYPE = "Type";
@@ -122,5 +125,8 @@ public class Constants {
         public static final String OBJECT_MODEL_GE_CLASS_SHOW_OPERATIONS = "ObjectModelGe.Class.ShowOperations";
         public static final String OBJECT_MODEL_GE_CLASS_SHOW_ATTRIBUTES = "ObjectModelGe.Class.ShowAttributes";
         public static final String OBJECT_MODEL_GE_CLASS_SHOW_NAME = "ObjectModelGe.Class.ShowName";
+        public static final String OBJECT_MODEL_GE_TYPE_COMPARTMENTS = "ObjectModelGe.Type.Compartments";
 
+
+        public static final String NEW_LINE = "\n";
 }

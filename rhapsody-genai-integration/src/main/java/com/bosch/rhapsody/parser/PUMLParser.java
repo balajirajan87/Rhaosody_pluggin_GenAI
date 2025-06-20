@@ -23,14 +23,14 @@ public class PUMLParser {
         Constants.project = Constants.rhapsodyApp.activeProject();
         // new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell,
         // "classdiagram");
-        // String outputFile = "";
-        // ClassDiagram diagramHandler = new ClassDiagram();
-        // diagramHandler.createClassDiagram(outputFile,shell);
-        String outputFileActivity = "";
-        ActivityDiagram diagramHandler = new ActivityDiagram();
-        ActivityTransitionAdder.swimlane = new HashSet<>();
-        ActivityTransitionAdder.AddMergeNode(outputFileActivity);
-        diagramHandler.createActivityDiagram(outputFileActivity);
+        String outputFile = "C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhapsody_Pluggin_UML_Designs_to_Project_Window\\Rhaosody_pluggin_GenAI\\puml-parser-py\\data\\processed\\classdiagram.json";
+        ClassDiagram diagramHandler = new ClassDiagram();
+        diagramHandler.createClassDiagram(outputFile);
+        // String outputFileActivity = "";
+        // ActivityDiagram diagramHandler = new ActivityDiagram();
+        // ActivityTransitionAdder.swimlane = new HashSet<>();
+        // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
+        // diagramHandler.createActivityDiagram(outputFileActivity);
     }
 
     public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
@@ -53,7 +53,7 @@ public class PUMLParser {
                 if (!Files.exists(Paths.get(outputFile))) {
                     throw new IOException("Output file was not generated: " + outputFile);
                 }
-                createDiagram( diagramType, outputFile);
+                createDiagram(diagramType, outputFile);
                 if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
                     pythonBackendProcess.destroy();
                 }
@@ -63,13 +63,13 @@ public class PUMLParser {
                 throw new RuntimeException(e);
             }
         } else {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
-                    "PUML not found, Make sure valid PUML exist in chat window.\n");
-            UiUtil.showWarnPopup("PUML not found, Make sure valid PUML exist in chat window");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);
+            UiUtil.showErrorPopup("PUML not found, Make sure valid PUML exist in chat window");
         }
     }
 
-    private void createDiagram( String diagramType, String outputFile) {
+    private void createDiagram(String diagramType, String outputFile) {
         ActivityTransitionAdder.swimlane = new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
@@ -94,7 +94,8 @@ public class PUMLParser {
                 writer.write(lastBlock);
             }
         } else {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "ERROR: No @startuml ... @enduml block found.");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: No @startuml ... @enduml block found." + Constants.NEW_LINE);
             throw new IOException("No @startuml ... @enduml block found.");
         }
     }

@@ -14,7 +14,8 @@ public class ClassDiagramUtil {
                 return pkg.addClass(className);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addClass: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addClass: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -29,7 +30,8 @@ public class ClassDiagramUtil {
                 return (IRPClass) pkg.addNewAggr(Constants.RHAPSODY_INTERFACE, interfaceName);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addInterface: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addInterface: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -48,7 +50,8 @@ public class ClassDiagramUtil {
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addEnum: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addEnum: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -67,7 +70,8 @@ public class ClassDiagramUtil {
                 }
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addStruct: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addStruct: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -84,7 +88,8 @@ public class ClassDiagramUtil {
                 return attr;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addAttributeToClass: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addAttributeToClass: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -101,7 +106,8 @@ public class ClassDiagramUtil {
                 return attr;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addAttributeToType: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addAttributeToType: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -115,7 +121,8 @@ public class ClassDiagramUtil {
                 return op;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addOperation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addOperation: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -128,7 +135,8 @@ public class ClassDiagramUtil {
                 return arg;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addArgument: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addArgument: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -141,7 +149,8 @@ public class ClassDiagramUtil {
                 return lit;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addEnumLiteral: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addEnumLiteral: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -150,7 +159,8 @@ public class ClassDiagramUtil {
         try {
             return (IRPObjectModelDiagram) pkg.addNewAggr(Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM, title);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addClassDiagram: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addClassDiagram: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -163,29 +173,37 @@ public class ClassDiagramUtil {
                 return note;
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addNote: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addNote: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
 
-    public static void createAssociation(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
+    public static void createAssociation(IRPClass from, IRPClass to, String description, String end1_multiplicity,
+            String end2_multiplicity) {
         try {
-            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
+            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
+                    Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAssociation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createAssociation: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
-    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description,String end1_multiplicity) {
+    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description,
+            String end1_multiplicity) {
         try {
-            IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"",  "",
+            IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
                     Constants.RHAPSODY_ASSOCIATION_TYPE, "", description);
             if (null != association) {
                 association.makeUnidirect();
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createDirectedAssociation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createDirectedAssociation: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -196,7 +214,8 @@ public class ClassDiagramUtil {
                 dep.setName(description);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createDependency: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createDependency: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -207,7 +226,8 @@ public class ClassDiagramUtil {
             if (gen != null)
                 gen.changeTo(Constants.RHAPSODY_REALIZATION_TYPE);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createRealization: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createRealization: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -218,29 +238,38 @@ public class ClassDiagramUtil {
             if (gen != null)
                 gen.setName(description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createInheritance: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createInheritance: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
-    public static void createAggregation(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
+    public static void createAggregation(IRPClass from, IRPClass to, String description, String end1_multiplicity,
+            String end2_multiplicity) {
 
         try {
-            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "", Constants.RHAPSODY_AGGREGATION_TYPE,
-                    isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
+            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
+                    Constants.RHAPSODY_AGGREGATION_TYPE,
+                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createAggregation: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createAggregation: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
-    public static void createComposition(IRPClass from, IRPClass to, String description, String end1_multiplicity, String end2_multiplicity) {
+    public static void createComposition(IRPClass from, IRPClass to, String description, String end1_multiplicity,
+            String end2_multiplicity) {
         try {
-            IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE, isValidMultiplicity(end1_multiplicity)?end1_multiplicity:"", "",
-                    Constants.RHAPSODY_AGGREGATION_TYPE, isValidMultiplicity(end2_multiplicity)?end2_multiplicity:"", description);
+            IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
+                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
+                    Constants.RHAPSODY_AGGREGATION_TYPE,
+                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
             if (null != comp) {
                 comp.setRelationType(Constants.RHAPSODY_COMPOSITION_TYPE);
             }
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createComposition: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createComposition: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -248,7 +277,8 @@ public class ClassDiagramUtil {
         try {
             diagram.addStereotype(stereotype, metaClass);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "addStereotype: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: addStereotype: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -256,7 +286,8 @@ public class ClassDiagramUtil {
         try {
             return app.createNewCollection();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "createNewCollection: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: createNewCollection: " + e.getMessage() + Constants.NEW_LINE);
             return null;
         }
     }
@@ -265,7 +296,8 @@ public class ClassDiagramUtil {
         try {
             collection.setString(index, value);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setCollectionString: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: setCollectionString: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -273,7 +305,8 @@ public class ClassDiagramUtil {
         try {
             collection.setSize(size);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setCollectionSize: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: setCollectionSize: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -282,7 +315,8 @@ public class ClassDiagramUtil {
         try {
             diagram.populateDiagram(elements, relTypes, mode);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "populateDiagram: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: populateDiagram: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
@@ -290,7 +324,8 @@ public class ClassDiagramUtil {
         try {
             return diagram.getGraphicalElements().toList();
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "getGraphicalElements: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: getGraphicalElements: " + e.getMessage() + Constants.NEW_LINE);
         }
         return null;
     }
@@ -299,22 +334,25 @@ public class ClassDiagramUtil {
         try {
             element.setGraphicalProperty(property, value);
         } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "setGraphicalProperty: " + e.getMessage());
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: setGraphicalProperty: " + e.getMessage() + Constants.NEW_LINE);
         }
     }
 
-        /**
+    /**
      * Validates if the given multiplicity string is allowed.
-     * Allowed values:  "1", "*", "1..*", "0..*", or any whole number.
+     * Allowed values: "1", "*", "1..*", "0..*", or any whole number.
+     * 
      * @param multiplicity the multiplicity string to validate
      * @return true if valid, false otherwise
      */
     public static boolean isValidMultiplicity(String multiplicity) {
-        if (multiplicity == null) return false;
+        if (multiplicity == null)
+            return false;
         multiplicity = multiplicity.trim();
         // Allowed literals
-        if ( multiplicity.equals("1") || multiplicity.equals("*") ||
-            multiplicity.equals("1..*") || multiplicity.equals("0..*")) {
+        if (multiplicity.equals("1") || multiplicity.equals("*") ||
+                multiplicity.equals("1..*") || multiplicity.equals("0..*")) {
             return true;
         }
         // Whole number

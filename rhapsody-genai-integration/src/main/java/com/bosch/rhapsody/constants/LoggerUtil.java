@@ -57,7 +57,7 @@ public class LoggerUtil {
     // Print to console
     System.out.println(logMessage);
 
-    rhapsodyApp.writeToOutputWindow("GenAIPlugin", logMessage + "\n");
+    rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN, logMessage  + Constants.NEW_LINE);
 
     // getLogFile(LoggerUtil.path+File.separator+LOG_FILE);
 
