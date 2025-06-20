@@ -43,7 +43,7 @@ public class ActivityDiagram {
                 }
                 for (int i = 0; i < sections.length(); i++) {
                     JSONObject section = sections.getJSONObject(i);
-                    JSONObject swimlaneobj = section.getJSONObject("swimlane");
+                    JSONObject swimlaneobj = section.optJSONObject("swimlane");
                     IRPSwimlane firstSwimlaneElem = null;
                     if (swimlaneobj != null) {
                         String identifier = swimlaneobj.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
@@ -228,6 +228,11 @@ public class ActivityDiagram {
                                 createStatementsRecursive(flowChart, swimlaneElem, caseStatements, false, value);
                             }
                         }
+                        break;
+                    case "partition":
+                        String partictionName = stmt.optString("name", "");
+                        JSONArray stmtPartition = stmt.optJSONArray("statements");
+                        createStatementsRecursive(flowChart, swimlaneElem, stmtPartition, hasStart, null);
                         break;
                     case "swimlane":
                         String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
