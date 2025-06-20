@@ -98,8 +98,8 @@ public static Set<String> swimlane = new HashSet<>();
                     LinkedHashMap<String, Object> mergeNode = new LinkedHashMap<>();
                     mergeNode.put("type", "MergeNode");
                     mergeNode.put("text", condition != null
-                        ? "Transition after decision: " + condition
-                        : "");
+                            ? "Transition after decision: " + condition
+                            : "");
                     elseStmts.add(mergeNode);
                     newElseBlock.put("statements", elseStmts);
                     stmt.put("else_block", newElseBlock);
@@ -110,8 +110,31 @@ public static Set<String> swimlane = new HashSet<>();
                 if (body != null)
                     processStatements(body, decisionCondition);
             }
+            if ("switch".equals(type)) {
+                String condition = (String) stmt.get("condition");
+                List<Map<String, Object>> cases = (List<Map<String, Object>>) stmt.get("cases");
+                if (cases != null) {
+                    for (Map<String, Object> caseObj : cases) {
+                        List<Map<String, Object>> caseStatements = (List<Map<String, Object>>) caseObj.get("statements");
+                        if (caseStatements != null) {
+                            //processStatements(caseStatements, condition);
+                            // Add MergeNode at the end of each case's statements
+                            if (!caseStatements.isEmpty()) {
+                                Map<String, Object> last = caseStatements.get(caseStatements.size() - 1);
+                                String lastType = (String) last.get("type");
+                                if (!"MergeNode".equals(lastType) && !"stop".equals(lastType)) {
+                                    LinkedHashMap<String, Object> mergeNode = new LinkedHashMap<>();
+                                    mergeNode.put("type", "MergeNode");
+                                    mergeNode.put("text", condition);
+                                    caseStatements.add(mergeNode);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             if ("swimlane".equals(type)) {
-                 String iden = (String) stmt.get("identifier");
+                String iden = (String) stmt.get("identifier");
                 swimlane.add(iden.replaceAll("[^a-zA-Z0-9]", "_"));
             }
 

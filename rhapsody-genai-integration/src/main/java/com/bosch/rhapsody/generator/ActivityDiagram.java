@@ -38,22 +38,19 @@ public class ActivityDiagram {
             IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
             JSONArray sections = json.optJSONArray("sections");
             if (sections != null) {
-                IRPSwimlane firstSwimlaneElem = null;
-                boolean isFirst = true;
                 if (ActivityTransitionAdder.swimlane.size() >= 2) {
-                    for (String swimlan : ActivityTransitionAdder.swimlane) {
-                        IRPSwimlane swimlaneElem = ActivityDiagramUtil.createSwimlane(fc, swimlan);
-                        swimlaneMap.put(swimlan, swimlaneElem);
-                        if (isFirst) {
-                            firstSwimlaneElem = swimlaneElem;
-                            isFirst = false;
-                        }
-                    }
                     state = null;
                 }
-
                 for (int i = 0; i < sections.length(); i++) {
                     JSONObject section = sections.getJSONObject(i);
+                    JSONObject swimlaneobj = section.getJSONObject("swimlane");
+                    IRPSwimlane firstSwimlaneElem = null;
+                    if(swimlaneobj != null){
+                        String identifier = swimlaneobj.optString("identifier","").replaceAll("[^a-zA-Z0-9]", "_");
+                        if(identifier != null && !identifier.isEmpty()){
+                            firstSwimlaneElem = ActivityDiagramUtil.createSwimlane(fc, identifier);
+                        }
+                    }
                     JSONArray statements = section.optJSONArray("statements");
                     if (statements != null) {
                         createStatementsRecursive(fc, firstSwimlaneElem, statements, false, null);
@@ -74,6 +71,7 @@ public class ActivityDiagram {
             ActivityDiagramUtil.createDiagramGraphics(fc);
             Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nActivity Diagram generated successfully.");
             UiUtil.showInfoPopup("Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
+            fc.getFlowchartDiagram().openDiagram();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -207,17 +205,26 @@ public class ActivityDiagram {
                         gaurd = loop_else_label;
                         break;
                     case "switch":
-                        Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin", "\nERROR: Switch case is not handled.");
+                        String caseCondition = stmt.optString("condition", "");
+                        IRPConnector caseConnector = ActivityDiagramUtil.createConnector(flowChart, "Condition", caseCondition,swimlaneElem);
+                        ActivityDiagramUtil.createTransition(state, caseConnector, gaurd, ActivityDiagramUtil.controlFlow);
+                        JSONArray cases = stmt.optJSONArray("cases");
+                        if (cases != null) {
+                            for (int j = 0; j < cases.length(); j++) {
+                                JSONObject case_obj = cases.getJSONObject(j);
+                                String value = case_obj.optString("value", "");
+                                JSONArray caseStatements = case_obj.optJSONArray("statements");
+                                state = caseConnector;
+                                createStatementsRecursive(flowChart, swimlaneElem, caseStatements, false, value);
+                            }
+                        }
                         break;
                     case "swimlane":
                         String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
-                        if (!swimlane_name.isEmpty()) {
-                            IRPSwimlane swim = swimlaneMap.get(swimlane_name);
-                            if (null != swim) {
+                        IRPSwimlane swim  = ActivityDiagramUtil.createSwimlane(flowChart, swimlane_name);
+                        if (null != swim) {
                                 swimlaneElem = swim;
-                            }
                         }
-
                 }
             } catch (Exception e) {
                 Constants.rhapsodyApp.writeToOutputWindow("GenAIPlugin",
