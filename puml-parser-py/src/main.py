@@ -33,6 +33,7 @@ def show_error_messagebox(message):
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)
+    root.update() 
     messagebox.showerror("Error", message, parent=root)
     root.destroy()
 
