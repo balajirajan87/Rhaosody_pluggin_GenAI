@@ -1,0 +1,55 @@
+@startuml
+|#lightblue|VoltageMonitoringTask|
+start
+
+:Initialize ADC hardware;
+:Adc_Init();
+
+repeat
+  :Start ADC group conversion for voltage rails;
+  :Adc_StartGroupConversion(groupId);
+
+  :Wait for ADC conversion to complete;
+  if (Adc_GetGroupStatus(groupId) == COMPLETED) then (yes)
+    :Read ADC results into buffer;
+    :Adc_ReadGroup(groupId, resultBuffer);
+
+    :Read and store ADC signals (every 10ms);
+    :ReadAndStoreAdcSignal();
+
+    :If Fault Injection Testing is enabled?;
+    if (Fault Injection Stub Active?) then (yes)
+      :Override ADC values with stub values;
+      note right: Fault injection via stub variable.
+    endif
+
+    :Convert ADC values to voltages;
+    :AdcUnitConvFunction();
+
+    :Compare voltages against UV/OV thresholds;
+    :cl_VoltMon();
+
+    if (Voltage deviation detected?) then (yes)
+      :Increment fault counter for this rail;
+      if (Fault counter >= 5) then (yes)
+        :Report error, log DTC, set degradation mode;
+        :rbsfty_ErrMgt_ReportError(ErrInfo_u16, Add_info_u32, Dem_status);
+        note right
+          BOSCH_SECPOWERSUPPLY_FAILURE DTC is raised after 5 consecutive faults (50ms).
+        end note
+      else (no)
+        :Continue monitoring;
+      endif
+    else (no)
+      :Reset fault counter for this rail;
+    endif
+
+  else (no)
+    :Continue waiting for ADC completion;
+  endif
+
+  :Wait until next 10ms cycle;
+repeat while (System running)
+
+stop
+@enduml

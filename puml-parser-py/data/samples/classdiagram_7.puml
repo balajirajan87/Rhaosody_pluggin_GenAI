@@ -1,0 +1,83 @@
+@startuml
+title Voltage Monitoring & Fault Management Class Diagram
+
+' Main modules
+class cl_VoltMon {
+    +monitorVoltages()
+    +checkThresholds()
+    +debounceCounters: Map<VoltageRail, Integer>
+    +readVoltage(VoltageRail): float
+    +injectStubVoltage(VoltageRail, float)
+    -voltageThresholds: Map<VoltageRail, Threshold>
+    -stubEnabled: boolean
+    -stubVoltages: Map<VoltageRail, float>
+}
+
+class cl_RTAOS_10msTask {
+    +run()
+}
+
+class cl_ErrMgmt {
+    +reportError(errInfo: uint16, addInfo: uint32, demStatus: DemStatus)
+}
+
+class AdcDriver {
+    +init()
+    +startGroupConversion(groupId: int)
+    +getGroupStatus(groupId: int): AdcStatus
+    +readGroup(groupId: int, resultBuffer: float[])
+}
+
+' Supporting types
+enum VoltageRail {
+    VDD_5V
+    VDD_1V2_SSD
+    VDD_0V9_SSD
+    VDD_3V3_ETH
+    VDD_1V2_ETH
+    VDD_0V8_ETH
+    US33_LDO3_S32G
+}
+
+class Threshold {
+    -min: float
+    -max: float
+    +isWithin(value: float): boolean
+}
+
+enum AdcStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+enum DemStatus {
+    PASSED
+    FAILED
+    PENDING
+}
+
+' Relationships
+cl_RTAOS_10msTask --> cl_VoltMon : triggers monitorVoltages() every 10ms
+cl_VoltMon --> AdcDriver : uses for ADC operations
+cl_VoltMon --> cl_ErrMgmt : reports errors via reportError()
+cl_VoltMon --> Threshold : uses for threshold checks
+cl_VoltMon --> VoltageRail : monitors each rail
+cl_VoltMon "1" o-- "1..*" Threshold : has thresholds per rail
+
+' Fault injection stub
+note right of cl_VoltMon
+    Software stub variable:
+    - Allows read/write of voltage levels
+    - Used for fault injection & test
+    - Enabled in test mode
+end note
+
+' Debounce logic
+note bottom of cl_VoltMon
+    Debounce: Error reported only after
+    5 consecutive threshold violations
+end note
+
+@enduml

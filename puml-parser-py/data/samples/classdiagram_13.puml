@@ -1,0 +1,89 @@
+@startuml
+' Packages represent SW Components
+package "cl_VoltMon" {
+    class cl_VoltMon {
+        - debounceCounter: uint8
+        - lastVoltages: float[]
+        - thresholds: Thresholds
+        + Init(): void
+        + MonitorVoltages(): void
+        + CheckThresholds(): void
+        + DebounceLogic(): bool
+        + HandleVoltageError(faultId: uint16): void
+    }
+}
+ 
+package "cl_ErrMgmt" {
+    class cl_ErrMgmt {
+        + rbsfty_ErrMgt_ReportError(ErrInfo_u16: uint16, Add_info_u32: uint32, Dem_status: uint8): void
+    }
+}
+ 
+package "cl_Dio" {
+    class cl_Dio {
+        + Dio_ReadChannel(channel: uint8): uint8
+        + Diochannel_Read(channel: uint8): uint8
+    }
+}
+ 
+package "rbsfty_BladeDiscovery" {
+    class rbsfty_BladeDiscovery {
+        - slotId: uint8
+        - bladeType: uint8
+        + BladeDiscovery_Init(): void
+        + BladeDiscovery_Run(): void
+        + CompareSlotId(): bool
+        + UpdateBladeTypeSignal(valid: bool): void
+        + SendBladeStatusCAN(): void
+        + HandleDiscoveryFailure(): void
+        + rbsfty_BldAuthenticate(): bool
+        + rbsfty_BldAuthenticate_Init(): void
+    }
+}
+ 
+package "DCM_if" <<external>> {
+    class DCM_if {
+        + LogDTC(dtcCode: uint32, extInfo: uint32): void
+    }
+}
+ 
+package "CAN-FD" <<external>> {
+    class CAN_FD {
+        + Write_Com_SafetyInterbladeSignal(signal: uint8): void
+        + Get_Com_SafetyInterBlade_Signal(): uint8
+    }
+}
+ 
+package "ADC Driver" <<external>> {
+    class ADC_Driver {
+        + Adc_Init(): void
+        + Adc_StartGroupConversion(group: uint8): void
+        + Adc_GetGroupStatus(group: uint8): uint8
+        + Adc_ReadGroup(group: uint8): float[]
+    }
+}
+ 
+' Data structure for thresholds (not a class, but shown for clarity)
+class Thresholds <<struct>> {
+    + uv: float[]
+    + ov: float[]
+}
+
+class AdcGroupStatus <<enum>>{
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+ 
+' Relationships
+cl_VoltMon ..> ADC_Driver : uses
+cl_VoltMon ..> cl_ErrMgmt : reports errors to
+cl_VoltMon ..> DCM_if : logs DTCs via
+cl_VoltMon ..> Thresholds : uses
+rbsfty_BladeDiscovery ..> cl_Dio : reads Slot ID from
+rbsfty_BladeDiscovery ..> CAN_FD : sends/receives signals via
+rbsfty_BladeDiscovery ..> DCM_if : logs DTCs via
+rbsfty_BladeDiscovery ..> cl_ErrMgmt : reports errors to
+ 
+@enduml

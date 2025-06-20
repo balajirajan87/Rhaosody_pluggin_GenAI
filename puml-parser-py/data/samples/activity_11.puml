@@ -1,0 +1,37 @@
+@startuml
+title Voltage Monitoring System - Activity Diagram
+
+start
+
+partition "Initialization" {
+    :Adc_Init();
+    :MPCI.initialize();
+    :MPCI.checkPreviousFaults();
+}
+
+partition "Periodic 10ms Task (cl_RTAOS.10ms task)" {
+    :Adc_StartGroupConversion();
+    :Wait for ADC conversion to complete;
+    if (Adc_GetGroupStatus() == COMPLETED) then (yes)
+        :Adc_ReadGroup();
+        :Update voltage values for all rails;
+        if (Fault Injection Enabled?) then (yes)
+            :Apply injected voltage values via FaultInjectionStub;
+        endif
+        :Increment measurement cycle count;
+        if (measurement cycle count >= 5) then (yes)
+            :Perform fault injection verification;
+            :Reset measurement cycle count;
+        endif
+        :Compare each rail's value to UV/OV thresholds;
+        if (Any voltage out of threshold?) then (yes)
+            :cl_VoltMon.notifyError();
+            :rbsfty_ErrMgt_ReportError();
+        endif
+    else (no)
+        :Handle ADC not ready (skip or retry);
+    endif
+}
+
+stop
+@enduml

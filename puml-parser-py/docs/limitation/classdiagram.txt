@@ -1,0 +1,4 @@
+| Limitation   | Puml Parser   | Json       | Rhapsodydiagram        |
+|--------------|---------------|------------|------------------------|
+| cardinality  |     yes       |    no      |       no               |
+| alias name   |     no        |    no      |       no               |

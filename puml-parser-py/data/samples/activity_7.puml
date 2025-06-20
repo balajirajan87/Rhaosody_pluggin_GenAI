@@ -1,0 +1,67 @@
+@startuml
+!define RECTANGLE class
+skinparam activity {
+    BackgroundColor<<API>> #E3F6FF
+    BackgroundColor<<Manager>> #E8F6E8
+    BackgroundColor<<Callback>> #FFF6E3
+}
+
+title Activity Diagram: RingBuffManag API Layer
+ 
+start
+ 
+:Application Process;
+partition "API Layer" {
+    :Call RBM_CreateBufswFile();
+    if (Success?) then (yes)
+        :Call RBM_CreateBufswContent();
+        if (Success?) then (yes)
+            :Call RBM_trigEvtRecOn();
+            if (Event Triggered?) then (yes)
+                :Buffering Data;
+                :Call RBM_trigSingleEvtRec();
+                :Freeze Write Pointer;
+                :Transfer Data to Storage/FIFO;
+                :Call RBM_StopEvtRec();
+                :Unfreeze Write Pointer;
+            else (no)
+                :Handle No Event;
+            endif
+            :Call RBM_trigEvtRecOff();
+        else (no)
+            :Return Error Code;
+            :Invoke Callback (Error);
+        endif
+    else (no)
+        :Return Error Code;
+        :Invoke Callback (Error);
+    endif
+ 
+    :Call RBM_RemoveRingBuf();
+    if (Success?) then (yes)
+        :Buffer Cleared;
+    else (no)
+        :Return Error Code;
+        :Invoke Callback (Error);
+    endif
+ 
+    :Call API Version Check;
+    :Query State/Resource Status;
+    :Register Callback Pointer;
+}
+ 
+partition "RingBuffManag Process" {
+    :Validate API Call (Re-entrant, IPC-agnostic);
+    :Check State Machine (Init, Standby, Buffering, Shutdown);
+    :Allocate RAM for Buffer;
+    :Initialize Buffer (0, static addr, size);
+    :Maintain Write Pointer;
+    :Monitor RAM/SSD Usage;
+    :Manage SSD (format/erase, log space);
+    :Log Entries (timestamp, data, metadata);
+    :Notify Client via Callback on State/Error;
+}
+ 
+stop
+ 
+@enduml

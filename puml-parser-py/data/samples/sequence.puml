@@ -1,0 +1,55 @@
+@startuml
+title Periodic Voltage Monitoring and Fault Handling Sequence
+
+actor "Tester" as Tester
+participant "cl_RTAOS.10ms Task" as RTAOS
+participant "cl_VoltMon" as VoltMon
+participant "Stub Software" as Stub
+participant "ADC Driver" as ADC
+participant "IsrAdc0/1" as ISR
+participant "MPCI" as MPCI
+participant "cl_ErrMgmt" as ErrMgmt
+
+== System Initialization ==
+RTAOS -> ADC: Adc_Init()
+note right: ADC hardware and channels initialized
+
+== Periodic Monitoring (every 10ms) ==
+RTAOS -> ADC: Adc_StartGroupConversion(AdcGroup_HwUnit1_Task10ms)
+activate ADC
+
+loop Wait for ADC conversion completion
+    ADC -> ISR: Conversion Complete Interrupt
+    ISR -> ADC: Notify Conversion Complete
+end
+deactivate ADC
+
+RTAOS -> ADC: Adc_GetGroupStatus(AdcGroup_HwUnit1_Task10ms)
+alt Status == COMPLETED
+    RTAOS -> ADC: Adc_ReadGroup(AdcGroup_HwUnit1_Task10ms)
+    RTAOS -> VoltMon: Provide ADC Results
+else Status != COMPLETED
+    note right: Wait or retry next cycle
+end
+
+== Fault Injection (if in test mode) ==
+Tester -> Stub: Set Injected Voltage Value
+Stub -> VoltMon: Override ADC Value (ReadAndStoreAdcSignal())
+
+== Under/Over-Voltage Detection ==
+VoltMon -> VoltMon: Compare ADC Results vs. UV/OV Thresholds
+alt Fault Detected (for 5 consecutive cycles)
+    VoltMon -> ErrMgmt: rbsfty_ErrMgt_ReportError(ErrInfo_u16, Add_info_u32, Dem_status)
+    ErrMgmt -> VoltMon: Ack/Error Handling
+    VoltMon -> MPCI: Forward Error
+    MPCI -> MPCI: Log/Retest Faults (on init or as needed)
+else No Fault
+    note right: Continue monitoring
+end
+
+== MPCI Initialization Fault Retest ==
+MPCI -> VoltMon: Request Retest for Previous Faults (on system init)
+VoltMon -> ADC: Adc_StartGroupConversion(AdcGroup_HwUnit1_Task10ms)
+... (repeat ADC read and compare as above) ...
+
+@enduml

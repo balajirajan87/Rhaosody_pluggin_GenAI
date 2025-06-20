@@ -1,0 +1,14 @@
+[Helpers]
+numberOfElements=2
+
+name1=Rhp-GenAI
+JavaMainClass1=com.bosch.rhapsody.integrator.RhpPlugin
+JavaClassPath1=Rhp-GenAI.jar
+isPlugin1=1
+isVisible1=0
+
+name2=Rhapsody GenAI
+isPluginCommand2=1
+command2=Rhp-GenAI
+applicableTo2=Project
+isVisible2=1

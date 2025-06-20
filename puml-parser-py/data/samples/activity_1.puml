@@ -1,0 +1,44 @@
+@startuml
+|Cl_RTAOS_10ms_Task|
+start
+:Triggered every 10ms;
+
+|Cl_VoltMon|
+:For each VoltageRail (VDD_5V, VDD_1V2_SSD, ...);
+repeat
+    if (Is Test Mode?) then (yes)
+        |FaultInjectionStub|
+        :Get stub value for rail;
+        note right: Fault injection via software stub
+        |Cl_VoltMon|
+        :Store stub value as measurement;
+    else (no)
+        |AdcDriver|
+        if (Adc_GetGroupStatus(groupId) == IDLE) then (yes)
+            :Adc_StartGroupConversion(groupId);
+        endif
+        repeat
+            :Poll Adc_GetGroupStatus(groupId);
+        repeat while (status != COMPLETED/STREAM_COMPLETED)
+        :Adc_ReadGroup(groupId, buffer);
+        :Store ADC value as measurement;
+    endif
+
+    :Update last 5 measurements for rail;
+    if (5 measurements collected?) then (yes)
+        :Compare all 5 to UV/OV thresholds;
+        if (Any out of range?) then (yes)
+            |Cl_VoltMon|
+            :Prepare error info;
+            |Cl_ErrMgmt|
+            :rbsfty_ErrMgt_ReportError(ErrInfo_u16, Add_info_u32, Dem_status);
+            :Log BOSCH_SECPOWERSUPPLY_FAILURE DTC;
+        else (no)
+            :Continue monitoring;
+        endif
+    else (no)
+        :Continue accumulating measurements;
+    endif
+repeat while (more rails)
+stop
+@enduml
