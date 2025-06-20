@@ -1,0 +1,44 @@
+@startuml
+title Voltage Monitoring System - Activity Diagram
+
+|System Initialization|
+start
+:Call Adc_Init();
+:Call MPCI.initialize();
+:Call MPCI.checkPreviousFaults();
+
+|Periodic 10ms Task (cl_RTAOS.10ms task)|
+repeat
+  :Call Adc_StartGroupConversion(groupId);
+  :Wait for ADC conversion completion;
+  if (Adc_GetGroupStatus(groupId) == COMPLETED) then (yes)
+    :Call Adc_ReadGroup(groupId, buffer);
+    :For each VoltageRail in buffer;
+      if (Fault Injection Enabled?) then (yes)
+        :Get injected value from FaultInjectionStub;
+        :Use injected value as voltage;
+      else (no)
+        :Use ADC value as voltage;
+      endif
+      :Compare voltage to UV/OV thresholds;
+      if (Voltage out of range?) then (yes)
+        :Call cl_VoltMon.notifyError(rail, errorType);
+        :Call cl_ErrMgmt.rbsfty_ErrMgt_ReportError();
+        :Raise DTC (BOSCH_SECPOWERSUPPLY_FAILURE);
+      else (no)
+        :No error;
+      endif
+    :End for;
+    :Increment measurementCount;
+    if (measurementCount >= 5) then (yes)
+      :Perform Fault Injection Verification;
+      :Reset measurementCount;
+    else (no)
+    endif
+  else (no)
+    :Continue waiting for ADC completion;
+  endif
+repeat while (system running)
+stop
+
+@enduml

@@ -68,6 +68,13 @@ class Thresholds <<struct>> {
     + uv: float[]
     + ov: float[]
 }
+
+class AdcGroupStatus <<enum>>{
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
  
 ' Relationships
 cl_VoltMon ..> ADC_Driver : uses

@@ -11,6 +11,7 @@ from PIL import Image
 from flask import Flask, request, jsonify
 import io
 from flask_cors import CORS
+import base64
 
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "text-embedding-3-small"
@@ -222,31 +223,65 @@ class MyEmbeddingFunction(EmbeddingFunction):
         Returns:
             list: A list of embeddings if successful, otherwise None.
         """
-        image_data = [image.tobytes() for image in images]
-        data = {
-            'input': image_data,
-            'dimensions': 1024
-        }
-        for attempt in range(self.max_retries):
+        descriptions = []
+
+        for image in images:
+            # Convert the image to base64
+            buffered = io.BytesIO()
+            image.save(buffered, format="PNG")
+            image_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+            # Compose the payload
+            data = {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail. Make sure to include all the important details like text. If the image contains UML diagrams, understand and describe its components."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}",
+                                    "detail": "high"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "max_tokens": 500,
+                "temperature": 0.5,
+                "top_p": 0.9
+            }
+
             try:
-                response = requests.post(f'{API_URL}/{IMAGE_EMBEDDING_MODEL}/embeddings?api-version={EMBEDDING_API_VERSION}', headers=HEADERS, json=data)
+                response = requests.post(
+                    f'{API_URL}/{CHAT_MODEL}/chat/completions?api-version={CHAT_API_VERSION}',
+                    headers=HEADERS,
+                    json=data
+                )
                 response.raise_for_status()
                 data_ = response.json()
-                if 'data' in data_:
-                    embeddings = [item.get('embedding') for item in data_['data']]
-                    return embeddings
-                return None
-            except requests.exceptions.RequestException as e:
-                if response.status_code == 429:
-                    # Handle rate limiting
-                    print(f"Rate limit exceeded. Retrying in {self.backoff_factor * (2 ** attempt)} seconds...")
-                    time.sleep(self.backoff_factor * (2 ** attempt))
+                if 'choices' in data_ and len(data_['choices']) > 0:
+                    descriptions.append(data_['choices'][0]['message']['content'])
                 else:
-                    print(f"Request failed: {e}")
-                    return None
-            except KeyError as e:
-                print(f"KeyError in response: {e}")
-                return None
+                    descriptions.append(None)
+            except requests.exceptions.RequestException as e:
+                print(f"Failed to describe image: {e}")
+                descriptions.append(None)
+
+        # Generate embeddings for the descriptions
+        text_embeddings = []
+        for description in descriptions:
+            if description:
+                text_embedding = self.__get_user_querry_embedding__(description)
+                text_embeddings.append(text_embedding)
+            else:
+                text_embeddings.append(None)
+
+        return text_embeddings
 
     def __call__(self, chunks):
         """
@@ -507,6 +542,9 @@ def process_reference_code(directory, collection, metadata_file):
             metadata_file="/path/to/metadata.json"
     """
     metadata = load_metadata(metadata_file)
+
+     # Remove entries for deleted PDFs
+    remove_deleted_code_files_from_chroma(directory, collection, metadata, metadata_file)
     
     # List all header and source files in the directory
     header_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.h')]
@@ -592,6 +630,50 @@ def remove_deleted_pdfs_from_chroma(directory, collection, metadata, metadata_fi
         del metadata[pdf_hash]
     
     save_metadata(metadata, metadata_file)
+
+# Remove embeddings for deleted PDFs
+def remove_deleted_code_files_from_chroma(directory, collection, metadata, metadata_file):
+    """
+    Remove embeddings for deleted PDFs from the collection.
+
+    This function performs the following tasks:
+    1. Identifies PDF files that have been deleted from the "docs" directory.
+    2. Removes the corresponding entries from the collection and metadata.
+
+    Parameters:
+    collection (object): The collection object from which the PDF embeddings and metadata will be removed.
+    metadata (dict): A dictionary containing metadata about the PDFs, where the key is the PDF hash and the value is a dictionary with PDF information.
+
+    Returns:
+    None
+
+    Detailed Steps:
+    1. Identify Existing Files: The function creates a set of existing PDF files in the "docs" directory.
+    2. Identify Deleted Files: It then identifies which PDFs have been deleted by comparing the existing files with the metadata.
+    3. Remove Deleted Files: For each deleted PDF, the function removes the corresponding entry from the collection and metadata, and prints a message indicating the removal.
+    4. Save Updated Metadata: Finally, the function saves the updated metadata.
+
+    Notes:
+    - Ensure that the `save_metadata` function is defined and imported in the script.
+    - The "docs" directory should contain only the PDF files that are currently in use.
+    """
+    # Identify existing .c and .h files
+    existing_files = {f for f in os.listdir(directory) if f.endswith(('.c', '.h'))}
+    
+    # Identify hashes of .c and .h files that no longer exist in the directory
+    hashes_to_remove = [
+        file_hash for file_hash, info in metadata.items()
+        if os.path.basename(info['path']) not in existing_files and info['path'].endswith(('.c', '.h'))
+    ]
+
+    # Remove deleted .c and .h files from the collection and metadata
+    for file_hash in hashes_to_remove:
+        print(f"Removing deleted code file with hash: {file_hash}")
+        collection.delete(where={"doc_hash": file_hash})
+        del metadata[file_hash]
+    
+    # Save the updated metadata
+    save_metadata(metadata, metadata_file)
     
 # Process all PDFs in the docs/ directory
 def process_all_pdfs(directory, collection, metadata_file):
@@ -675,7 +757,7 @@ def find_relevant_chunk(user_query, collection):
     return None
 
 # Prompting the model for text generation
-def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temperature: float = 0.2, top_p: float = 0.7, max_retries: int = 5, backoff_factor: int = 2) -> str:
+def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 5000, temperature: float = 0.5, top_p: float = 0.7, max_retries: int = 5, backoff_factor: int = 2) -> str:
     """
     Prompt the model for text generation.
 
@@ -826,10 +908,14 @@ def extract_design_information(messages, collection):
     messages = [
         {
             "role": "system",
-            "content": f"""
-            You are a highly skilled AI assistant specializing in understanding software architechture / reference Design informations. You are provided with Requirements and Reference Design Information delimited by tripple backticks and task delimited by Angle brackets.
-            Your task is:
-            <{task}>
+            "content": """
+            You are a highly skilled AI assistant specializing in understanding Software Architechture. You are provided with Requirements and Information from Software Architechture delimited by tripple backticks.
+            Your task is to:
+            1. First understand the requirements and identify all the critical / important points mentioned in the requirements.
+            2. Next, understand the extracted Software Architecture and identify relevant API functions, parameters, protocols, and constraints.
+            3. Next Combine the understanding of the Software Architechture and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed to realize the input Requirements.
+            4. Make sure that the generated output addresses all the requirements and is consistent with the Software Architecture.
+            5. Ignore unrelated or ambiguous information and ensure consistency.
             """
         },
         {
@@ -837,7 +923,7 @@ def extract_design_information(messages, collection):
             "content": f"""
             Requirements:
             ```{requirements_summary}```
-            Reference Design Information:
+            Software Architecture:
             ```{relevant_chunks}```
             """
         }
@@ -876,9 +962,13 @@ def extract_code_information(messages, collection):
         {
             "role": "system",
             "content": """
-            You are a highly skilled AI assistant specializing in understanding Code information. You are provided with Requirements and its associated Code Information delimited by tripple backticks and task delimited by Angle brackets.
-            Your task is:
-            <{task}>
+            You are a highly skilled AI assistant specializing in understanding Software Designs from the Code. You are provided with Requirements and Code Information delimited by tripple backticks.
+            Your task is to:
+            1. First understand the requirements and identify all the critical / important points mentioned in the requirements.
+            2. Next, understand the extracted Code Information and in your understanding include all relevant API functions, parameters, protocols, and constraints.
+            3. Next Combine the understanding of the extracted Code Information and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed to realize the input Requirements.
+            4. Make sure that the generated output addresses all the requirements and is consistent with the extracted Code Information.
+            5. Ignore unrelated or ambiguous information and ensure consistency.
             """
         },
         {
