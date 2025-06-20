@@ -100,6 +100,32 @@ public class ActivityDiagramUtil {
     }
 
     /**
+     * Creates an action block (state with type "Block") in the given activity
+     * diagram and assigns it to a swimlane.
+     *
+     * @param diagram    The IRPFlowchart (activity diagram) where the action block
+     *                   will be created.
+     * @param actionName The name of the action block.
+     * @param swimlane   The IRPSwimlane to assign the action block to (can be
+     *                   null).
+     * @return The created IRPState object, or null if creation failed.
+     */
+    public static IRPState createActionBlock(IRPFlowchart diagram, String actionName, IRPSwimlane swimlane) {
+        IRPState action = null;
+        try {
+            action = diagram.getRootState().addState(actionName);
+            action.setStateType("Block");
+            if (swimlane != null) {
+                action.setItsSwimlane(swimlane);
+            }
+        } catch (Exception ex) {
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create action block " + actionName + ": " + ex.getMessage() + Constants.NEW_LINE);
+        }
+        return action;
+    }
+
+    /**
      * Creates an object node in the given activity diagram.
      *
      * @param diagram  The IRPFlowchart (activity diagram) where the object node
