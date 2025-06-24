@@ -834,7 +834,7 @@ def summarize_requirements(messages, collection):
            dependencies, and assumptions, and ignores unrelated or ambiguous information.
     """
     # Extract the feature query from the first dictionary
-    feature_query = messages[0].get("content")
+    feature_query = messages[-1].get("content")
 
     if feature_query is None:
         raise ValueError("Feature query not found in messages.")
@@ -900,7 +900,7 @@ def extract_design_information(messages, collection):
         return None
     
     # Extract the task from the third dictionary
-    task = messages[2].get("content")
+    task = messages[-1].get("content")
     if not task:
         raise ValueError("Task not found in the third dictionary of messages.")
 
@@ -953,7 +953,7 @@ def extract_code_information(messages, collection):
         return None
     
     # Extract the task from the third dictionary
-    task = messages[4].get("content")
+    task = messages[-1].get("content")
     if not task:
         raise ValueError("Task not found in the fourth dictionary of messages.")
 
