@@ -14,6 +14,7 @@ import com.bosch.rhapsody.generator.*;
 import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
+import com.bosch.rhapsody.util.PlantUMLValidator;
 
 public class PUMLParser {
 
@@ -21,6 +22,7 @@ public class PUMLParser {
         IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
         Constants.rhapsodyApp = app;
         Constants.project = Constants.rhapsodyApp.activeProject();
+        Constants.PROFILEPATH = "";
         // new PUMLParser().generateJsonFromPuml("@startuml.....@enduml", shell,
         // "classdiagram");
         // String outputFile = "";
@@ -39,23 +41,26 @@ public class PUMLParser {
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
             extractLastPumlBlock(chatContent, inputFile);
             try {
-                ProcessBuilder processBuilder = new ProcessBuilder(
+                boolean isValid = PlantUMLValidator.isValidPuml(inputFile);
+                if(isValid){
+                    ProcessBuilder processBuilder = new ProcessBuilder(
                         Constants.PUML_PARSER_PATH,
                         "-i", inputFile,
                         "-o", outputFile,
                         "-t", diagramType);
-                processBuilder.redirectErrorStream(true);
-                Process pythonBackendProcess = processBuilder.start();
-                int exitCode = pythonBackendProcess.waitFor();
-                if (exitCode != 0) {
-                    throw new IOException("Python parser failed with exit code " + exitCode);
-                }
-                if (!Files.exists(Paths.get(outputFile))) {
-                    throw new IOException("Output file was not generated: " + outputFile);
-                }
-                createDiagram(diagramType, outputFile);
-                if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
-                    pythonBackendProcess.destroy();
+                    processBuilder.redirectErrorStream(true);
+                    Process pythonBackendProcess = processBuilder.start();
+                    int exitCode = pythonBackendProcess.waitFor();
+                    if (exitCode != 0) {
+                        throw new IOException("Python parser failed with exit code " + exitCode);
+                    }
+                    if (!Files.exists(Paths.get(outputFile))) {
+                        throw new IOException("Output file was not generated: " + outputFile);
+                    }
+                    createDiagram(diagramType, outputFile);
+                    if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
+                        pythonBackendProcess.destroy();
+                    }
                 }
             } catch (IOException io) {
                 throw io;
