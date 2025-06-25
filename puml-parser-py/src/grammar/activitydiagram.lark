@@ -10,7 +10,7 @@ stereotype: "<<" CNAME ">>"
 
 section: swimlane? (statement | partition) +
 
-swimlane: "|"? COLOR? "|" IDENTIFIER "|"
+swimlane: "|"? COLOR? ("|" | ":") IDENTIFIER "|"
 
 statement: start_activity
          | swimlane
