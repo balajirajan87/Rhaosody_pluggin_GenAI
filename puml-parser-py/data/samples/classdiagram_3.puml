@@ -1,0 +1,112 @@
+@startuml
+title Voltage Monitoring & Fault Injection System - Class Diagram
+
+package "Voltage Monitoring" {
+    class VoltageMonitor {
+        - monitoredVoltages: List<VoltageSignal>
+        - measurementBuffer: Map<VoltageSignal, List<int>>
+        - consecutiveFaultCount: Map<VoltageSignal, int>
+        - periodicIntervalMs: int
+        + startMonitoring()
+        + stopMonitoring()
+        + checkVoltages()
+        + compareThresholds(signal: VoltageSignal, value: int): FaultType
+        + handleFault(signal: VoltageSignal, fault: FaultType)
+        + powerOnRetest()
+    }
+
+    class VoltageSignal {
+        + name: String
+        + uvThreshold: int
+        + ovThreshold: int
+    }
+}
+
+package "ADC Interface" {
+    class AdcDriver {
+        + Adc_Init()
+        + Adc_StartGroupConversion(groupId: int)
+        + Adc_GetGroupStatus(groupId: int): AdcStatus
+        + Adc_ReadGroup(groupId: int, buffer: int[])
+    }
+
+    class AdcUnitConvFunction {
+        + convertRawToVoltage(raw: int): int
+    }
+
+    class ReadAndStoreAdcSignal {
+        + readAndStore(signal: VoltageSignal): int
+    }
+}
+
+package "Fault Injection" {
+    class FaultInjectionStub {
+        - enabled: bool
+        - injectedValues: Map<VoltageSignal, int>
+        + enable()
+        + disable()
+        + injectFault(signal: VoltageSignal, value: int)
+        + getInjectedValue(signal: VoltageSignal): int
+    }
+}
+
+package "Error Management" {
+    class ErrorManager {
+        + rbsfty_ErrMgt_ReportError(errInfo: int, addInfo: int, demStatus: int)
+        + rbsfty_ErrMgt_Process_info()
+        + logDTC(signal: VoltageSignal, fault: FaultType)
+        + persistFault(signal: VoltageSignal, fault: FaultType)
+        + retrievePersistedFaults(): List<FaultRecord>
+    }
+
+    class FaultRecord {
+        + signal: VoltageSignal
+        + faultType: FaultType
+        + timestamp: DateTime
+    }
+
+    enum FaultType {
+        NONE
+        UNDER_VOLTAGE
+        OVER_VOLTAGE
+    }
+}
+
+package "Safety Monitoring" {
+    class SafetyMonitor {
+        + checkLocalBladeSafety()
+        + performPowerOnRetest()
+    }
+}
+
+' Relationships
+VoltageMonitor --> VoltageSignal : monitors >
+VoltageMonitor --> AdcDriver : uses >
+VoltageMonitor --> AdcUnitConvFunction : uses >
+VoltageMonitor --> ReadAndStoreAdcSignal : uses >
+VoltageMonitor --> FaultInjectionStub : queries for injected values >
+VoltageMonitor --> ErrorManager : reports faults >
+VoltageMonitor --> SafetyMonitor : coordinates with >
+ErrorManager --> FaultRecord : persists >
+FaultInjectionStub --> VoltageSignal : injects faults for >
+ReadAndStoreAdcSignal --> AdcDriver : uses >
+ReadAndStoreAdcSignal --> AdcUnitConvFunction : uses >
+
+' Notes for clarity
+note right of FaultInjectionStub
+  Used for software-based fault injection.
+  Allows overriding ADC readings for test.
+end note
+
+note right of ErrorManager
+  Handles error reporting, DTC logging,
+  and persistent fault storage for safety.
+end note
+
+note left of VoltageMonitor
+  Main orchestrator for periodic voltage
+  monitoring, threshold checking, and
+  fault handling.
+end note
+
+@enduml

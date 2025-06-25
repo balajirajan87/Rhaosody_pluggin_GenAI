@@ -1,0 +1,60 @@
+@startuml
+title Voltage Monitoring and Safety Management - Simple Class Diagram
+
+' ADC Hardware Interface
+class cl_adc {
+    +Adc_Init(config: AdcConfigType): void
+    +Adc_StartGroupConversion(groupId: AdcGroupType): void
+    +Adc_GetGroupStatus(groupId: AdcGroupType): AdcStatusType
+    +Adc_ReadGroup(groupId: AdcGroupType, resultBuffer: uint16[]): void
+}
+
+' Voltage Monitoring Module
+class cl_VoltMon {
+    +MonitorVoltages(): void
+    +CompareToThresholds(results: uint16[]): void
+    +ReadAndStoreAdcSignal(): void
+    +InjectFault(stubValue: uint16): void
+}
+
+' Error Management Module
+class cl_ErrMgmt {
+    +rbsfty_ErrMgt_ReportError(ErrInfo_u16: uint16, Add_info_u32: uint32, Dem_status: DemStatusType): void
+}
+
+' Real-Time OS Task (10ms)
+class cl_RTAOS_10ms_Task {
+    +Run(): void
+}
+
+' Fault Injection Stub
+class FaultInjectionStub {
+    +EnableFaultInjection(enable: bool): void
+    +SetStubValue(value: uint16): void
+    +GetStubValue(): uint16
+}
+
+' MPCI Safety Monitor
+class MPCI {
+    +TestPreviousFaults(): void
+    +PerformBladeLevelSafetyCheck(): void
+}
+
+' Data Types (as simple classes for clarity)
+class AdcConfigType << (D,orchid) >>
+class AdcGroupType << (D,orchid) >>
+class AdcStatusType << (D,orchid) >>
+class DemStatusType << (D,orchid) >>
+
+' Relationships
+cl_VoltMon --> cl_adc : uses
+cl_VoltMon --> cl_ErrMgmt : reports error to
+cl_RTAOS_10ms_Task --> cl_VoltMon : triggers MonitorVoltages()
+cl_VoltMon --> FaultInjectionStub : uses for testing
+cl_VoltMon --> MPCI : notifies on safety fault
+cl_adc ..> AdcConfigType
+cl_adc ..> AdcGroupType
+cl_adc ..> AdcStatusType
+cl_ErrMgmt ..> DemStatusType
+
+@enduml

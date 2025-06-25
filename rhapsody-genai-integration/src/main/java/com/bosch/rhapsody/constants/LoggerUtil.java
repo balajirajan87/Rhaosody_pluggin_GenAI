@@ -14,7 +14,6 @@ public class LoggerUtil {
   private static IRPApplication rhapsodyApp;
   private static String path;
 
-
   /**
    * @param rhapsodyApp the rhapsodyApp to set
    */
@@ -58,7 +57,7 @@ public class LoggerUtil {
     // Print to console
     System.out.println(logMessage);
 
-    rhapsodyApp.writeToOutputWindow("GenAIPlugin", logMessage + "\n");
+    rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN, logMessage  + Constants.NEW_LINE);
 
     // getLogFile(LoggerUtil.path+File.separator+LOG_FILE);
 
@@ -77,21 +76,17 @@ public class LoggerUtil {
       try (java.io.PrintWriter writer = new java.io.PrintWriter(chatLogFile)) {
         writer.print("");
         LoggerUtil.info("Chat log file content cleared: " + string);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         LoggerUtil.error("Failed to clear the chat log file content: " + e.getMessage());
       }
-    }
-    else {
+    } else {
       try {
         if (chatLogFile.createNewFile()) {
           LoggerUtil.info("Chat log file created: " + string);
-        }
-        else {
+        } else {
           LoggerUtil.error("Failed to create chat log file: " + string);
         }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         LoggerUtil.error("Error while creating chat log file: " + e.getMessage());
       }
     }

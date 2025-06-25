@@ -1,0 +1,39 @@
+@startuml
+|#lightblue|BladeDiscovery|
+start
+
+:Read Slot ID from GPIO (cl_Dio.Dio_ReadChannel);
+
+:Compare read Slot ID with actual Slot ID;
+
+if (Slot ID matches actual?) then (yes)
+  :Send Slot ID & Blade Type as "Valid" via CAN-FD (Write_Com_SafetyInterbladeSignal);
+  :Authenticate blade at power on (rbsfty_BldAuthenticate);
+  if (Authentication successful?) then (yes)
+    :Update blade authentication info (rbSfty_Update_BladeAuthInfo);
+    :Publish authentication result via CAN-FD (Write_Com_SafetyInterbladeSignal);
+    :Store blade info (IDs, CRC32);
+    stop
+  else (no)
+    :Trigger DTC: BOSCH_AUTHENTICATION_FAILURE (rbMonReact_ReportEvent);
+    :Send "Error Invalid Combination" via CAN-FD (Write_Com_SafetyInterbladeSignal);
+    stop
+  endif
+else (no)
+  :Trigger DTC: BOSCH_BLADE_DISCOVERY_FAILURE (rbMonReact_ReportEvent);
+  :Send "Error Invalid Combination" via CAN-FD (Write_Com_SafetyInterbladeSignal);
+  stop
+endif
+
+|#lightyellow|Diagnostics|
+:Re-learning requested via secured diagnostics (DCM_IF)?;
+if (Re-learning requested?) then (yes)
+  :Update blade authentication info (rbSfty_Update_BladeAuthInfo);
+  :Store blade info (IDs, CRC32);
+  :Publish learning status via CAN-FD (Write_Com_SafetyInterbladeSignal);
+  stop
+else (no)
+  stop
+endif
+
+@enduml

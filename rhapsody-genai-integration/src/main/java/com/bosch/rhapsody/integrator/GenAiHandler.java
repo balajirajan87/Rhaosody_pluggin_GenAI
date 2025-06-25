@@ -17,8 +17,6 @@ import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.telelogic.rhapsody.core.IRPApplication;
-import com.telelogic.rhapsody.core.RhapsodyAppServer;
 
 /**
  * @author DHP4COB
@@ -27,10 +25,9 @@ public class GenAiHandler {
 
   private Process pythonBackendProcess;
   private String sessionId = null; // Store the session ID
-  private IRPApplication rhapsodyApp;
 
   public static void main(String[] args) {
-    GenAiHandler plugin = new GenAiHandler(RhapsodyAppServer.getActiveRhapsodyApplication());
+    GenAiHandler plugin = new GenAiHandler();
     try {
       plugin.startPythonBackend();
     } catch (ProcessingException e) {
@@ -38,13 +35,6 @@ public class GenAiHandler {
       e.printStackTrace();
     }
     // plugin.generateUMLDesign();
-  }
-
-  /**
-   * @param rhapsodyApp2
-   */
-  public GenAiHandler(IRPApplication rhapsodyApp2) {
-    this.rhapsodyApp = rhapsodyApp2;
   }
 
   /**
@@ -149,25 +139,27 @@ public class GenAiHandler {
       }
 
       // new Thread(() -> {
-      //   try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getInputStream()))) {
-      //     String line;
-      //     while ((line = reader.readLine()) != null) {
-      //       LoggerUtil.info("[Python Backend] " + line);
-      //     }
-      //   } catch (IOException e) {
-      //     LoggerUtil.error(e.getMessage());
-      //   }
+      // try (BufferedReader reader = new BufferedReader(new
+      // InputStreamReader(pythonBackendProcess.getInputStream()))) {
+      // String line;
+      // while ((line = reader.readLine()) != null) {
+      // LoggerUtil.info("[Python Backend] " + line);
+      // }
+      // } catch (IOException e) {
+      // LoggerUtil.error(e.getMessage());
+      // }
       // }).start();
 
       // new Thread(() -> {
-      //   try (BufferedReader reader = new BufferedReader(new InputStreamReader(pythonBackendProcess.getErrorStream()))) {
-      //     String line;
-      //     while ((line = reader.readLine()) != null) {
-      //       LoggerUtil.error("[Python Backend] " + line);
-      //     }
-      //   } catch (IOException e) {
-      //     LoggerUtil.error(e.getMessage());
-      //   }
+      // try (BufferedReader reader = new BufferedReader(new
+      // InputStreamReader(pythonBackendProcess.getErrorStream()))) {
+      // String line;
+      // while ((line = reader.readLine()) != null) {
+      // LoggerUtil.error("[Python Backend] " + line);
+      // }
+      // } catch (IOException e) {
+      // LoggerUtil.error(e.getMessage());
+      // }
       // }).start();
 
       return "Background process started";
@@ -297,7 +289,7 @@ public class GenAiHandler {
   private void generateSessionId(boolean reset) {
     if (reset || sessionId == null) {
       sessionId = UUID.randomUUID().toString(); // Generate a unique session ID
-      LoggerUtil.info("Generated new session ID: " + sessionId);
+      // LoggerUtil.info("Generated new session ID: " + sessionId);
     }
   }
 
@@ -312,19 +304,19 @@ public class GenAiHandler {
       switch (docType) {
         case "summarize_requirements":
           queryKey = "feature_query";
-          messageKey="requirements_summary";
+          messageKey = "requirements_summary";
           break;
         case "extract_design_information":
           queryKey = "task_input";
-          messageKey="design_info";
+          messageKey = "design_info";
           break;
         case "extract_code_information":
           queryKey = "task_input";
-          messageKey="code_design_info";
+          messageKey = "code_design_info";
           break;
         case "create_uml_design":
           queryKey = "task_input";
-          messageKey="uml_design";
+          messageKey = "uml_design";
           break;
         default:
           LoggerUtil.error("Invalid docType: " + docType);
@@ -354,7 +346,6 @@ public class GenAiHandler {
         byte[] input = jsonInputString.getBytes("utf-8");
         os.write(input, 0, input.length);
       }
-
 
       // Attempt connection
       int responseCode = connection.getResponseCode();
@@ -391,7 +382,7 @@ public class GenAiHandler {
       connection.disconnect();
 
       return "Couldn't fetch related data. Please re-upload all the files and try again.";
-      
+
     } catch (SocketTimeoutException e) {
       throw new ProcessingException("Connection timed out: " + e.getMessage());
     } catch (Exception e) {
@@ -428,10 +419,10 @@ public class GenAiHandler {
 
       // If the exit code is 0 and there's output, Python is accessible
       return exitCode == 0 && (output != null || errorOutput != null);
-  } catch (Exception e) {
+    } catch (Exception e) {
       // If an exception occurs, Python is not accessible
       return false;
-  }
+    }
   }
 
 }

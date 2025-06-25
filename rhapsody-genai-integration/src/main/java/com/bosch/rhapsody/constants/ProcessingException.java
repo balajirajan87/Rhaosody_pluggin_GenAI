@@ -1,11 +1,9 @@
 package com.bosch.rhapsody.constants;
 
-
 /**
  * @author dhp4cob
  */
 public class ProcessingException extends Exception {
-
 
   private static final long serialVersionUID = 2037820832580274661L;
 

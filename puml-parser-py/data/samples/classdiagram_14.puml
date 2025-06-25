@@ -1,0 +1,81 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "Scheduler" {
+    class cl_RTAOS {
+        +scheduleTask(task: Task, periodMs: int)
+    }
+    class AdcGroup_HwUnit1_Task10ms {
+        +run()
+    }
+    cl_RTAOS "1" o-- "1" AdcGroup_HwUnit1_Task10ms : schedules
+}
+
+package "ADC Driver" {
+    class cl_adc {
+        +Adc_Init()
+        +Adc_StartGroupConversion(groupId: int)
+        +Adc_GetGroupStatus(groupId: int): AdcStatus
+        +Adc_ReadGroup(groupId: int, buffer: ADCSignalBuffer)
+    }
+    class ADCSignalBuffer {
+        +signals: Map<String, int>
+        +readSignal(name: String): int
+        +writeSignal(name: String, value: int)
+    }
+    cl_adc "1" o-- "1" ADCSignalBuffer : manages
+}
+
+package "Voltage Monitoring" {
+    class cl_VoltMon {
+        +ReadAndStoreAdcSignal()
+        +checkThresholds()
+        +detectFaults()
+        +monitoredSignals: List<String>
+        +faultCounter: Map<String, int>
+    }
+    cl_VoltMon "1" ..> "1" cl_adc : uses
+    cl_VoltMon "1" ..> "1" cl_ErrMgmt : reports to
+}
+
+package "Error Management" {
+    class cl_ErrMgmt {
+        +rbsfty_ErrMgt_ReportError(ErrInfo_u16: int, Add_info_u32: int, Dem_status: int)
+        +rbsfty_ErrMgt_Process_info()
+    }
+}
+
+package "Fault Injection" {
+    class TesterStub {
+        +injectFault(signalName: String, value: int)
+    }
+    TesterStub "1" ..> "1" ADCSignalBuffer : modifies
+}
+
+' Relationships for periodic task
+AdcGroup_HwUnit1_Task10ms ..> cl_adc : triggers ADC sampling
+AdcGroup_HwUnit1_Task10ms ..> cl_VoltMon : notifies to process
+
+' Notes for clarity
+note right of cl_VoltMon
+  - Periodic monitoring (10ms)
+  - 5-cycle validation for faults
+  - Under/Over voltage detection
+end note
+
+note right of cl_adc
+  - ADC initialization and conversion
+  - Provides signal buffer access
+end note
+
+note right of cl_ErrMgmt
+  - Error reporting and degradation mode
+  - Integration with safety monitoring
+end note
+
+note right of TesterStub
+  - Supports stub-based fault injection
+  - Tester can inject arbitrary values
+end note
+
+@enduml

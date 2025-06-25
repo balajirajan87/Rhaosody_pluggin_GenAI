@@ -1,0 +1,45 @@
+@startuml
+|#lightblue|Cl_RTAOS_10msTask|
+start
+:Trigger every 10ms;
+
+|#lightyellow|AdcGroup_HwUnit1_Task10ms|
+:Check ADC group status;
+if (ADC group status == IDLE?) then (yes)
+  :Adc_StartGroupConversion();
+endif
+:Adc_GetGroupStatus();
+if (ADC group status == COMPLETED?) then (yes)
+  :Adc_ReadGroup(VoltageBuffer);
+else
+  :Wait for next cycle;
+  stop
+endif
+
+|#lightgreen|StubFaultInjector|
+if (Test mode enabled?) then (yes)
+  :Override VoltageBuffer values for test;
+endif
+
+|#wheat|Cl_VoltMon|
+:Compare voltages to thresholds;
+if (Any voltage out of bounds?) then (yes)
+  :Increment fault counter;
+  if (Fault counter >= 5?) then (yes)
+    :Set FaultStatus = FAULT_CONFIRMED;
+    |#mistyrose|Cl_ErrMgmt|
+    :rbsfty_ErrMgt_ReportError(\nErrInfo_u16, Add_info_u32, Dem_status);
+    :Log DTC;
+    |#wheat|Cl_VoltMon|
+    :Reset fault counter;
+  else (no)
+    :Continue monitoring;
+  endif
+else (no)
+  :Reset fault counter;
+endif
+
+|#lightblue|Cl_RTAOS_10msTask|
+:Wait for next 10ms cycle;
+stop
+@enduml

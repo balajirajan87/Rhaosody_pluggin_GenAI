@@ -1,16 +1,13 @@
 package com.bosch.rhapsody.integrator;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.ui.UI;
+import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RPUserPlugin;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
@@ -20,13 +17,15 @@ import com.telelogic.rhapsody.core.RhapsodyAppServer;
  */
 public class RhpPlugin extends RPUserPlugin {
 
-  private static boolean isStandalone = false;
+  public static boolean isStandaloneJar = false;
+  public static boolean isValidLanguage = false;
   ProcessFiles fileHandler = null;
   private IRPApplication rhapsodyApp;
   GenAiHandler genAiHandler = null;
+  private UI ui = null;
 
   public static void main(String[] args) {
-    isStandalone = true;
+    isStandaloneJar = true;
     RhpPlugin plugin = new RhpPlugin();
     plugin.RhpPluginInit(RhapsodyAppServer.getActiveRhapsodyApplication());
     plugin.OnMenuItemSelect("Rhapsody GenAI");
@@ -38,53 +37,110 @@ public class RhpPlugin extends RPUserPlugin {
     fileHandler = new ProcessFiles();
     rhapsodyApp = rpyApplication;
     LoggerUtil.setRhapsodyApp(rhapsodyApp);
+    Constants.rhapsodyApp = rhapsodyApp;
+    Constants.project = rhapsodyApp.activeProject();
     String temp = fileHandler.getJarPath();
 
-    if (RhpPlugin.isStandalone) {
+    if (RhpPlugin.isStandaloneJar) {
       Constants.ROOTDIR = temp.replace("\\rhapsody-genai-integration\\target", "");
       Constants.PROFILEPATH = Constants.ROOTDIR + File.separator
-          + "rhapsody-genai-integration\\src\\main\\resources";
+          + "RhapsodyPlugin\\RhapsodyPlugin_rpy\\GenAiIntegrationProfile";
+
       Constants.BACKEND_SCRIPT_PATH = Constants.ROOTDIR + File.separator + "openai.py";
-      Constants.CHAT_LOG_FILE_PATH = Constants.ROOTDIR + File.separator + "rhp-genai-chat_log.txt";
+      Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
+      Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "pumlparser.exe";
+
     } else {
       Constants.PROFILEPATH = temp;
       Constants.ROOTDIR = Paths.get(Constants.PROFILEPATH).getParent().getParent().toString();
       Constants.BACKEND_SCRIPT_PATH = Constants.PROFILEPATH + File.separator + "openai.py";
       Constants.CHAT_LOG_FILE_PATH = "C:\\Temp\\rhp-genai-chat_log.txt";
+      Constants.PUML_PARSER_PATH = Constants.PROFILEPATH + File.separator + "pumlparser.exe";
     }
 
     fileHandler.getChatLogFile();
-
     LoggerUtil.info("GenAI Plugin loaded " + Constants.VERSION + ". Use the menu to \"Rhapsody GenAI\".");
   }
 
   @Override
   public void OnMenuItemSelect(String menuItem) {
+    if (!run()) {
+      return;
+    }
+    LoggerUtil.setRhapsodyApp(Constants.rhapsodyApp);
     if (menuItem.equals("Rhapsody GenAI")) {
+
       if (fileHandler.validatePaths()) {
         try {
           LoggerUtil.info("Running GenAI...");
-          genAiHandler = new GenAiHandler(rhapsodyApp);
+          genAiHandler = new GenAiHandler();
           if (!genAiHandler.isPythonCommandAccessible()) {
             LoggerUtil.error(
                 "Python command is not accessible. Please ensure Python is installed and added to the system PATH.");
             return;
           }
+          LoggerUtil.info("Python command is accessible. Proceeding with GenAI...");
           String response = genAiHandler.startPythonBackend();
-
-          UI ui = new UI(genAiHandler, response);
+          LoggerUtil.info("Python backend started successfully.");
+          if (response == null || response.isEmpty()) {
+            LoggerUtil.error("Failed to start Python backend. Please check the logs for details.");
+            return;
+          }
+          ui = new UI(genAiHandler, response);
           try {
+            LoggerUtil.info("Creating UI...");
             ui.createUI();
           } catch (Exception e) {
             LoggerUtil.error(e.getMessage());
           }
-          genAiHandler.shutdown();
-          // files.deleteDirectories();
-
+          if (ui.display.isDisposed()) {
+            RhpPlugin.isStandaloneJar = false;
+            RhpPlugin.isValidLanguage = false;
+            genAiHandler.shutdown();
+          }
         } catch (Exception e) {
           LoggerUtil.error(e.getMessage());
         }
       }
+    }
+  }
+
+  public boolean run() {
+    try {
+      Constants.rhapsodyApp = RhapsodyAppServer.getActiveRhapsodyApplication();
+      if (Constants.rhapsodyApp == null) {
+        UiUtil.showErrorPopup("Couldn't find running instance of Rhapsody.");
+        return false;
+      }
+
+      Constants.project = Constants.rhapsodyApp.activeProject();
+      if (Constants.project == null) {
+        UiUtil.showErrorPopup(
+            "Rhapsody " + Constants.rhapsodyApp.version() + " is running. Couldn't find active Rhapsody project.");
+        return false;
+      }
+
+      RhpPlugin.isValidLanguage = false;
+      String language = Constants.project.getLanguage();
+      if ("C".equals(language)) {
+        RhpPlugin.isValidLanguage = true;
+        return true;
+      } else {
+        boolean response = UiUtil.showQuestionPopup(
+            String.format(
+                "Expected Rhapsody project type is \"C\" but found \"%s\". \nUML diagram generation in rhapsody will be disabled.\n\n Do you want to continue?",
+                language));
+        if (response) {
+          return true;
+        }
+      }
+      return false;
+    } catch (Exception e) {
+      String msg = "Can't get active object".equals(e.getMessage())
+          ? "Couldn't find running instance of Rhapsody. \n\nHence terminating GenAI plugin."
+          : e.getMessage();
+      UiUtil.showErrorPopup(msg);
+      return false;
     }
   }
 
@@ -100,11 +156,23 @@ public class RhpPlugin extends RPUserPlugin {
 
   @Override
   public boolean RhpPluginCleanup() {
+    if (!ui.display.isDisposed()) {
+      ui.display.dispose();
+      RhpPlugin.isStandaloneJar = false;
+      RhpPlugin.isValidLanguage = false;
+      genAiHandler.shutdown();
+    }
     return false;
   }
 
   @Override
   public void RhpPluginFinalCleanup() {
+    if (!ui.display.isDisposed()) {
+      ui.display.dispose();
+      RhpPlugin.isStandaloneJar = false;
+      RhpPlugin.isValidLanguage = false;
+      genAiHandler.shutdown();
+    }
     throw new UnsupportedOperationException("Unimplemented method 'RhpPluginFinalCleanup'");
   }
 

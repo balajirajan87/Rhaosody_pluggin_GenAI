@@ -1,0 +1,52 @@
+@startuml
+' Swimlanes for clear responsibility separation
+|#AliceBlue:Initialization|
+start
+:Configure eMcem_FccuConfig;
+:Set alarm interrupts for NCF 91-97;
+:Set FCCU alarm timeout to 50ms;
+:Register eMcemUserAlarmHandler for NCF 91-97;
+:Enable FCCU_ALARM_ISR and FCCU_TIMEOUT_ISR;
+end partition
+ 
+|#LemonChiffon:Normal Operation|
+:Wait for FCCU alarm interrupt or timeout;
+if (FCCU alarm interrupt?) then (Yes)
+  |#MistyRose:ISR Handling|
+  :FCCU_ALARM_ISR() triggered;
+  :Read NCF ID (nFaultId);
+  :Call eMcemUserAlarmHandler(nFaultId);
+  if (nFaultId in 91-97?) then (Yes)
+    :Map nFaultId to DTC and error symptom;
+    if (nFaultId = 91) then (LLCE RAM ECC UE)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x00, DEM_EVENT_STATUS_FAILED);
+    elseif (nFaultId = 92) then (LLCE FlexRay RAM ECC UE)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x01, DEM_EVENT_STATUS_FAILED);
+    elseif (nFaultId = 93) then (LLCE SWT 0)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x02, DEM_EVENT_STATUS_FAILED);
+    elseif (nFaultId = 94) then (LLCE SWT 1)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x03, DEM_EVENT_STATUS_FAILED);
+    elseif (nFaultId = 95) then (LLCE SWT 2)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x04, DEM_EVENT_STATUS_FAILED);
+      :PerformFunctionalReset();
+    elseif (nFaultId = 96) then (LLCE SWT 3)
+      :rbsfty_ErrMgt_ReportError(BOSCH_LLCE_FAILURE, 0x05, DEM_EVENT_STATUS_FAILED);
+      :PerformFunctionalReset();
+    elseif (nFaultId = 97) then (LLCE CM0+ Lockup)
+      :rbsfty_ErrMgt_ReportError(BOSCH_CORE_LOCKUP, 0x01, DEM_EVENT_STATUS_FAILED);
+      :PerformFunctionalReset();
+    else (Other NCF)
+      :Ignore (not handled);
+    endif
+  else (Other NCF)
+    :Ignore (not handled);
+  endif
+elseif (FCCU timeout interrupt?) then (Yes)
+  |#Wheat:Timeout Handling|
+  :FCCU_TIMEOUT_ISR() triggered;
+  :Call FccuTimeoutNotificationCallback();
+else (No interrupt)
+  :Continue monitoring;
+endif
+stop
+@enduml

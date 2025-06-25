@@ -1,0 +1,62 @@
+@startuml
+|#lightBlue|Initialization|
+start
+:ERM_LLCE_Initialize = TRUE;
+:eMcem_Fccu_ConfigureFccu();
+note right
+  - Configure NCF channels 91–97 for alarm & interrupt
+  - Set FCCU alarm timeout to 50ms
+end note
+ 
+|#lightGreen|Normal Operation|
+:Monitor FCCU for alarms;
+ 
+|#orange|FCCU Alarm Interrupt (ISR)|
+:Check if FCCU alarm interrupt is pending;
+if (Alarm on NCF 91-97?) then (yes)
+  :eMcem_ProcessFaults();
+  :Identify NCF Channel;
+  if (NCF 91?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0000";
+    :rbsfty_Report_Alarm_Reaction_X(91);
+  else if (NCF 92?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0001";
+    :rbsfty_Report_Alarm_Reaction_X(92);
+  else if (NCF 93?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0010";
+    :rbsfty_Report_Alarm_Reaction_X(93);
+  else if (NCF 94?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0011";
+    :rbsfty_Report_Alarm_Reaction_X(94);
+  else if (NCF 95?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0100";
+    :rbsfty_Report_Alarm_Reaction_X(95);
+    :Perform Functional Reset;
+  else if (NCF 96?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0101";
+    :rbsfty_Report_Alarm_Reaction_X(96);
+    :Perform Functional Reset;
+  else if (NCF 97?) then (yes)
+    :Enable DTC "BOSCH_LLCE_FAILURE"\nSymptom "0000 0110";
+    :Enable DTC "BOSCH_CORE_LOCKUP";
+    :rbsfty_Report_Alarm_Reaction_X(97);
+    :Perform Functional Reset;
+  else
+    :Other NCF: No action;
+  endif
+else (no)
+  :No relevant FCCU alarm;
+endif
+ 
+|#yellow|FCCU Timeout Handling|
+:Check if FCCU alarm timeout (50ms) occurred;
+if (Timeout?) then (yes)
+  :TimeoutNotificationCallbackFunction();
+else (no)
+  :Continue monitoring;
+endif
+ 
+|#lightGreen|Normal Operation|
+:Continue normal operation;
+stop
+@enduml

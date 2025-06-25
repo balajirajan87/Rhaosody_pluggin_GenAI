@@ -1,0 +1,24 @@
+@startuml
+skinparam activity {
+    BackgroundColor<<API>> #E3F6FF
+    BackgroundColor<<Manager>> #E8F6E8
+    BackgroundColor<<Callback>> #FFF6E3
+}
+skinparam shadowing<<no_shadow>> false
+skinparam shadowing<<with_shadow>> true
+
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+
+skinparam sequence {
+ArrowColor DeepSkyBlue
+ActorBorderColor DeepSkyBlue
+LifeLineBorderColor blue
+LifeLineBackgroundColor #A9DCDF
+
+ActorBackgroundColor aqua
+ActorFontColor DeepSkyBlue
+ActorFontSize 17
+ActorFontName Aapex
+}
+@enduml

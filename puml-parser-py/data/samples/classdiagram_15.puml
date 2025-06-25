@@ -1,0 +1,105 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+ 
+package "Reset Type Monitoring SW" {
+ 
+    class ResetTypeMonitor {
+        - resetType : uint8
+        - operationCycleCounter : uint32
+        - lastResetReason : uint8
+        - state : ResetMonitorState
+        + getResetReason() : uint8
+        + updateResetType() : void
+        + incrementOperationCycleCounter() : void
+        + handleNvmWriteStatus(status : uint8) : void
+    }
+ 
+    enum ResetMonitorState {
+        Idle
+        WritingNvm
+    }
+ 
+    class ResetTypeSignalManager {
+        + transmitResetType(signalId : uint16, resetType : uint8) : void
+        + receiveResetType(signalId : uint16, resetTypePtr : uint8*) : void
+        + getReceivedResetType(signalId : uint16, resetTypePtr : uint8*) : void
+    }
+ 
+    class ApplicationSWInterface {
+        + provideResetTypeToASW() : void
+    }
+ 
+    class NvmManager {
+        + writeBlock(blockId : uint16, dataPtr : void*) : void
+        + getWriteStatus() : uint8
+    }
+ 
+    class PeriodicTask100ms {
+        + run() : void
+    }
+ 
+    ' External Interfaces
+    interface RTE {
+        + R_rba_cdd_Safety_periodic_100ms() : void
+    }
+ 
+    interface CAN_GL2 {
+        + Write_Com_SafetyInterbladeSignal(signalId : uint16, data : uint32) : void
+        + Com_ReceiveSignal(signalId : uint16, dataPtr : void*) : void
+        + Get_Com_SafetyInterBlade_Signal(signalId : uint16, dataPtr : void*) : void
+    }
+ 
+    interface NVM {
+        + NvM_WriteBlock(blockId : uint16, dataPtr : void*) : void
+        + NvmWrite_sts_u8() : uint8
+    }
+ 
+    interface ResetHW {
+        + rba_Reset_GetResetReason() : uint8
+    }
+ 
+    ' Relationships
+    ResetTypeMonitor o-- ResetTypeSignalManager : uses >
+    ResetTypeMonitor o-- NvmManager : uses >
+    ResetTypeMonitor o-- ResetHW : uses >
+    ResetTypeMonitor o-- ApplicationSWInterface : provides >
+    ApplicationSWInterface ..> RTE : uses >
+    ResetTypeSignalManager ..> CAN_GL2 : uses >
+    NvmManager ..> NVM : uses >
+ 
+    PeriodicTask100ms o-- ResetTypeMonitor : triggers >
+    PeriodicTask100ms o-- ResetTypeSignalManager : triggers >
+    PeriodicTask100ms o-- ApplicationSWInterface : triggers >
+ 
+    ' Notes for API mapping
+    note right of ResetTypeMonitor
+        Uses:
+        - rba_Reset_GetResetReason()
+        - rbsftyBldResetMon_GetLastResetReason()
+        - State logic for NVM write/Idle
+    end note
+ 
+    note right of ResetTypeSignalManager
+        Uses:
+        - Write_Com_SafetyInterbladeSignal()
+        - Com_ReceiveSignal()
+        - Get_Com_SafetyInterBlade_Signal()
+    end note
+ 
+    note right of ApplicationSWInterface
+        Uses:
+        - R_rba_cdd_Safety_periodic_100ms()
+        - RTE/VRTE/INC
+    end note
+ 
+    note right of NvmManager
+        Uses:
+        - NvM_WriteBlock()
+        - NvmWrite_sts_u8()
+    end note
+}
+ 
+@enduml

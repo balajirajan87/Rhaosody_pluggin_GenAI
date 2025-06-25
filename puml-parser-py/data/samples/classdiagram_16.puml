@@ -1,0 +1,72 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+ 
+package "Voltage Monitoring System" {
+    class cl_VoltMon {
+        - adcDriver: ADCDriver
+        - errMgmt: cl_ErrMgmt
+        - rails: List<VoltageRail>
+        - debounceCounters: Map<String, Integer>
+        - config: VoltMonConfig
+        + monitorVoltages()
+        + checkThresholds(rail: VoltageRail, value: float): FaultType
+        + handleDebounce(rail: VoltageRail, fault: FaultType)
+        + loadConfig(config: VoltMonConfig)
+    }
+ 
+    class VoltageRail {
+        + name: String
+        + uvThreshold: float
+        + ovThreshold: float
+        + adcChannel: int
+        + lastValue: float
+    }
+ 
+    class VoltMonConfig {
+        + railsConfig: List<VoltageRail>
+        + getRailConfig(name: String): VoltageRail
+    }
+ 
+    class ADCDriver {
+        + Adc_Init()
+        + Adc_GetGroupStatus(groupId: int): ADCStatus
+        + Adc_StartGroupConversion(groupId: int)
+        + Adc_ReadGroup(groupId: int, buffer: float[]): void
+    }
+ 
+    enum ADCStatus {
+        IDLE
+        BUSY
+        COMPLETED
+        STREAM_COMPLETED
+    }
+ 
+    class cl_ErrMgmt {
+        + rbsfty_ErrMgt_ReportError(errInfo: int, addInfo: int, demStatus: int)
+        + logDTC(dtcCode: int, faultId: int)
+        + triggerSafeStateSS02()
+    }
+ 
+    class RTAOS_10ms_Task {
+        + run()
+    }
+ 
+    enum FaultType {
+        NO_FAULT
+        UV_FAULT
+        OV_FAULT
+    }
+ 
+    ' Relationships
+    cl_VoltMon o-- "1..*" VoltageRail : monitors >
+    cl_VoltMon *-- VoltMonConfig : uses
+    cl_VoltMon *-- ADCDriver : uses >
+    cl_VoltMon *-- cl_ErrMgmt : reports to >
+    RTAOS_10ms_Task --> cl_VoltMon : calls monitorVoltages()
+    cl_ErrMgmt ..> "Safe State SS02" : triggers >
+}
+ 
+@enduml
