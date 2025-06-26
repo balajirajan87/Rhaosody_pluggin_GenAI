@@ -17,8 +17,7 @@ public class PlantUMLValidator {
 
     public static boolean isValidPuml(String inputFile) throws IllegalArgumentException {
         boolean isValid = false;
-        String plantumlJarPath = new File(Constants.PROFILEPATH + File.separator +  "plantuml", "plantuml-1.2025.3.jar").getAbsolutePath();
-
+        String plantumlJarPath = new File(Constants.PROFILEPATH + File.separator + "plantuml.jar").getAbsolutePath();
         try {
             isValid = validatePUML(plantumlJarPath, inputFile);
         } catch (IOException fnfErr) {
@@ -50,7 +49,7 @@ public class PlantUMLValidator {
         command.add("java");
         command.add("-jar");
         command.add(plantumlJarPath);
-        command.add("-check");
+        command.add("-debugsvek");
         command.add(pumlFilePath);
 
         // Execute the command
@@ -98,11 +97,11 @@ public class PlantUMLValidator {
         // Handle the output and errors
         if (exitCode != 0) {
             if (errorOutput.length() > 0) {
-                throw new RuntimeException("PlantUML error: " + errorOutput.toString().trim());
+                throw new RuntimeException(errorOutput.toString().trim());
             }
             if (output.toString().toLowerCase().contains("error")
                     || output.toString().toLowerCase().contains("syntax error")) {
-                throw new IllegalArgumentException("Validation failed: " + output.toString().trim());
+                throw new IllegalArgumentException(output.toString().trim());
             }
         }
 
