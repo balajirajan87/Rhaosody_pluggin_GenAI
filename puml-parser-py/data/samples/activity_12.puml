@@ -4,12 +4,15 @@ start
 :ERM_LLCE_Initialize = TRUE;
 :eMcem_Fccu_ConfigureFccu();
 note right
-  - Configure NCF channels 91–97 for alarm & interrupt
+  - Configure NCF channels 91-97 for alarm & interrupt
   - Set FCCU alarm timeout to 50ms
 end note
- 
+
+
+
 |#lightGreen|Normal Operation|
 :Monitor FCCU for alarms;
+note right: Monitor FCCU for alarms.
  
 |#orange|FCCU Alarm Interrupt (ISR)|
 :Check if FCCU alarm interrupt is pending;

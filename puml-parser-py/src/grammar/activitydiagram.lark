@@ -10,7 +10,9 @@ stereotype: "<<" CNAME ">>"
 
 section: swimlane? (statement | partition) +
 
-swimlane: "|"? COLOR? ("|" | ":") IDENTIFIER "|"
+swimlane: "|" COLOR? ":" swimlane_name "|"
+        | "|" COLOR? "|" swimlane_name "|"
+        | "|" swimlane_name "|"
 
 statement: start_activity
          | swimlane
@@ -48,12 +50,25 @@ stop: "stop"
 
 end: "end"
 
-note: "note" note_position? ":"? note_content
+note: note_singleline | note_multiline
+
+note_multiline: "note" note_position? note_multiline_content "end note"
+
+note_singleline: note_with_position note_content
 
 note_position: "left"  -> left
              | "right"  -> right
              | "top"  -> top
              | "bottom" -> bottom
+
+note_with_position: "note left:"
+             | "note right:"
+             | "note top:"
+             | "note bottom:"
+             | "note left :"
+             | "note right :"
+             | "note top :"
+             | "note bottom :"
 
 switch: "switch" "(" switch_condition ")" case_block+ "endswitch"
 
@@ -61,7 +76,6 @@ case_block: "case" "(" case_value ")" statement* break_statement
 
 partition: "partition" partition_name "{" statement* "}"
 
-note_content_lines: (LINE | NEWLINE)*
 note_content: /.+/
 description: /.+/
 sparam: CNAME 
@@ -74,11 +88,12 @@ else_label:/[^)]+/
 switch_condition: /[^)]+/
 case_value: /[^)]+/
 COLOR: /#[a-zA-Z0-9]+/
-IDENTIFIER: /[^|]+/
+swimlane_name: /[^|]+/
 action_statement: /[^;]+/
 transition_label: /[^;]+/
 COMMENT: "'" /[^\n]*/
 partition_name: ESCAPED_STRING
+note_multiline_content: (LINE | NEWLINE)*
 LINE: /(?!(end note))(.+)/
 NEWLINE: /\\r?\\n/
 
@@ -92,3 +107,4 @@ NEWLINE: /\\r?\\n/
 %ignore /\!define[^\n]*/
 %ignore /\|\*[^\n]*/
 %ignore COMMENT
+%ignore /[ \t]+/

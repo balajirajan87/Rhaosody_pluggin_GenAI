@@ -77,7 +77,7 @@ class ActivityDiagramTransformer(Transformer):
         return {
             "type": "swimlane",
             "color": str(color) if color else None,
-            "identifier": str(identifier) if identifier else None
+            "identifier": str(ParsingUtil.parse_tree(identifier)) if identifier else None
         }
 
     @v_args(inline=True)
@@ -251,7 +251,7 @@ class ActivityDiagramTransformer(Transformer):
     def note(self, description=None):
         return {
             "type": "note",
-            "description": str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
+            "description": description.get('content') if isinstance(description, dict) and 'content' in description else str(ParsingUtil.parse_tree(description)).replace("\"", "") if description else None,
         }
 
     @v_args(inline=True)
@@ -300,3 +300,44 @@ class ActivityDiagramTransformer(Transformer):
     @v_args(inline=True)
     def TEXT(self, token):
         return str(ParsingUtil.parse_tree(token))
+    
+    @v_args(inline=True)
+    def note_singleline(self, *args):
+        # args: [note_position? , note_content]
+        if len(args) == 2:
+            position, content = args
+        elif len(args) == 1:
+            position = None
+            content = args[0]
+        else:
+            position = None
+            content = None
+        return {
+            "type": "note",
+            "multiline": False,
+            "position": str(position) if position else None,
+            "content": str(ParsingUtil.parse_tree(content)) if content else None,
+        }
+
+    @v_args(inline=True)
+    def note_multiline(self, *args):
+        # args: [note_position?, note_multiline_content]
+        if len(args) == 2:
+            position, content = args
+        elif len(args) == 1:
+            position = None
+            content = args[0]
+        else:
+            position = None
+            content = None
+        # Flatten lines and join as a single string
+        if isinstance(content, list):
+            content_str = "\n".join([str(ParsingUtil.parse_tree(line)).strip() for line in content if str(line).strip()])
+        else:
+            content_str = str(ParsingUtil.parse_tree(content)).strip()
+        return {
+            "type": "note",
+            "multiline": True,
+            "position": str(position) if position else None,
+            "content": content_str,
+        }
