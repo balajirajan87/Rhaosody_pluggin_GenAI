@@ -143,7 +143,7 @@ public static Set<String> swimlane = new HashSet<>();
         // Add a new transition block if last is not stop
         Map<String, Object> last = statements.get(statements.size() - 1);
         String lastType = (String) last.get("type");
-        if (!"stop".equals(lastType)) {
+        if (!"stop".equals(lastType) && !"decision".equals(lastType)) {
             LinkedHashMap<String, Object> transitionBlock = new LinkedHashMap<>();
             transitionBlock.put("type", "MergeNode");
             transitionBlock.put("text", decisionCondition != null

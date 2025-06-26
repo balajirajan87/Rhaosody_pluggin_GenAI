@@ -23,7 +23,12 @@ public class PlantUMLValidator {
         } catch (IOException fnfErr) {
             UiUtil.showErrorPopup("File not found: " + fnfErr.getMessage());
         } catch (RuntimeException rtErr) {
-            UiUtil.showErrorPopup("PlantUML execution error: " + rtErr.getMessage());
+            try {
+                 UiUtil.showPngPopup(inputFile,rtErr.getMessage());
+            }
+            catch (Exception err) {
+                UiUtil.showErrorPopup("PlantUML execution error: " + rtErr.getMessage());
+            }
         } catch (Exception e) {
             UiUtil.showErrorPopup("An unexpected error occurred while processing the diagram: " + e.getMessage());
         }

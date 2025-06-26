@@ -51,6 +51,9 @@ public class ActivityDiagram {
                             firstSwimlaneElem = swimlaneMap.get(identifier);
                             if (null == firstSwimlaneElem) {
                                 firstSwimlaneElem = ActivityDiagramUtil.createSwimlane(fc, identifier);
+                                if (ActivityTransitionAdder.swimlane.size() == 1) {
+                                    ActivityDiagramUtil.createSwimlane(fc, "dummy_swimlane");           
+                                }
                                 swimlaneMap.put(identifier, firstSwimlaneElem);
                             }
                         }
@@ -240,6 +243,9 @@ public class ActivityDiagram {
                         if (null == swim) {
                             swim = ActivityDiagramUtil.createSwimlane(flowChart, swimlane_name);
                             swimlaneMap.put(swimlane_name, swim);
+                            if (ActivityTransitionAdder.swimlane.size() == 1) {
+                                ActivityDiagramUtil.createSwimlane(flowChart, "dummy_swimlane");           
+                            }
                         }
                         if (null != swim) {
                             swimlaneElem = swim;
