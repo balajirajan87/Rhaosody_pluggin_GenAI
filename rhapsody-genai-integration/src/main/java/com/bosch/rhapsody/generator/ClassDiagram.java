@@ -508,7 +508,7 @@ public class ClassDiagram {
                 ClassDiagramUtil.addStereotype(diagram, Constants.RHAPSODY_CLASS_DIAGRAM_STEREOTYPE,
                         Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM);
                 setRelationProperties(diagram);
-                CommonUtil.populateDiagrams((IRPDiagram) diagram , elementsToPopulate,false);
+                CommonUtil.populateDiagrams((IRPDiagram) diagram , elementsToPopulate);
             }
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,

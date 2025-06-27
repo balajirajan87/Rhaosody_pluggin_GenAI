@@ -82,7 +82,7 @@ public class ActivityDiagram {
             ActivityDiagramUtil.createDiagramGraphics(fc);
             CommonUtil.pause(3000);
             IRPDiagram activityDiagram = fc.getFlowchartDiagram();
-            CommonUtil.populateDiagrams(activityDiagram , elementsToPopulate,true);
+            CommonUtil.populateNote(activityDiagram , elementsToPopulate);
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(

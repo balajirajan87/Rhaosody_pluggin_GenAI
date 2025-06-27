@@ -5,6 +5,7 @@ import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.IRPCollection;
 import com.telelogic.rhapsody.core.IRPDiagram;
 import com.telelogic.rhapsody.core.IRPGraphElement;
+import com.telelogic.rhapsody.core.IRPGraphNode;
 import com.telelogic.rhapsody.core.IRPModelElement;
 import com.telelogic.rhapsody.core.IRPPackage;
 import com.telelogic.rhapsody.core.IRPProject;
@@ -118,12 +119,9 @@ public class CommonUtil {
     }
 
     public static void populateDiagram(IRPDiagram diagram, IRPCollection elements, IRPCollection relTypes,
-            String mode,Boolean isCompleteRelations) {
+            String mode) {
         try {
             diagram.populateDiagram(elements, relTypes, mode);
-            if(isCompleteRelations){
-                doCompleteRelation(diagram, elements);
-            }
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: populateDiagram: " + e.getMessage() + Constants.NEW_LINE);
@@ -143,14 +141,28 @@ public class CommonUtil {
     }
     
 
-    public static void populateDiagrams(IRPDiagram diagram ,IRPCollection elementsToPopulate, Boolean isCompleteRelation){
-        IRPCollection relTypes = ClassDiagramUtil.createNewCollection(Constants.rhapsodyApp);
-        if (relTypes != null) {
-            CommonUtil.setCollectionSize(relTypes, 1);
-            CommonUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
-            CommonUtil.populateDiagram(diagram, elementsToPopulate, relTypes,
-                    Constants.RHAPSODY_POPULATE_MODE,isCompleteRelation);
-            diagram.openDiagram();
+    public static void populateDiagrams(IRPDiagram diagram ,IRPCollection elementsToPopulate){
+        if(elementsToPopulate.getCount() > 0){
+            IRPCollection relTypes = ClassDiagramUtil.createNewCollection(Constants.rhapsodyApp);
+            if (relTypes != null) {
+                CommonUtil.setCollectionSize(relTypes, 1);
+                CommonUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
+                CommonUtil.populateDiagram(diagram, elementsToPopulate, relTypes,
+                        Constants.RHAPSODY_POPULATE_MODE);
+                diagram.openDiagram();
+            }
+        }
+    }
+
+     public static void populateNote(IRPDiagram diagram ,IRPCollection elementsToPopulate){
+        if(elementsToPopulate.getCount() > 0){
+        IRPCollection graphElementsToPopulate = Constants.rhapsodyApp.createNewCollection();
+           for(Object element : elementsToPopulate.toList()){
+                IRPModelElement modelElement = (IRPModelElement)element;
+                IRPGraphNode graphNode = diagram.addNewNodeForElement(modelElement,0,0,200,50);
+                graphElementsToPopulate.addGraphicalItem((IRPGraphElement) graphNode);
+            }
+            diagram.completeRelations(graphElementsToPopulate, 1);
         }
     }
     
