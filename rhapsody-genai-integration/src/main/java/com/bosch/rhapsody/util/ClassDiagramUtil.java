@@ -292,33 +292,7 @@ public class ClassDiagramUtil {
         }
     }
 
-    public static void setCollectionString(IRPCollection collection, int index, String value) {
-        try {
-            collection.setString(index, value);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: setCollectionString: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void setCollectionSize(IRPCollection collection, int size) {
-        try {
-            collection.setSize(size);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: setCollectionSize: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void populateDiagram(IRPObjectModelDiagram diagram, IRPCollection elements, IRPCollection relTypes,
-            String mode) {
-        try {
-            diagram.populateDiagram(elements, relTypes, mode);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: populateDiagram: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
+    
 
     public static java.util.List<?> getGraphicalElements(IRPObjectModelDiagram diagram) {
         try {

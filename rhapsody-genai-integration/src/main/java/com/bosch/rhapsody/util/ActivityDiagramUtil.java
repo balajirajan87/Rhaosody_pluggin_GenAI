@@ -1,8 +1,10 @@
 package com.bosch.rhapsody.util;
 
 import com.bosch.rhapsody.constants.Constants;
+import com.telelogic.rhapsody.core.IRPComment;
 import com.telelogic.rhapsody.core.IRPConnector;
 import com.telelogic.rhapsody.core.IRPFlowchart;
+import com.telelogic.rhapsody.core.IRPModelElement;
 import com.telelogic.rhapsody.core.IRPObjectNode;
 import com.telelogic.rhapsody.core.IRPPackage;
 import com.telelogic.rhapsody.core.IRPProject;
@@ -97,6 +99,35 @@ public class ActivityDiagramUtil {
                     "ERROR: Failed to create action " + actionName + ": " + ex.getMessage() + Constants.NEW_LINE);
         }
         return action;
+    }
+
+    /**
+     * 
+     * @param diagram
+     * @param entryAction
+     * @param actionName
+     * @param swimlane
+     * @return
+     */
+    public static IRPModelElement createNote(IRPFlowchart diagram, String description, String noteName,
+            IRPSwimlane swimlane,Object state) {
+        IRPModelElement note = null;
+        try {
+            if (swimlane != null) {
+                note = swimlane.addNewAggr("Comment", noteName);
+            } else {
+                note = diagram.getRootState().addNewAggr("Comment", noteName);
+            }
+            if (note != null) {
+                note.setDescription(description);
+                if (state != null)
+                    ((IRPComment)note).addAnchor((IRPModelElement)state);
+            }
+        } catch (Exception ex) {
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Failed to create note " + noteName + ": " + ex.getMessage() + Constants.NEW_LINE);
+        }
+        return note;
     }
 
     /**

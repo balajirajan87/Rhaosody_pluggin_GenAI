@@ -508,15 +508,7 @@ public class ClassDiagram {
                 ClassDiagramUtil.addStereotype(diagram, Constants.RHAPSODY_CLASS_DIAGRAM_STEREOTYPE,
                         Constants.RHAPSODY_OBJECT_MODEL_DIAGRAM);
                 setRelationProperties(diagram);
-
-                IRPCollection relTypes = ClassDiagramUtil.createNewCollection(Constants.rhapsodyApp);
-                if (relTypes != null) {
-                    ClassDiagramUtil.setCollectionSize(relTypes, 1);
-                    ClassDiagramUtil.setCollectionString(relTypes, 1, Constants.RHAPSODY_ALL_RELATIONS);
-                    ClassDiagramUtil.populateDiagram(diagram, elementsToPopulate, relTypes,
-                            Constants.RHAPSODY_POPULATE_MODE);
-                    diagram.openDiagram();
-                }
+                CommonUtil.populateDiagrams((IRPDiagram) diagram , elementsToPopulate,false);
             }
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,

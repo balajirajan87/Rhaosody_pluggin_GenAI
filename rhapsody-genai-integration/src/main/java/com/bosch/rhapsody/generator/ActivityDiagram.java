@@ -16,11 +16,14 @@ import java.util.Map;
 public class ActivityDiagram {
 
     private int actionNameIndex = 1;
+    private int noteNameIndex = 1;
     IRPConnector connector = null;
     Object state = null;
     private Map<String, IRPConnector> MergeNodeMap = new HashMap<>();
     private Map<String, IRPSwimlane> swimlaneMap = new HashMap<>();
     private Object MergeNodeState = null;
+    private IRPCollection elementsToPopulate;
+
 
     public void createActivityDiagram(String outputFile) {
         try {
@@ -33,6 +36,7 @@ public class ActivityDiagram {
                         "ERROR: Could not create/find base package for activity diagram." + Constants.NEW_LINE);
                 return;
             }
+            elementsToPopulate = Constants.rhapsodyApp.createNewCollection();
             ActivityDiagramUtil.getActivitySpecificStereotypes(Constants.project);
             String diagramName = json.optString("title", "ActivityDiagram").replaceAll("[^a-zA-Z0-9]", "_");
             IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
@@ -77,11 +81,13 @@ public class ActivityDiagram {
             }
             ActivityDiagramUtil.createDiagramGraphics(fc);
             CommonUtil.pause(3000);
+            IRPDiagram activityDiagram = fc.getFlowchartDiagram();
+            CommonUtil.populateDiagrams(activityDiagram , elementsToPopulate,true);
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
                     "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
-            fc.getFlowchartDiagram().openDiagram();
+            activityDiagram.openDiagram();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -236,6 +242,14 @@ public class ActivityDiagram {
                         String partictionName = stmt.optString("name", "");
                         JSONArray stmtPartition = stmt.optJSONArray("statements");
                         createStatementsRecursive(flowChart, swimlaneElem, stmtPartition, hasStart, null);
+                        break;
+                    case "note":
+                        String description = stmt.optString("description", "");
+                        IRPModelElement note = ActivityDiagramUtil.createNote(flowChart, description, "comment_" + noteNameIndex,swimlaneElem,state);
+                        if (note != null){
+                            noteNameIndex++;
+                            elementsToPopulate.addItem(note);
+                        } 
                         break;
                     case "swimlane":
                         String swimlane_name = stmt.optString("identifier", "").replaceAll("[^a-zA-Z0-9]", "_");
