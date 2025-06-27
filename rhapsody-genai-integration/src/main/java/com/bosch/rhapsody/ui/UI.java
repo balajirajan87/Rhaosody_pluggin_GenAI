@@ -415,7 +415,7 @@ public class UI {
             // chatArea.append("Diagram generated successfully: " + "\n");
           } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                "ERROR: Error while generating " + e.getMessage() + Constants.NEW_LINE);
+                "ERROR: " + e.getMessage() + Constants.NEW_LINE);
           }
         });
       }).start();
