@@ -1,0 +1,54 @@
+@startuml
+' Global style for clarity
+<style>
+componentDiagram {
+  BackGroundColor #f9f9ff
+  LineThickness 2
+  LineColor #004080
+}
+</style>
+' Global style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #f8faff
+
+skinparam component {
+    BackgroundColor #e3f2fd
+    BorderColor #1976d2
+    FontColor #0d47a1
+}
+skinparam interface {
+    BackgroundColor #fffde7
+    BorderColor #fbc02d
+    FontColor #f57c00
+}
+skinparam note {
+    BackgroundColor #fffde7
+    BorderColor #fbc02d
+    FontColor #6d4c41
+}
+
+title Periodic Voltage Monitoring Software - Component Diagram
+
+' NOTES for clarity
+note right of VoltMon
+  - Monitors 7 voltages every 10ms
+  - Triggers error if 5 consecutive faults
+  - Uses StubADC for SW-only fault injection
+end note
+
+note right of ErrMgmt
+  - Raises DTCs (e.g., BOSCH_SECPOWERSUPPLY_FAILURE)
+  - Handles system degradation modes
+end note
+
+note right of ADC
+  - Hardware abstraction for ADC
+  - Provides standard ADC APIs
+end note
+
+note right of StubADC
+  - Allows test code to inject/read voltages
+  - Enables boundary/fault injection tests
+end note
+
+@enduml

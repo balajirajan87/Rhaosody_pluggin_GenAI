@@ -1,0 +1,73 @@
+@startuml
+' Global style for clarity
+<style>
+componentDiagram {
+  BackGroundColor #f9f9ff
+  LineThickness 2
+  LineColor #004080
+}
+</style>
+
+' COMPONENTS
+[cl_VoltMon] as VoltMon <<component>>
+[cl_ErrMgmt] as ErrMgmt <<component>>
+[cl_adc] as ADC <<component>>
+[cl_OsInterrupt] as OsInterrupt <<component>>
+[cl_RTAOS] as RTAOS <<component>>
+[cl_EcuM] as EcuM <<component>>
+[StubADC] as StubADC <<component>>
+
+' INTERFACES
+interface "Adc_GetGroupStatus" as I_GetGroupStatus
+interface "Adc_StartGroupConversion" as I_StartGroupConversion
+interface "Adc_ReadGroup" as I_ReadGroup
+interface "rbsfty_ErrMgt_ReportError" as I_ReportError
+interface "Adc_Init" as I_AdcInit
+interface "InjectVoltageValue" as I_InjectVoltage
+interface "ReadInjectedValue" as I_ReadInjected
+interface "IsrAdc0/IsrAdc1" as I_AdcISR
+interface "schedule10msTask" as I_Schedule10ms
+
+' PROVIDED/REQUIRED INTERFACES
+ADC -- I_GetGroupStatus
+ADC -- I_StartGroupConversion
+ADC -- I_ReadGroup
+ErrMgmt -- I_ReportError
+EcuM -- I_AdcInit
+StubADC -- I_InjectVoltage
+StubADC -- I_ReadInjected
+OsInterrupt -- I_AdcISR
+RTAOS -- I_Schedule10ms
+
+' CONNECTORS (dependencies/usages)
+RTAOS ..> VoltMon : schedules (10ms)
+VoltMon ..> ADC : uses ADC APIs
+VoltMon ..> ErrMgmt : forwards errors
+VoltMon ..> StubADC : uses for fault injection
+ADC ..> OsInterrupt : triggers ADC interrupts
+OsInterrupt ..> ADC : calls Adc_ReadGroup()
+EcuM ..> ADC : initializes ADC
+
+' NOTES for clarity
+note right of VoltMon
+  - Monitors 7 voltages every 10ms
+  - Triggers error if 5 consecutive faults
+  - Uses StubADC for SW-only fault injection
+end note
+
+note right of ErrMgmt
+  - Raises DTCs (e.g., BOSCH_SECPOWERSUPPLY_FAILURE)
+  - Handles system degradation modes
+end note
+
+note right of ADC
+  - Hardware abstraction for ADC
+  - Provides standard ADC APIs
+end note
+
+note right of StubADC
+  - Allows test code to inject/read voltages
+  - Enables boundary/fault injection tests
+end note
+
+@enduml
