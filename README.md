@@ -54,3 +54,34 @@ Now you can feed in your Documents and start Chatting with your Documents.
 <div align="left">
   <img src="images/Document_Selection.png" alt="Document Selection" />
 </div>
+
+# Steps to generate the UML Design inside the Rhapsody:
+
+Step1: Select the function: "Summarize_Requirements" to summarize all the requirements specific to a feature:
+<div align="left">
+  <img src="images/Summarize_Requirements.png" alt="Document Selection" />
+</div>
+
+Step2:
+Select the Function "Extract Design Information" to extract all the relevant design information that are related to the summarized requirements. 
+<div align="left">
+  <img src="images/Extract_Design_Information.bmp" alt="Document Selection" />
+</div>
+
+Step3:
+Optionally you can also choose to extract the design from the available code information by providing .c and .h files. 
+
+Step4:
+generate the plantUML code for the SWE.3 Diagram of your choice (Class or Activity Diagram).
+<div align="left">
+  <img src="images/Create_UML_Design.bmp" alt="Document Selection" />
+</div>
+
+Now your Diagram would appear in the Rhapsody Window with all the associated project elements. 
+<div align="left">
+  <img src="images/Rhapsody_Class_Diagram.bmp" alt="Document Selection" />
+</div>
+
+Additionally if you want any corrections to the previously generated Diagram you can prompt for the corrections and the tool would regenerate the same. 
+
+Happy Designing !!
