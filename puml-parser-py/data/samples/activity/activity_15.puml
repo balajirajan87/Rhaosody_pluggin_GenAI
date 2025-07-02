@@ -1,0 +1,33 @@
+@startuml
+|BladeDiscovery|
+ 
+start
+ 
+:Power On Event;
+ 
+if (Is Power Blade in MPCI?) then (Yes)
+  :Skip Blade Discovery for Power Blade in MPCI;
+  stop
+else (No)
+  :Read Slot ID from GPIO (B70-B73)\n[cl_Dio.Dio_ReadChannel()];
+  :Obtain Actual Slot ID (from config/data);
+ 
+  if (Read Slot ID == Actual Slot ID?) then (Yes)
+    :Pass Blade Discovery;
+    :Update Blade Auth Info\n[rbSfty_Update_BladeAuthInfo()];
+    :Send Slot ID via CAN-FD\n[Write_Com_SafetyInterbladeSignal(sig_Slot_ID_DS, sig_Slot_ID_D, sig_Slot_ID_P)];
+    :Send "Valid" Blade Type Signal via CAN-FD\n[Write_Com_SafetyInterbladeSignal(sig_blade_type_P)];
+    :Global Authentication Pass;
+    stop
+  else (No)
+    :Fail Blade Discovery;
+    :Enter Degraded State;
+    :Raise DTC BOSCH_BLADE_DISCOVERY_FAILURE\n[rbMonReact_ReportEvent(BOSCH_BLADE_DISCOVERY_FAILURE, Failed)];
+    :Send "Error Invalid combination" via CAN-FD\n[Write_Com_SafetyInterbladeSignal(sig_blade_type_DS, sig_blade_type_DP)];
+    :Send Slot ID via CAN-FD\n[Write_Com_SafetyInterbladeSignal(sig_Slot_ID_DS, sig_Slot_ID_D, sig_Slot_ID_P)];
+    :Raise DTC BOSCH_GLOBAL_AUTHENTICATION_FAILURE\n[rbMonReact_ReportEvent(BOSCH_GLOBAL_AUTHENTICATION_FAILURE, Failed)];
+    stop
+  endif
+endif
+ 
+@enduml

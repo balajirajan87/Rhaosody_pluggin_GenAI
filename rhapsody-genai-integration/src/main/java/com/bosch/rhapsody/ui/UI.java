@@ -11,7 +11,6 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.internal.win32.OS;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -21,7 +20,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -30,6 +28,9 @@ import com.bosch.rhapsody.constants.LoggerUtil;
 import com.bosch.rhapsody.constants.ProcessingException;
 import com.bosch.rhapsody.file.ProcessFiles;
 import com.bosch.rhapsody.integrator.GenAiHandler;
+import com.bosch.rhapsody.integrator.RhpPlugin;
+import com.bosch.rhapsody.parser.PUMLParser;
+import com.bosch.rhapsody.util.UiUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.telelogic.rhapsody.core.IRPApplication;
 import com.telelogic.rhapsody.core.RhapsodyAppServer;
@@ -43,6 +44,8 @@ public class UI {
   String startPythonBackend;
 
   private Text chatArea;
+  public Display display = null;
+  public Shell shell = null;
 
   public UI(GenAiHandler genAiHandler, String startPythonBackend) {
     this.startPythonBackend = startPythonBackend;
@@ -51,45 +54,21 @@ public class UI {
 
   public static void main(String[] args) {
     IRPApplication app = RhapsodyAppServer.getActiveRhapsodyApplication();
-    GenAiHandler aiHandler = new GenAiHandler(app);
+    Constants.rhapsodyApp = app;
+    GenAiHandler aiHandler = new GenAiHandler();
     // String startPythonBackend2 = aiHandler.startPythonBackend();
 
     UI ui = new UI(aiHandler, "abc");
     ui.createUI();
   }
 
-  /**
-   * @param shell   - shell input
-   * @param isOnTop - boolean to show shell in the top of the display
-   */
-  public void toggleAlwaysOnTop(Shell shell, boolean isOnTop) {
-    long handle = shell.handle;
-    org.eclipse.swt.graphics.Point location = shell.getLocation();
-    org.eclipse.swt.graphics.Point dimension = shell.getSize();
-    OS.SetWindowPos(handle, isOnTop ? OS.HWND_TOPMOST : OS.HWND_NOTOPMOST, location.x, location.y, dimension.x,
-        dimension.y, 0);
-  }
-
-  /**
-   * @param display - display input
-   * @param shell   - shell input
-   */
-  public static void setShellLocation(Display display, Shell shell) {
-    org.eclipse.swt.widgets.Monitor primary = display.getPrimaryMonitor();
-    org.eclipse.swt.graphics.Rectangle bounds = primary.getBounds();
-    int centerX = bounds.x + (bounds.width - shell.getSize().x) / 2;
-    int centerY = bounds.y + (bounds.height - shell.getSize().y) / 2;
-    shell.setLocation(centerX, centerY);
-  }
-
   public void createUI() {
 
     Map<String, ArrayList<String>> dropdownFileMapping = new HashMap<>();
-
-    Display display = new Display();
-    Shell shell = new Shell(display);
-    setShellLocation(display, shell);
-    toggleAlwaysOnTop(shell, true);
+    display = new Display();
+    shell = new Shell(display);
+    UiUtil.setShellLocation(display, shell);
+    UiUtil.toggleAlwaysOnTop(shell, true);
 
     shell.setText("UML diagram generator");
     shell.setSize(1000, 700);
@@ -100,7 +79,7 @@ public class UI {
       Image icon = new Image(display, iconFile.getAbsolutePath());
       shell.setImage(icon);
     }
-   
+
     CTabFolder tabFolder = new CTabFolder(shell, SWT.BORDER);
     tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     tabFolder.setSimple(false);
@@ -215,24 +194,40 @@ public class UI {
     });
 
     selectFileButton.addListener(SWT.Selection, e -> {
-      FileDialog fileDialog = new FileDialog(shell, SWT.OPEN);
+      FileDialog fileDialog = new FileDialog(shell, SWT.OPEN | SWT.MULTI);
       // Update the file selection logic
       fileDialog.setText("Select a File");
       fileDialog.setFilterPath(System.getProperty("user.home")); // Default to user's home directory
-      fileDialog.setFilterExtensions(new String[] { "*.pdf" }); // Restrict to PDF file type
+      // file type
+      String selectedOption = dropdownCombo.getText();
+      // Decide allowed extensions based on dropdown selection
+      if ("Requirement_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.reqExtension);
+      } else if ("Reference_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.refExtension);
+      } else if ("ReferenceCode_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.refCodeExtension);
+      } else if ("Guideline_Docs".equals(selectedOption)) {
+        fileDialog.setFilterExtensions(Constants.guideExtension);
+      } else {
+        fileDialog.setFilterExtensions(new String[] { "*.*" }); // Allow all files if unknown
+      }
+
       String selectedFile = fileDialog.open();
       if (selectedFile != null) {
-        String selectedOption = dropdownCombo.getText();
         if (selectedOption.isEmpty()) {
-          MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-          messageBox.setMessage("Please select an option from the dropdown before selecting a file.");
-          messageBox.open();
+          UiUtil.showWarnPopup("Please select an option from the dropdown before selecting a file.");
         } else {
-          fileList.add(selectedFile);
-          dropdownFileMapping.get(selectedOption).add(selectedFile);
-          String fileName = new java.io.File(selectedFile).getName();
+          String[] selectedFiles = fileDialog.getFileNames();
+          String dir = fileDialog.getFilterPath();
+          for (String file : selectedFiles) {
+            String fullPath = dir + File.separator + file;
+            fileList.add(fullPath);
+            dropdownFileMapping.get(selectedOption).add(fullPath);
+          }
+          String fileNames = String.join(", ", selectedFiles);
           statusTextBoxTab1.setForeground(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-          statusTextBoxTab1.setText("Status: Seleted file " + fileName);
+          statusTextBoxTab1.setText("Status: Selected file(s): " + fileNames);
         }
       }
     });
@@ -261,17 +256,13 @@ public class UI {
           fileList.select(fileList.getItemCount() - 1); // Select the last item if no next item
         }
       } else {
-        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-        messageBox.setMessage("No file selected to remove.");
-        messageBox.open();
+        UiUtil.showWarnPopup("No file selected to remove.");
       }
     });
 
     uploadTextButton.addListener(SWT.Selection, e -> {
       if (fileList.getItemCount() == 0) { // Check if no files are uploaded
-        MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.OK);
-        messageBox.setMessage("Please upload/select at least one file before submitting.");
-        messageBox.open();
+        UiUtil.showWarnPopup("Please upload/select at least one file before submitting.");
         return; // Stop further execution
       }
 
@@ -355,6 +346,12 @@ public class UI {
     // field
     dropdown.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+    Button generateButton = new Button(inputRow1, SWT.PUSH);
+    generateButton.setText("Generate Diagram");
+    generateButton.setEnabled(false);
+    generateButton.setToolTipText("Enabled only for \"create_uml_design\" context");
+    generateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
     // User input area
     Composite inputRow = new Composite(tab2Composite, SWT.NONE);
     inputRow.setLayout(new GridLayout(2, false));
@@ -390,9 +387,38 @@ public class UI {
       String userMessage = userInput.getText();
       if (!userMessage.isEmpty()) {
         sendMessage(dropdown.getText(), userInput);
+        // chatArea.append("User Request: \n" + userMessage + "\n"
+        // +"***********************************************************************************\n\n@startuml
+        // ....@enduml ");
         // Clear user input
         userInput.setText("");
+        if (dropdown.getText().equals("create_uml_design")) {
+          if (!RhpPlugin.isValidLanguage) {
+            generateButton.setToolTipText("Disabled due to invalid language support.");
+          } else {
+            generateButton.setEnabled(true);
+            generateButton.setToolTipText("Generate UML diagram in Rhapsody");
+            Constants.userMessageDiagramType = userMessage;
+          }
+        }
       }
+    });
+
+    // Add functionality to generateButton
+    generateButton.addListener(SWT.Selection, event -> {
+      String chatContent = chatArea.getText();
+      PUMLParser parserHandler = new PUMLParser();
+      new Thread(() -> {
+        display.asyncExec(() -> {
+          try {
+            parserHandler.generateJsonFromPuml(chatContent, Constants.userMessageDiagramType);
+            // chatArea.append("Diagram generated successfully: " + "\n");
+          } catch (Exception e) {
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "ERROR: " + e.getMessage() + Constants.NEW_LINE);
+          }
+        });
+      }).start();
     });
 
     // Set the first tab as selected
@@ -420,7 +446,9 @@ public class UI {
     });
 
     // Open the Shell
+    LoggerUtil.info("Starting GenAI UI...");
     shell.open();
+
     while (!shell.isDisposed()) {
       if (!display.readAndDispatch()) {
         display.sleep();

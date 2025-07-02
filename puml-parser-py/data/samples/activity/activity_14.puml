@@ -1,0 +1,42 @@
+@startuml
+|SW_Main|
+ 
+start
+ 
+:Power-On Reset (POR) or Wakeup from Standby;
+ 
+:LBIST/ABIST1 auto-triggered by HW;
+ 
+:Enter INIT_FS state;
+ 
+:Call rbVR5510_writeFSICfg();
+note right: Configures FS_I_ABIST2_CTRL\n(Enables ABIST2 by setting\nVMONx_ABIST2, VCORE_ABIST2, VDDIO_ABIST2)
+ 
+:If mode transition delay needed?;
+if (Delay needed?) then (Yes)
+  :Call rbVR5510_stateTransDelay(DestState_u8);
+endif
+ 
+:Monitor BIST Status;
+ 
+:Call rbVR5510_PMIC_BIST_ErrStatus();
+note right: Checks LBIST/ABIST1/ABIST2 status\nfrom FS_DIAG_SAFETY register
+ 
+if (Any BIST error detected?) then (Yes)
+  :Call rbsfty_ErrMgt_Process_info(\n  BOSCH_VR5510BIST_FAILURE,\n  <additional info>\n);
+  note right: Raises DTC and triggers degradation mode
+ 
+  :System enters SS01 safe state\n(assert FSOB/RSTB pins);
+ 
+  :Optionally verify FSOB/RSTB assertion;
+  :Call Dio_ReadChannel();
+else (No)
+  :Continue normal operation;
+endif
+ 
+:Optionally clear FS_DIAG_SAFETY register;
+:Call rbVR5510_WriteRegister_u8(\n  LogicUnit_tu16, FS_DIAG_SAFETY, 0xFFFF\n);
+ 
+stop
+ 
+@enduml

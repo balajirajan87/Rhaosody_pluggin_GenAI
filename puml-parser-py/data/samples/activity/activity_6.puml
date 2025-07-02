@@ -1,0 +1,37 @@
+@startuml
+|FCCU Fault Handling|
+ 
+start
+ 
+:Initialize FCCU alarms and interrupts;
+:Emcem_Init();
+ 
+:Enable and route NMI to M7;
+:rbsfty_eMcem_EnableRoutingNMI();
+ 
+:Configure FCCU alarm timeout (50ms);
+ 
+:Start monitoring NCF channels 91-97;
+:rbsfty_LLCENcfChannel_Monitoring();
+ 
+partition "FCCU Runtime" {
+    :Wait for FCCU alarm event (NCF 91-97);
+    :Fault detected on NCF channel?;
+    if (Fault detected?) then (yes)
+        :FCCU_ALARM_ISR() invoked;
+        :Call eMcemUserAlarmHandler(nFaultId);
+        :Map nFaultId to error symptom;
+        :Report error via rbsfty_ErrMgt_ReportError(channel, error_symptom, DEM_EVENT_STATUS_FAILED);
+ 
+        if (Critical fault?) then (yes)
+            :Perform destructive reset;
+        else (no)
+            :Continue monitoring;
+        endif
+    else (no)
+        :Continue monitoring;
+    endif
+}
+ 
+stop
+@enduml

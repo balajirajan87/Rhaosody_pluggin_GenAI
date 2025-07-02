@@ -1,0 +1,59 @@
+@startuml
+title Voltage Monitoring & Safety Management Activity Diagram
+
+|TaskScheduler|
+start
+:Wait for 10ms tick (cl_RTAOS.10ms task);
+:Trigger VoltageMonitor.monitorVoltages();
+
+|VoltageMonitor|
+:For each ADC group (e.g., AdcGroup_HwUnit1_Task10ms);
+:Check if fault injection is enabled for any rail?;
+
+if (Fault injection enabled?) then (yes)
+  :Get injected value from FaultInjector.getInjectedValue();
+  note right: Fault injection via stub variable
+else (no)
+  :Use ADC hardware for measurement;
+  :Call AdcController.Adc_GetGroupStatus(groupId);
+  if (Status == IDLE) then (yes)
+    :Call AdcController.Adc_StartGroupConversion(groupId);
+    :Wait for conversion to complete;
+  endif
+  :Call AdcController.Adc_ReadGroup(groupId, resultBuffer);
+endif
+
+:For each voltage rail in group;
+:Compare measured value to thresholds (compareThresholds);
+
+if (Value < underVoltage) then (Under-voltage)
+  :Increment consecutiveFaultCounter for rail;
+  if (consecutiveFaultCounter >= 5) then (yes)
+    :Call ErrorManager.rbsfty_ErrMgt_ReportError(UV info, ...);
+    :Log DTC;
+    :Set degradation mode if needed;
+    :Reset consecutiveFaultCounter;
+  else (no)
+    :Continue monitoring;
+  endif
+elseif (Value > overVoltage) then (Over-voltage)
+  :Increment consecutiveFaultCounter for rail;
+  if (consecutiveFaultCounter >= 5) then (yes)
+    :Call ErrorManager.rbsfty_ErrMgt_ReportError(OV info, ...);
+    :Log DTC;
+    :Set degradation mode if needed;
+    :Reset consecutiveFaultCounter;
+  else (no)
+    :Continue monitoring;
+  endif
+else (Normal)
+  :Reset consecutiveFaultCounter for rail;
+endif
+
+:Repeat for all voltage rails;
+
+|TaskScheduler|
+:Wait for next 10ms tick;
+
+stop
+@enduml

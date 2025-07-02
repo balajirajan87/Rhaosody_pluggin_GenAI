@@ -1,0 +1,50 @@
+@startuml
+title Power Supply Monitoring & Fault Injection - Activity Diagram
+
+|RTAOS 10ms Task|
+start
+:Trigger monitorAllRails();
+
+|PowerSupplyMonitor|
+:For each VoltageRail in rails;
+repeat
+    :processRail(rail);
+
+    |VoltageRail|
+    if (useStub?) then (yes)
+        :Read stubValue as measured voltage;
+    else (no)
+        |AdcController|
+        if (Adc_GetGroupStatus(groupId) == IDLE) then (yes)
+            :Adc_StartGroupConversion(groupId);
+            :Wait for conversion to complete;
+        endif
+        if (Adc_GetGroupStatus(groupId) == COMPLETED) then (yes)
+            :Adc_ReadGroup(groupId, resultBuffer);
+            :Update lastMeasuredValue;
+        else (no)
+            :Skip to next rail;
+            break
+        endif
+    endif
+
+    |VoltageRail|
+    :Check thresholds (under/over voltage);
+    if (Fault detected?) then (yes)
+        :incrementFaultCount();
+        if (consecutiveFaultCount >= 5) then (yes)
+            |PowerSupplyMonitor|
+            :debounceAndReport(rail, fault);
+            |ErrorManager|
+            :rbsfty_ErrMgt_ReportError(...);
+            :resetFaultCount();
+        else (no)
+            :Continue monitoring;
+        endif
+    else (no)
+        :resetFaultCount();
+    endif
+repeat while (more rails)
+|RTAOS 10ms Task|
+stop
+@enduml

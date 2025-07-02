@@ -1,0 +1,143 @@
+@startuml
+' Global style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #f8fff8
+ 
+' Main RBM Component
+[RBM Core] as RBM <<component>>
+ 
+' State Management
+[State Machine] <<component>>
+[FPGA Configurator] <<component>>
+[Time Sync Service] <<component>>
+ 
+' Buffer Management
+[Ring Buffer Manager] <<component>>
+[Buffer Locking Service] <<component>>
+ 
+' Storage/Memory Management
+[RAM Allocator] <<component>>
+[SSD Partition Manager] <<component>>
+[EMMC Manager] <<component>>
+[NOR Flash Middleware] <<component>>
+ 
+' Logger/Directory Services
+[Logger Directory Service] <<component>>
+[Upload/Eraser Service] <<component>>
+ 
+' Callback/Notification
+[Callback Handler] <<component>>
+[ASW Integration] <<component>>
+ 
+' Network/External Integration
+[Network Monitor] <<component>>
+[SOME/IP Handler] <<component>>
+[QNX SPI Driver] <<component>>
+ 
+' API Interfaces
+interface "RBM_ReqCbk" as I_ReqCbk
+interface "RBM_setCallBack" as I_setCallBack
+interface "RBM_CleanPartition" as I_CleanPartition
+interface "RBM_EnterStandby" as I_EnterStandby
+interface "RBM_ReInit" as I_ReInit
+interface "RBM_StartBuffering" as I_StartBuffering
+interface "RBM_trigEvtRecOnADISS" as I_trigEvtRecOnADISS
+interface "RBM_trigEvtRecOnRDC" as I_trigEvtRecOnRDC
+interface "RBM_trigEvtRecOnOM" as I_trigEvtRecOnOM
+interface "RBM_trigEvtRecOff" as I_trigEvtRecOff
+interface "RBM_trigSingleEvtRecADISS" as I_trigSingleEvtRecADISS
+interface "RBM_CreateBufCycAlt" as I_CreateBufCycAlt
+interface "RBM_CreateBufCycSock" as I_CreateBufCycSock
+interface "RBM_CreateBufnonCycAlt" as I_CreateBufnonCycAlt
+interface "RBM_CreateBufnonCycSock" as I_CreateBufnonCycSock
+interface "RBM_CreateBufStream" as I_CreateBufStream
+interface "RBM_CreateBufswContent" as I_CreateBufswContent
+interface "RBM_CreateBufswFile" as I_CreateBufswFile
+interface "RBM_RemoveRingBuf" as I_RemoveRingBuf
+interface "RBM_CleanPartition" as I_CleanPartition
+interface "RBM_DeleteEntryADISS" as I_DeleteEntryADISS
+interface "RBM_DeleteEntryRDC" as I_DeleteEntryRDC
+interface "RBM_AddMetaData" as I_AddMetaData
+interface "RBM_cbkASWRBMStatus" as I_cbkASWRBMStatus
+interface "RBM_GetState" as I_GetState
+interface "RBM_GetVersion" as I_GetVersion
+interface "RBM_GetOMFIFOpath" as I_GetOMFIFOpath
+ 
+' RBM Core provides all main APIs
+RBM --|> I_ReqCbk
+RBM --|> I_setCallBack
+RBM --|> I_CleanPartition
+RBM --|> I_EnterStandby
+RBM --|> I_ReInit
+RBM --|> I_StartBuffering
+RBM --|> I_trigEvtRecOnADISS
+RBM --|> I_trigEvtRecOnRDC
+RBM --|> I_trigEvtRecOnOM
+RBM --|> I_trigEvtRecOff
+RBM --|> I_trigSingleEvtRecADISS
+RBM --|> I_CreateBufCycAlt
+RBM --|> I_CreateBufCycSock
+RBM --|> I_CreateBufnonCycAlt
+RBM --|> I_CreateBufnonCycSock
+RBM --|> I_CreateBufStream
+RBM --|> I_CreateBufswContent
+RBM --|> I_CreateBufswFile
+RBM --|> I_RemoveRingBuf
+RBM --|> I_DeleteEntryADISS
+RBM --|> I_DeleteEntryRDC
+RBM --|> I_AddMetaData
+RBM --|> I_cbkASWRBMStatus
+RBM --|> I_GetState
+RBM --|> I_GetVersion
+RBM --|> I_GetOMFIFOpath
+ 
+' Internal dependencies
+RBM ..> [State Machine] : uses
+RBM ..> [Ring Buffer Manager] : manages
+RBM ..> [SSD Partition Manager] : formats/monitors
+RBM ..> [RAM Allocator] : allocates/monitors
+RBM ..> [Logger Directory Service] : logs/queries
+RBM ..> [Upload/Eraser Service] : triggers
+RBM ..> [Callback Handler] : notifies
+RBM ..> [Buffer Locking Service] : synchronizes
+RBM ..> [FPGA Configurator] : configures
+RBM ..> [Time Sync Service] : waits for sync
+RBM ..> [EMMC Manager] : fallback
+RBM ..> [NOR Flash Middleware] : via QNX SPI
+RBM ..> [Network Monitor] : monitors PDU/packet loss
+RBM ..> [SOME/IP Handler] : ensures no disturbance
+RBM ..> [ASW Integration] : reports status
+RBM ..> [QNX SPI Driver] : for NOR flash
+ 
+' External system dependencies
+[FPGA Configurator] ..> [FPGA] : configures
+[Time Sync Service] ..> [Global Time Sync] : syncs
+[QNX SPI Driver] ..> [NOR Flash Middleware] : accesses
+[Network Monitor] ..> [Network Stack] : monitors
+[SOME/IP Handler] ..> [SOME/IP Chain] : integrates
+ 
+' Notes for clarity
+note right of RBM
+  RBM Core provides all main APIs for
+  state, buffer, storage, logger, and callback management.
+end note
+ 
+note right of [Ring Buffer Manager]
+  Manages one ring buffer per log entry ID.
+  Handles buffer creation, removal, and pointer management.
+end note
+ 
+note right of [SSD Partition Manager]
+  Handles SSD partitioning, formatting, and monitoring.
+  Supports fallback to EMMC.
+end note
+ 
+note right of [Callback Handler]
+  Handles registration and invocation of callbacks
+  for storage, state, and error notifications.
+end note
+ 
+note right of [Logger Directory Service]
+  Distinguishes RDC/ADISS, supports upload/erase for SSD/NOR.
+end note
+@enduml

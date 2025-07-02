@@ -1,0 +1,115 @@
+@startuml
+' Global style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #f8faff
+ 
+' External Client/Middleware
+actor Client
+ 
+' Main RBM Core Component
+component "RBM Core" as RBM_Core {
+  [RBM_EnterStandby()]
+  [RBM_ReInit()]
+  [RBM_StartBuffering()]
+  [RBM_trigEvtRecOnADISS()]
+  [RBM_trigEvtRecOnRDC()]
+  [RBM_trigEvtRecOnOM()]
+  [RBM_GetState()]
+  [RBM_GetVersion()]
+}
+ 
+' Buffer Manager
+component "Buffer Manager" as BufferMgr {
+  [RBM_CreateBuf*]
+  [RBM_DeleteEntry*]
+  [RBM_RingBuf_tst]
+}
+ 
+' Storage Manager
+component "Storage Manager" as StorageMgr {
+  [RBM_CleanPartition()]
+  [RBM_DeleteEntryADISS()]
+  [RBM_DeleteEntryRDC()]
+  [RBM_AddMetaData()]
+  [RBM_StorReport_tst]
+}
+ 
+' Callback Manager
+component "Callback Manager" as CallbackMgr {
+  [RBM_ReqCbk()]
+  [RBM_setCallBack()]
+  [RBM_cbkASWRBMStatus]
+}
+ 
+' Network/DRB Manager
+component "Network/DRB Manager" as DRBMgr {
+  [RBM_GetOMFIFOpath()]
+  [RBM_OpenOMFIFO()]
+  [RBM_PDUFrame_tst]
+}
+ 
+' Logger Directory
+component "Logger Directory" as LoggerDir
+ 
+' FPGA/Hardware Interface
+component "FPGA/Hardware Interface" as HW_IF
+ 
+' Storage Devices
+database "SSD/EMMC" as Storage
+ 
+' Network Stack
+component "Network Stack" as NetStack
+ 
+' Relationships
+ 
+Client --> RBM_Core : uses APIs
+RBM_Core --> BufferMgr : manages buffers
+RBM_Core --> StorageMgr : manages storage
+RBM_Core --> CallbackMgr : registers/invokes callbacks
+RBM_Core --> DRBMgr : receives/forwards PDUs
+RBM_Core --> LoggerDir : distinguishes RDC/ADISS
+RBM_Core --> HW_IF : configures FPGA, DMA
+RBM_Core --> NetStack : monitors PDUs
+ 
+BufferMgr --> HW_IF : uses DMA
+BufferMgr --> StorageMgr : stores/loads data
+ 
+StorageMgr --> Storage : manages partitions, failover
+ 
+CallbackMgr --> Client : notifies via callbacks
+ 
+DRBMgr --> NetStack : receives PDUs
+DRBMgr --> BufferMgr : stores PDUs
+ 
+HW_IF --> Storage : hardware access
+HW_IF --> NetStack : hardware network access
+ 
+' Notes for clarity
+note right of RBM_Core
+  - Implements state machine
+  - Handles main API logic
+  - Coordinates all managers
+end note
+ 
+note right of CallbackMgr
+  - Registers client callbacks
+  - Notifies on events (storage, buffer, HW)
+end note
+ 
+note right of StorageMgr
+  - Cleans partitions (NVMe trim)
+  - Monitors SSD/EMMC
+  - Handles failover
+end note
+ 
+note right of BufferMgr
+  - Allocates ring buffers
+  - Manages write pointers
+  - Freezes on trigger
+end note
+ 
+note right of DRBMgr
+  - Receives SOME/IP, CAN-FD PDUs
+  - Pre-filters, tags, forwards
+end note
+@enduml

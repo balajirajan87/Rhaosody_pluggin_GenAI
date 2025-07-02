@@ -138,6 +138,18 @@ public class ProcessFiles {
 
   public void getChatLogFile() {
     File chatLogFile = new File(Constants.CHAT_LOG_FILE_PATH);
+    File parentDir = chatLogFile.getParentFile();
+
+    // Ensure parent directory exists
+    if (parentDir != null && !parentDir.exists()) {
+        if (parentDir.mkdirs()) {
+            LoggerUtil.info("Created parent directory for chat log: " + parentDir.getAbsolutePath());
+        } else {
+            LoggerUtil.error("Failed to create parent directory for chat log: " + parentDir.getAbsolutePath());
+            return;
+        }
+    }
+
     if (chatLogFile.exists()) {
       try (java.io.PrintWriter writer = new java.io.PrintWriter(chatLogFile)) {
         writer.print("");

@@ -1,0 +1,110 @@
+start: "@startuml" (title | skinparam | section )* "@enduml"
+
+title: "title" description
+
+skinparam: "skinparam" (sparam stereotype? svalue | sparam "{" skinparam_entry* "}")
+
+skinparam_entry: sparam stereotype? svalue
+
+stereotype: "<<" CNAME ">>"
+
+section: swimlane? (statement | partition) +
+
+swimlane: "|" COLOR? ":" swimlane_name "|"
+        | "|" COLOR? "|" swimlane_name "|"
+        | "|" swimlane_name "|"
+
+statement: start_activity
+         | swimlane
+         | action
+         | decision
+         | while_loop
+         | repeat_loop
+         | break_statement
+         | transition
+         | stop
+         | note
+         | switch
+
+start_activity: "start"
+
+action: ":" action_statement ";"
+
+decision: "if" "(" condition ")" "then" "(" then_label ")" (statement | partition)+ else_if_block* else_block? "endif"
+
+else_if_block:("else if" | "elseif") "(" condition ")" "then" "(" then_label ")" (statement | partition)+
+
+else_block: "else" ("(" else_label ")")? ((statement | partition)+)?
+
+while_loop: "while" "(" while_condition ")" ("is" "(" then_label ")")? statement+ "endwhile" ("(" else_label ")")?
+
+repeat_loop: "repeat" (statement | partition)+ "repeat while" "(" while_condition ")" repeat_loop_labels?
+
+repeat_loop_labels: "is" "(" then_label ")" "not" "(" else_label ")"
+
+break_statement: "break"
+
+transition: "->" transition_label ";"
+
+stop: "stop" 
+
+end: "end"
+
+note: note_singleline | note_multiline
+
+note_multiline: "note" note_position? note_multiline_content "end note"
+
+note_singleline: note_with_position note_content
+
+note_position: "left"  -> left
+             | "right"  -> right
+             | "top"  -> top
+             | "bottom" -> bottom
+
+note_with_position: "note left:"
+             | "note right:"
+             | "note top:"
+             | "note bottom:"
+             | "note left :"
+             | "note right :"
+             | "note top :"
+             | "note bottom :"
+
+switch: "switch" "(" switch_condition ")" case_block+ "endswitch"
+
+case_block: "case" "(" case_value ")" statement* break_statement
+
+partition: "partition" partition_name "{" statement* "}"
+
+note_content: /.+/
+description: /.+/
+sparam: CNAME 
+svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+
+condition: /.+?(?=\)\s+then)/
+repeat_while_condition: /[^)]+/
+while_condition: /[^)]+/
+then_label:/[^)]+/
+else_label:/[^)]+/
+switch_condition: /[^)]+/
+case_value: /[^)]+/
+COLOR: /#[a-zA-Z0-9]+/
+swimlane_name: /[^|]+/
+action_statement: /[^;]+/
+transition_label: /[^;]+/
+COMMENT: "'" /[^\n]*/
+partition_name: ESCAPED_STRING
+note_multiline_content: (LINE | NEWLINE)*
+LINE: /(?!(end note))(.+)/
+NEWLINE: /\\r?\\n/
+
+%import common.CNAME
+%import common.ESCAPED_STRING
+%import common.SIGNED_NUMBER
+%import common.WORD
+%import common.DIGIT
+%import common.WS
+%ignore WS
+%ignore /\!define[^\n]*/
+%ignore /\|\*[^\n]*/
+%ignore COMMENT
+%ignore /[ \t]+/

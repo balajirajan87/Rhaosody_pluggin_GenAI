@@ -1,0 +1,83 @@
+@startuml
+title Voltage Monitoring System - Class Diagram
+
+' ADC Peripheral and APIs
+class AdcDriver {
+    +Init()
+    +StartGroupConversion(groupId: int): void
+    +GetGroupStatus(groupId: int): AdcGroupStatus
+    +ReadGroup(groupId: int, resultBuffer: int[]): void
+}
+
+enum AdcGroupStatus {
+    IDLE
+    BUSY
+    COMPLETED
+    STREAM_COMPLETED
+}
+
+class AdcGroup {
+    -groupId: int
+    -channels: List<AdcChannel>
+    +getChannels(): List<AdcChannel>
+}
+
+class AdcChannel {
+    -channelId: int
+    -voltageRail: VoltageRail
+    +getVoltage(): float
+}
+
+enum VoltageRail {
+    VDD_5V
+    VDD_1V2_SSD
+    VDD_0V9_SSD
+    VDD_3V3_ETH
+    VDD_1V2_ETH
+    VDD_0V8_ETH
+    US33_LDO3_S32G
+}
+
+' Voltage Monitoring Task
+class VoltageMonitorTask {
+    -adcDriver: AdcDriver
+    -adcGroup: AdcGroup
+    -resultBuffer: int[]
+    -debounceCounters: Map<VoltageRail, int>
+    -thresholds: Map<VoltageRail, (float, float)>
+    +runEvery10ms(): void
+    +compareThresholds(): void
+    +handleFault(rail: VoltageRail, value: float, type: FaultType): void
+}
+
+enum FaultType {
+    UNDER_VOLTAGE
+    OVER_VOLTAGE
+}
+
+' Diagnostic Error Management
+class ErrorManager {
+    +ReportError(ErrInfo_u16: int, Add_info_u32: int, Dem_status: int): void
+}
+
+' Fault Injection Stub
+class FaultInjectionStub {
+    -overriddenValues: Map<VoltageRail, float>
+    +setVoltage(rail: VoltageRail, value: float): void
+    +clearOverride(rail: VoltageRail): void
+    +applyOverrides(resultBuffer: int[]): void
+}
+
+' Relationships
+AdcDriver "1" o-- "0..*" AdcGroup
+AdcGroup "1" o-- "1..*" AdcChannel
+AdcChannel "1" -- "1" VoltageRail
+
+VoltageMonitorTask "1" -- "1" AdcDriver
+VoltageMonitorTask "1" -- "1" AdcGroup
+VoltageMonitorTask "1" ..> ErrorManager : uses
+VoltageMonitorTask "1" ..> FaultInjectionStub : uses
+
+FaultInjectionStub ..> AdcChannel : overrides
+
+@enduml
