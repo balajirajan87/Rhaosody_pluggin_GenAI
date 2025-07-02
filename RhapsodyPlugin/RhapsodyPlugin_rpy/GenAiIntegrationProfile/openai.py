@@ -12,6 +12,7 @@ from flask import Flask, request, jsonify
 import io
 from flask_cors import CORS
 import base64
+import re
 
 # Constants for Embedding and LLM API
 TEXT_EMBEDDING_MODEL = "text-embedding-3-small"
@@ -239,7 +240,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
                         "content": [
                             {
                                 "type": "text",
-                                "text": "Describe this image in detail. Make sure to include all the important details like text. If the image contains UML diagrams, understand and describe its components."
+                                "text": "Describe this image in detail. Make sure to capture all the important details like texts, relationships, flow, etc. If the image contains UML diagrams, understand and describe its components, and the relationship between components."
                             },
                             {
                                 "type": "image_url",
@@ -252,8 +253,8 @@ class MyEmbeddingFunction(EmbeddingFunction):
                     }
                 ],
                 "max_tokens": 500,
-                "temperature": 0.5,
-                "top_p": 0.9
+                "temperature": 0.1,
+                "top_p": 1.0
             }
 
             try:
@@ -338,6 +339,26 @@ class MyEmbeddingFunction(EmbeddingFunction):
             except KeyError as e:
                 print(f"KeyError in response: {e}")
                 return None
+            
+# --- Session Tracker ---
+class SessionTracker:
+    def __init__(self):
+        self.current_session_id = None
+        self.code_info_extracted = False
+
+    def update_session(self, session_id):
+        if self.current_session_id != session_id:
+            self.current_session_id = session_id
+            self.code_info_extracted = False
+
+    def set_code_info_extracted(self, value=True):
+        self.code_info_extracted = value
+
+    def get_code_info_extracted(self):
+        return self.code_info_extracted
+    
+# Global instance
+session_tracker = SessionTracker()
 
 # Initialize Chroma Client (new method)
 def init_chroma_client(collection_name):
@@ -484,7 +505,7 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
                 embeddings=[embedding],
                 ids=[f"{pdf_path}_chunk{i}"]
             )
-    """
+    
     if images:
         #Generate Embeddings for Images:
         image_embeddings = embF.get_image_embedding(images)
@@ -500,7 +521,7 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
                     embeddings=[embedding],
                     ids=[f"{pdf_path}_image{i}"]
                 )
-    """      
+          
     # Update metadata
     metadata[pdf_hash] = {'path': pdf_path}
     save_metadata(metadata, metadata_file)
@@ -547,13 +568,11 @@ def process_reference_code(directory, collection, metadata_file):
     remove_deleted_code_files_from_chroma(directory, collection, metadata, metadata_file)
     
     # List all header and source files in the directory
-    header_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.h')]
-    source_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.c')]
+    # List all relevant source and header files in the directory
+    code_extensions = ('.h', '.c', '.hpp', '.cpp')
+    code_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(code_extensions)]
     
-    # Combine all files to process
-    all_files = header_files + source_files
-    
-    for file_path in all_files:
+    for file_path in code_files:
         # Calculate hash to check if the file has changed
         file_hash = calculate_pdf_hash(file_path)  # Reuse the hash function for consistency
         
@@ -657,13 +676,14 @@ def remove_deleted_code_files_from_chroma(directory, collection, metadata, metad
     - Ensure that the `save_metadata` function is defined and imported in the script.
     - The "docs" directory should contain only the PDF files that are currently in use.
     """
+    code_extensions = ('.h', '.c', '.hpp', '.cpp')
     # Identify existing .c and .h files
-    existing_files = {f for f in os.listdir(directory) if f.endswith(('.c', '.h'))}
+    existing_files = {f for f in os.listdir(directory) if f.endswith(code_extensions)}
     
     # Identify hashes of .c and .h files that no longer exist in the directory
     hashes_to_remove = [
         file_hash for file_hash, info in metadata.items()
-        if os.path.basename(info['path']) not in existing_files and info['path'].endswith(('.c', '.h'))
+        if os.path.basename(info['path']) not in existing_files and info['path'].endswith(code_extensions)
     ]
 
     # Remove deleted .c and .h files from the collection and metadata
@@ -749,15 +769,58 @@ def find_relevant_chunk(user_query, collection):
     
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=10
+        n_results=5
     )
     
     if results and 'documents' in results and len(results['documents']) > 0:
         return results['documents']
     return None
 
+def detect_intent_llm(user_input):
+    """
+    Uses the LLM to classify user intent as either 'correction' or 'generate'.
+    Returns: 'correction' or 'generate'
+    """
+    system_message = (
+        "You are an intent classification assistant. "
+        "Classify the following user message as either 'correction' (if the user wants to correct, refine, update, restrict, or generate a diagram/code for a subset or specific part of an already generated diagram/code) "
+        "or 'generate' (if the user wants to generate a completely new diagram). "
+        "If the user asks to generate a diagram for a specific part, subset, or with additional constraints, and a diagram was already generated in this session, classify as 'correction'. "
+        "If the user message contains ONLY the diagram name, classify as 'generate'. "
+        "If the user message contains any other statements or words along with the diagram name, classify as 'correction'. "
+        "Respond with only one word: 'correction' or 'generate'.\n"
+        "\n"
+        "Examples:\n"
+        "User: Class Diagram\n"
+        "Intent: generate\n"
+        "User: Generate the Activity Diagram only for the API RMB_EnterStandby()\n"
+        "Intent: correction\n"
+        "User: Sequence Diagram\n"
+        "Intent: generate\n"
+        "User: Generate the activity diagram only for Buffer Management Partition\n"
+        "Intent: correction\n"
+        "User: Fix the class diagram to include error handling\n"
+        "Intent: correction\n"
+        "User: Activity Diagram\n"
+        "Intent: generate\n"
+        "User: Component Diagram\n"
+        "Intent: generate\n"
+        "User: re-generate the class diagram to include error handling\n"
+        "Intent: correction\n"
+    )
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_input}
+    ]
+    result = prompt_model(messages, max_tokens=10, temperature=0)
+    if result:
+        result = result.strip().lower()
+        if "correction" in result:
+            return "correction"
+    return "generate"
+
 # Prompting the model for text generation
-def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 5000, temperature: float = 0.5, top_p: float = 0.7, max_retries: int = 5, backoff_factor: int = 2) -> str:
+def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 2000, temperature: float = 0.0, top_p: float = 1.0, max_retries: int = 5, backoff_factor: int = 2) -> str:
     """
     Prompt the model for text generation.
 
@@ -985,7 +1048,13 @@ def extract_code_information(messages, collection):
     code_design_info = prompt_model(messages)
     return code_design_info
 
-def create_uml_design(messages, uml_guidelines_collection):
+def is_diagram_name(text):
+    diagram_names = ["class diagram", "sequence diagram", "activity diagram", "component diagram"]
+    cleaned = text.strip().lower()
+    print(f"Checking: '{cleaned}' in {diagram_names}")
+    return cleaned in diagram_names
+
+def create_uml_design(messages, uml_guidelines_collection, interactive=False):
     """
     Generates a UML design based on the provided messages and UML guidelines.
     This function extracts the UML diagram type and design information from the 
@@ -1015,21 +1084,69 @@ def create_uml_design(messages, uml_guidelines_collection):
         - The `prompt_model` function is used to generate the UML design based on 
           the constructed prompt.
     """
+    """
     UML_Diagram = messages[-1].get("content")  # The last message contains the UML diagram type
     design_query = f"Extract the guidelines related to {UML_Diagram}"
     uml_guidelines = find_relevant_chunk(design_query, uml_guidelines_collection)
     if not uml_guidelines:
         print("No UML design guidelines found.")
         return None
+    """
+    # Find the latest user message that is a diagram name (not a correction)
+    UML_Diagram = None
+    for msg in reversed(messages):
+        if msg["role"] == "user" and is_diagram_name(msg["content"]):
+            UML_Diagram = msg["content"]
+            break
+    if not UML_Diagram:
+        raise ValueError("Diagram name not found in messages.")
 
+    uml_guideline_query = f"Extract the guidelines related to {UML_Diagram}"
+    uml_guidelines = find_relevant_chunk(uml_guideline_query, uml_guidelines_collection)
+    if not uml_guidelines:
+        print("No UML design guidelines found.")
+        return None
+    
     design_info = messages[3].get("content")
     if not design_info:
         raise ValueError("Design Information not found in the fourth dictionary of messages.")
 
     # Check if code design information is available
     Code_design_info = None
-    if len(messages) > 5 and "content" in messages[5]:
+    if len(messages) > 5 and "content" in messages[5] and session_tracker.get_code_info_extracted():
         Code_design_info = messages[5].get("content")
+
+    if interactive:
+        # Find the last assistant PlantUML code in the chat history
+        last_plantuml = None
+        for msg in reversed(messages):
+            if msg["role"] == "assistant" and "@startuml" in msg.get("content", ""):
+                # Extract all PlantUML code blocks
+                matches = re.findall(r'@startuml.*?@enduml', msg["content"], re.DOTALL | re.IGNORECASE)
+                if matches:
+                    last_plantuml = '\n\n'.join(matches)
+                else:
+                    last_plantuml = msg["content"]
+                break
+        correction_instruction = messages[-1].get("content", "")
+        system_message = (
+            "You are a highly skilled AI assistant specializing in correcting and refining PlantUML diagrams. "
+            "You will be given the previous PlantUML code and a user instruction. "
+            "Apply the correction/refinement as per the instruction and return the updated PlantUML code and explanation."
+        )
+        user_message = f"""
+        Previous PlantUML code:
+        ```{last_plantuml}```
+        User instruction:
+        ```{correction_instruction}```
+        UML Design Guidelines:
+        ```{uml_guidelines}```
+        """
+        prompt_messages = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ]
+        return prompt_model(prompt_messages)
 
     # Define system and user messages based on the availability of code design information
     if Code_design_info:
@@ -1037,11 +1154,20 @@ def create_uml_design(messages, uml_guidelines_collection):
         system_message = f"""
         You are a highly skilled AI assistant specializing in creating Software UML designs.
         Your task is to:
-        1. Understand the provided Design Information and Code Design Information delimited by triple backticks.
-        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information and Code Design Information.
+        1. Understand the provided Design Information and Code Design Information and UML Design Guidelines delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information and Code Design Information and by adhering to the guidelines provided in UML Design Guidelines.
         3. Make sure all the identified API Functions from the Design Information and Code Design Information are included in the UML Design.
         4. Provide PlantUML codes for the requested ({UML_Diagram}).
         5. Provide a detailed explanation of the requested PlantUML diagrams.
+
+        For Class Diagram additionally consider the below Project Specific Guidelines:
+        1. Classes appearing in the Sequence Diagram should be the same as the classes created in the Class Diagram.
+        2. Function names need not be generated as Classes in the Class Diagram.
+        3. File names needs to be generated as Classes in the Class Diagram, and methods in the Files as methods inside the class.
+        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes. Color Coding needs to be differentiated between header files and source files.
+
+        For Activity Diagram additionally consider the below Project specific Guidelines:
+        1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
         """
         # User message when code design information is available
         user_message = f"""
@@ -1062,6 +1188,15 @@ def create_uml_design(messages, uml_guidelines_collection):
         3. Make sure all the identified API Functions from the Design Information are included in the UML Design.
         4. Provide PlantUML codes for the requested ({UML_Diagram}).
         5. Provide a detailed explanation of the requested PlantUML diagrams.
+
+        For Class Diagram additionally consider the below Project Specific Guidelines:
+        1. Classes appearing in the Sequence Diagram should be the same as the classes created in the Class Diagram.
+        2. Function names need not be generated as Classes in the Class Diagram.
+        3. File names needs to be generated as Classes in the Class Diagram, and methods in the Files as methods inside the class.
+        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes. Color Coding needs to be differentiated between header files and source files.
+
+        For Activity Diagram additionally consider the below Project specific Guidelines:
+        1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
         """
         # User message when code design information is not available
         user_message = f"""
@@ -1320,6 +1455,9 @@ def summarize_requirements_api():
     feature_query = data.get('feature_query', '')
     session_id = data.get('session_id', '')
 
+    # Register or update the session in the tracker
+    session_tracker.update_session(session_id)
+
     # Retrieve or initialize the session context
     if session_id not in chat_contexts:
         chat_contexts[session_id] = []
@@ -1430,6 +1568,9 @@ def extract_code_information_api():
 
     code_design_info = extract_code_information(messages, code_collection)
 
+    # Set the global flag to True after extraction
+    session_tracker.set_code_info_extracted(True)
+
     # Add the response to the session context
     messages.append({"role": "assistant", "content": code_design_info})
 
@@ -1484,7 +1625,22 @@ def create_uml_design_api():
     # Add the new user message to the context
     messages.append({"role": "user", "content": UML_Diagram})
 
-    uml_design = create_uml_design(messages, guideline_collection)
+    # Use LLM based intent Detection
+    intent = detect_intent_llm(UML_Diagram)
+    interactive = (intent == "correction")
+
+    uml_design = create_uml_design(messages, guideline_collection, interactive)
+
+    # Extract only the PlantUML code between @startuml and @enduml
+    """
+    plantuml_code = None
+    if uml_design:
+        match = re.search(r'@startuml(.*?)@enduml', uml_design, re.DOTALL | re.IGNORECASE)
+        if match:
+            plantuml_code = f"@startuml{match.group(1)}@enduml"
+        else:
+            plantuml_code = uml_design  # fallback if not found
+    """
 
     # Add the response to the session context
     messages.append({"role": "assistant", "content": uml_design})
