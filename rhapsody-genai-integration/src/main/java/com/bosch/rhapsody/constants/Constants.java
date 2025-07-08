@@ -47,10 +47,12 @@ public class Constants {
         public static final String LOG_TITLE_GEN_AI_PLUGIN = "GenAIPlugin";
 
         public static final String JSON_CLASSES = "classes";
+        public static final String JSON_COMPONENTS = "components";
         public static final String JSON_INTERFACES = "interfaces";
         public static final String JSON_ENUMS = "enums";
         public static final String JSON_STRUCTS = "structs";
         public static final String JSON_PACKAGES = "packages";
+        public static final String JSON_ACTORS = "actors";
         public static final String JSON_RELATIONSHIPS = "relationships";
         public static final String JSON_NOTES = "notes";
         public static final String JSON_ATTRIBUTES = "attributes";
@@ -72,6 +74,7 @@ public class Constants {
         public static final String JSON_STEREOTYPE = "stereotype";
 
         public static final String RHAPSODY_CLASS_DIAGRAM = "ClassDiagram";
+        public static final String RHAPSODY_COMPONENT_DIAGRAM = "ComponentDiagram";
         public static final String RHAPSODY_STEREOTYPE = "Stereotype";
         public static final String RHAPSODY_ACTIVITY_DIAGRAM = "ActivityDiagram";
         public static final String RHAPSODY_CLASS_DIAGRAM_STEREOTYPE = "Class Diagram";
@@ -80,6 +83,8 @@ public class Constants {
         public static final String RHAPSODY_POPULATE_MODE = "fromto";
         public static final String RHAPSODY_INTERFACE = "Interface";
         public static final String RHAPSODY_CLASS = "Class";
+        public static final String RHAPSODY_COMPONENT = "Component";
+        public static final String RHAPSODY_ACTOR = "Actor";
         public static final String RHAPSODY_OPERATIONS_DISPLAY = "OperationsDisplay";
         public static final String RHAPSODY_ATTRIBUTES_DISPLAY = "AttributesDisplay";
         public static final String RHAPSODY_LITERAL_DISPLAY = "EnumerationLiteralsDisplay";
@@ -111,6 +116,7 @@ public class Constants {
 
         public static final String NAME_ONLY = "name_only";
         public static final String NAME = "Name";
+        public static final String LABEL = "Label";
         public static final String RECTILINEAR_ARROWS = "rectilinear_arrows";
         public static final String OBJECT_MODEL_GE_REALIZATION_SHOW_NAME = "ObjectModelGe.Realization.ShowName";
         public static final String OBJECT_MODEL_GE_DEPENDS_SHOW_NAME = "ObjectModelGe.Depends.ShowName";
@@ -126,6 +132,9 @@ public class Constants {
         public static final String OBJECT_MODEL_GE_CLASS_SHOW_ATTRIBUTES = "ObjectModelGe.Class.ShowAttributes";
         public static final String OBJECT_MODEL_GE_CLASS_SHOW_NAME = "ObjectModelGe.Class.ShowName";
         public static final String OBJECT_MODEL_GE_TYPE_COMPARTMENTS = "ObjectModelGe.Type.Compartments";
+        public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_OPERATIONS = "ObjectModelGe.Interface.ShowOperations";
+        public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_ATTRIBUTES = "ObjectModelGe.Interface.ShowAttributes";
+        public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_NAME = "ObjectModelGe.Interface.ShowName";
 
 
         public static final String NEW_LINE = "\n";

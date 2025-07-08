@@ -25,12 +25,16 @@ public class ActivityDiagram {
     private IRPCollection elementsToPopulate;
 
 
-    public void createActivityDiagram(String outputFile) {
+    public void createActivityDiagram(String outputFile,int fileCount,Boolean hasMultipleFiles) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project,
-                    Constants.RHAPSODY_ACTIVITY_DIAGRAM);
+            IRPPackage basePackage;
+             if(fileCount == 1)
+                basePackage = CommonUtil.createBasePackage(Constants.project,Constants.RHAPSODY_ACTIVITY_DIAGRAM); 
+            else
+                 basePackage = CommonUtil.createOrGetPackage(Constants.project,Constants.RHAPSODY_ACTIVITY_DIAGRAM); 
+
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                         "ERROR: Could not create/find base package for activity diagram." + Constants.NEW_LINE);
@@ -38,7 +42,11 @@ public class ActivityDiagram {
             }
             elementsToPopulate = Constants.rhapsodyApp.createNewCollection();
             ActivityDiagramUtil.getActivitySpecificStereotypes(Constants.project);
-            String diagramName = json.optString("title", "ActivityDiagram").replaceAll("[^a-zA-Z0-9]", "_");
+            String title = "ActivityDiagram";
+            if(hasMultipleFiles){
+                title = title + "_" + fileCount;
+            }
+            String diagramName = json.optString("title", title).replaceAll("[^a-zA-Z0-9]", "_");
             IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
             JSONArray sections = json.optJSONArray("sections");
             if (sections != null) {
@@ -83,10 +91,6 @@ public class ActivityDiagram {
             CommonUtil.pause(3000);
             IRPDiagram activityDiagram = fc.getFlowchartDiagram();
             CommonUtil.populateNote(activityDiagram , elementsToPopulate);
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
-            UiUtil.showInfoPopup(
-                    "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
             activityDiagram.openDiagram();
         } catch (Exception e) {
             throw new RuntimeException(e);

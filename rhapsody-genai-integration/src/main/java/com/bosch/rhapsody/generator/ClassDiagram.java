@@ -28,14 +28,18 @@ public class ClassDiagram {
     JSONObject relations  = new JSONObject();
     
 
-    public void createClassDiagram(String outputFile) {
+    public void createClassDiagram(String outputFile,int fileCount,Boolean hasMultipleFiles) {
         try {
             String jsonString = readJsonFile(outputFile);
             if (jsonString == null)
                 return;
             JSONObject json = new JSONObject(jsonString);
-
-            basePackage = CommonUtil.createBasePackage(Constants.project, Constants.RHAPSODY_CLASS_DIAGRAM);
+            
+            if(fileCount == 1)
+                basePackage = CommonUtil.createBasePackage(Constants.project, Constants.RHAPSODY_CLASS_DIAGRAM);
+               
+            else
+                 basePackage = CommonUtil.createOrGetPackage(Constants.project, Constants.RHAPSODY_CLASS_DIAGRAM);
             if (basePackage == null) {
                 return;
             }
@@ -64,12 +68,7 @@ public class ClassDiagram {
             createNoteRelation();
 
             // Create class diagram
-            createBDD(basePackage, json);
-
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "INFO: Class Diagram generated successfully" + Constants.NEW_LINE);
-            UiUtil.showInfoPopup(
-                    "Class Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.");
+            createBDD(basePackage, json,fileCount,hasMultipleFiles);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -496,9 +495,12 @@ public class ClassDiagram {
         }
     }
 
-    private void createBDD(IRPPackage basePackage, JSONObject jsonObject) {
+    private void createBDD(IRPPackage basePackage, JSONObject jsonObject,int fileCount,Boolean hasMultipleFiles) {
         try {
             String title = Constants.RHAPSODY_CLASS_DIAGRAM;
+            if(hasMultipleFiles){
+                title = title + "_" + fileCount;
+            }
             Object titleObject = jsonObject.get(Constants.JSON_TITLE);
             if (titleObject != null && titleObject != JSONObject.NULL) {
                 title = titleObject.toString();
@@ -522,6 +524,10 @@ public class ClassDiagram {
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_CLASS_SHOW_OPERATIONS, Constants.RHAPSODY_DISPLAY_ALL);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_TYPE_COMPARTMENTS, "Attribute,EnumerationLiteral");
 
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_INTERFACE_SHOW_NAME, Constants.NAME_ONLY);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_INTERFACE_SHOW_ATTRIBUTES, Constants.RHAPSODY_DISPLAY_ALL);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_INTERFACE_SHOW_OPERATIONS, Constants.RHAPSODY_DISPLAY_ALL);
+
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_AGGREGATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_ASSOCIATION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_COMPOSITION_LINE_STYLE, Constants.RECTILINEAR_ARROWS);
@@ -531,7 +537,7 @@ public class ClassDiagram {
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_AGGREGATION_SHOW_NAME, Constants.NAME);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_ASSOCIATION_SHOW_NAME, Constants.NAME);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_COMPOSITION_SHOW_NAME, Constants.NAME);
-        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_DEPENDS_SHOW_NAME, Constants.NAME);
+        diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_DEPENDS_SHOW_NAME, Constants.LABEL);
         diagram.setPropertyValue(Constants.OBJECT_MODEL_GE_REALIZATION_SHOW_NAME, Constants.NAME);
     }
 

@@ -211,7 +211,7 @@ public class ClassDiagramUtil {
         try {
             IRPDependency dep = from.addDependencyTo(to);
             if (null != dep) {
-                dep.setName(description);
+                dep.setDisplayName(description);
             }
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,

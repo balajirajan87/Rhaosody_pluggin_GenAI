@@ -5,7 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,45 +30,55 @@ public class PUMLParser {
         // String outputFile = "";
         // ClassDiagram diagramHandler = new ClassDiagram();
         // diagramHandler.createClassDiagram(outputFile);
-        // String outputFileActivity = "";
+                // String outputFileActivity = "";
         // ActivityDiagram diagramHandler = new ActivityDiagram();
         // ActivityTransitionAdder.swimlane = new HashSet<>();
         // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
         // diagramHandler.createActivityDiagram(outputFileActivity);
-    }
+        }
 
     public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
-            String inputFile = "C:\\temp\\GenAI\\chatContent.puml";
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
-            extractLastPumlBlock(chatContent, inputFile);
-            try {
-                boolean isValid = PlantUMLValidator.isValidPuml(inputFile);
-                if(isValid){
-                    ProcessBuilder processBuilder = new ProcessBuilder(
-                        Constants.PUML_PARSER_PATH,
-                        "-i", inputFile,
-                        "-o", outputFile,
-                        "-t", diagramType);
-                    processBuilder.redirectErrorStream(true);
-                    Process pythonBackendProcess = processBuilder.start();
-                    int exitCode = pythonBackendProcess.waitFor();
-                    if (exitCode != 0) {
-                        throw new IOException("Python parser failed with exit code " + exitCode);
-                    }
-                    if (!Files.exists(Paths.get(outputFile))) {
-                        throw new IOException("Output file was not generated: " + outputFile);
-                    }
-                    createDiagram(diagramType, outputFile);
-                    if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
-                        pythonBackendProcess.destroy();
-                    }
+            List<String> inputFiles = extractAllPumlBlocks(chatContent);
+            int fileCount = 1;
+            Boolean hasMultipleFiles = false;
+            if(inputFiles.size() > 1)
+                hasMultipleFiles = true;
+            for(String inputFile:inputFiles){
+                try {
+                    boolean isValid = PlantUMLValidator.isValidPuml(inputFile);
+                    if(isValid){
+                        ProcessBuilder processBuilder = new ProcessBuilder(
+                            Constants.PUML_PARSER_PATH,
+                            "-i", inputFile,
+                            "-o", outputFile,
+                            "-t", diagramType);
+                        processBuilder.redirectErrorStream(true);
+                        Process pythonBackendProcess = processBuilder.start();
+                        int exitCode = pythonBackendProcess.waitFor();
+                        if (exitCode != 0) {
+                            throw new IOException("Python parser failed with exit code " + exitCode);
+                        }
+                        if (!Files.exists(Paths.get(outputFile))) {
+                            throw new IOException("Output file was not generated: " + outputFile);
+                        }
+                        createDiagram(diagramType, outputFile,fileCount,hasMultipleFiles);
+                        fileCount++;
+                        if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
+                            pythonBackendProcess.destroy();
+                        }
+                    }     
+                } catch (IOException io) {
+                    throw io;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (IOException io) {
-                throw io;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            }  
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "INFO: Diagram generated successfully." + Constants.NEW_LINE);
+            UiUtil.showInfoPopup(
+                "Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);
@@ -74,36 +86,51 @@ public class PUMLParser {
         }
     }
 
-    private void createDiagram(String diagramType, String outputFile) {
+    private void createDiagram(String diagramType, String outputFile,int fileCount,Boolean hasMultipleFiles) {
         ActivityTransitionAdder.swimlane = new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
             ClassDiagram diagramHandler = new ClassDiagram();
-            diagramHandler.createClassDiagram(outputFile);
+            diagramHandler.createClassDiagram(outputFile,fileCount,hasMultipleFiles);
         } else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
             ActivityDiagram diagramHandler = new ActivityDiagram();
-            diagramHandler.createActivityDiagram(outputFile);
+            diagramHandler.createActivityDiagram(outputFile,fileCount,hasMultipleFiles);
+        }else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("component")) {
+            ComponentDiagram diagramHandler = new ComponentDiagram();
+            diagramHandler.createComponentDiagram(outputFile, fileCount, hasMultipleFiles);
         }
     }
 
-    private void extractLastPumlBlock(String input, String outputFilePath) throws IOException {
-        Pattern pattern = Pattern.compile("@startuml[\\s\\S]*?@enduml", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(input);
-        String lastBlock = null;
-        while (matcher.find()) {
-            lastBlock = matcher.group();
+    private List<String> extractAllPumlBlocks(String input) throws IOException {
+        int idx = input.lastIndexOf("Response:");
+        if (idx == -1) {
+            throw new IOException("\"Response:\" not found in input.");
         }
-        if (lastBlock != null) {
-            getParentDir(outputFilePath);
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
-                writer.write(lastBlock);
+        String afterResponse = input.substring(idx + "Response:".length());
+        String outputFilePath = "C:\\temp\\GenAI\\chatContent.puml";
+        Pattern pattern = Pattern.compile("@startuml[\\s\\S]*?@enduml", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(afterResponse);
+        int count = 0;
+        boolean found = false;
+        List<String> filePaths = new ArrayList<>();
+        while (matcher.find()) {
+            found = true;
+            String block = matcher.group();
+            String thisFilePath = outputFilePath.replace(".puml", "_" + (++count) + ".puml");
+            getParentDir(thisFilePath);
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(thisFilePath))) {
+                writer.write(block);
             }
-        } else {
+            filePaths.add(thisFilePath);
+        }
+        if (!found) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: No @startuml ... @enduml block found." + Constants.NEW_LINE);
             throw new IOException("No @startuml ... @enduml block found.");
         }
+        return filePaths;
     }
+
 
     private void getParentDir(String outputFilePath) throws IOException {
         // Ensure parent directories exist
