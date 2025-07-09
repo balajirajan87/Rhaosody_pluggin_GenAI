@@ -70,9 +70,11 @@ public class PUMLParser {
                         }
                     }     
                 } catch (IOException io) {
-                    throw io;
+                   Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error creating diagram " + io.getMessage()+ Constants.NEW_LINE);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Error creating diagram " + e.getMessage()+ Constants.NEW_LINE);
                 }
             }  
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
