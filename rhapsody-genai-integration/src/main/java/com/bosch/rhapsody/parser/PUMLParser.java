@@ -35,7 +35,7 @@ public class PUMLParser {
         // ActivityTransitionAdder.swimlane = new HashSet<>();
         // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
         // diagramHandler.createActivityDiagram(outputFileActivity);
-        }
+    }
 
     public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
@@ -76,9 +76,9 @@ public class PUMLParser {
                 }
             }  
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                "INFO: Diagram generated successfully." + Constants.NEW_LINE);
+                "INFO: Diagram generated completed." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
-                "Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
+                "Diagram generated completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);

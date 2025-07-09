@@ -48,6 +48,9 @@ public class Constants {
 
         public static final String JSON_CLASSES = "classes";
         public static final String JSON_COMPONENTS = "components";
+        public static final String JSON_DATABASE = "databases";
+        public static final String JSON_CLOUDS= "clouds";
+        public static final String JSON_NODES = "nodes";
         public static final String JSON_INTERFACES = "interfaces";
         public static final String JSON_ENUMS = "enums";
         public static final String JSON_STRUCTS = "structs";
@@ -60,6 +63,7 @@ public class Constants {
         public static final String JSON_PARAMS = "params";
         public static final String JSON_VALUES = "values";
         public static final String JSON_NAME = "name";
+        public static final String JSON_ALIAS_NAME = "alias_name";
         public static final String JSON_TYPE = "type";
         public static final String JSON_END1_MULTIPLICITY = "end1_multiplicity";
         public static final String JSON_END2_MULTIPLICITY = "end2_multiplicity";

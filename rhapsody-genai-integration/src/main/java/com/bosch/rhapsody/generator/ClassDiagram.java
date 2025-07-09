@@ -5,7 +5,6 @@ import org.json.JSONObject;
 import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.util.ClassDiagramUtil;
 import com.bosch.rhapsody.util.CommonUtil;
-import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.*;
 
 import java.nio.file.Files;
@@ -26,10 +25,12 @@ public class ClassDiagram {
     IRPPackage basePackage;
     IRPPackage baseStereotypePackage;
     JSONObject relations  = new JSONObject();
+    int fileCount;
     
 
-    public void createClassDiagram(String outputFile,int fileCount,Boolean hasMultipleFiles) {
+    public void createClassDiagram(String outputFile,int fileCountTemp,Boolean hasMultipleFiles) {
         try {
+            fileCount = fileCountTemp;
             String jsonString = readJsonFile(outputFile);
             if (jsonString == null)
                 return;
@@ -43,7 +44,13 @@ public class ClassDiagram {
             if (basePackage == null) {
                 return;
             }
-
+            String title = Constants.RHAPSODY_CLASS_DIAGRAM;
+            if(hasMultipleFiles){
+                title = title + "_" + fileCount;
+            }
+            String diagramName = json.optString("title", title).replaceAll("[^a-zA-Z0-9]", "_");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "INFO: Creating class diagram :" + diagramName+ Constants.NEW_LINE); 
             baseStereotypePackage = CommonUtil.createOrGetPackage(Constants.project, Constants.RHAPSODY_STEREOTYPE);
             stereotypeMap = CommonUtil.getStereotypes(baseStereotypePackage);
 
@@ -68,9 +75,12 @@ public class ClassDiagram {
             createNoteRelation();
 
             // Create class diagram
-            createBDD(basePackage, json,fileCount,hasMultipleFiles);
+            createBDD(basePackage, diagramName,fileCount,hasMultipleFiles);
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "INFO: Class diagram created :" + diagramName+ Constants.NEW_LINE);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "ERROR: Error creating class diagram " + e.getMessage()+ Constants.NEW_LINE);
         } finally {
             try {
                 java.nio.file.Path outputPath = java.nio.file.Paths.get(outputFile);
@@ -221,7 +231,7 @@ public class ClassDiagram {
                                     : null;
                     String interfaceName = interfaceObject.getString(Constants.JSON_NAME).replaceAll("[^a-zA-Z0-9]",
                             "_");
-                    IRPClass rhapsodyInterface = ClassDiagramUtil.addInterface((IRPPackage) container, interfaceName,
+                    IRPClass rhapsodyInterface = CommonUtil.addInterface((IRPPackage) container, interfaceName,
                             basePackage);
                     if (rhapsodyInterface != null) {
                         addStereotype(rhapsodyInterface, stereotype);
@@ -377,7 +387,7 @@ public class ClassDiagram {
                     String noteText = noteObject.optString(Constants.JSON_DESCRIPTION, "");
                     String target = noteObject.optString(Constants.JSON_TARGET, "");
                     IRPComment comment = (IRPComment) container.addNewAggr(Constants.RHAPSODY_COMMENT,
-                            Constants.RHAPSODY_COMMENT + "_" + i);
+                            Constants.RHAPSODY_COMMENT + "_" + fileCount + "_"+ i);
                     if (comment != null) {
                         comment.setDescription(noteText);
                         anchors.put(comment, target);
@@ -426,27 +436,27 @@ public class ClassDiagram {
                     if (fromElem != null && toElem != null && fromElem instanceof IRPClass
                             && toElem instanceof IRPClass) {
                         if (Constants.RHAPSODY_ASSOCIATION.equals(type)) {
-                            ClassDiagramUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description,
+                            CommonUtil.createAssociation((IRPClass) fromElem, (IRPClass) toElem, description,
                                     end1_multiplicity, end2_multiplicity);
                         } else if (Constants.RHAPSODY_DIRECTED_ASSOCIATION.equals(type)) {
-                            ClassDiagramUtil.createDirectedAssociation((IRPClass) fromElem, (IRPClass) toElem,
+                            CommonUtil.createDirectedAssociation((IRPClass) fromElem, (IRPClass) toElem,
                                     description, end1_multiplicity);
                         } else if (Constants.RHAPSODY_REVERSE_DIRECTED_ASSOCIATION.equals(type)) {
-                            ClassDiagramUtil.createDirectedAssociation((IRPClass) toElem, (IRPClass) fromElem,
+                            CommonUtil.createDirectedAssociation((IRPClass) toElem, (IRPClass) fromElem,
                                     description, end2_multiplicity);
                         } else if (Constants.RHAPSODY_DEPENDENCY.equals(type)) {
-                            ClassDiagramUtil.createDependency(fromElem, toElem, description);
+                            CommonUtil.createDependency(fromElem, toElem, description);
                         } else if (Constants.RHAPSODY_REVERSE_DEPENDENCY.equals(type)) {
-                            ClassDiagramUtil.createDependency(toElem, fromElem, description);
+                            CommonUtil.createDependency(toElem, fromElem, description);
                         } else if (Constants.RHAPSODY_REALIZATION.equals(type)) {
-                            ClassDiagramUtil.createRealization((IRPClass) fromElem, (IRPClassifier) toElem);
+                            CommonUtil.createRealization((IRPClass) fromElem, (IRPClassifier) toElem);
                         } else if (Constants.RHAPSODY_REVERSE_REALIZATION.equals(type)) {
-                            ClassDiagramUtil.createRealization((IRPClass) toElem, (IRPClassifier) fromElem);
+                            CommonUtil.createRealization((IRPClass) toElem, (IRPClassifier) fromElem);
                         } else if (Constants.RHAPSODY_INHERITANCE.equals(type)) {
-                            ClassDiagramUtil.createInheritance((IRPClass) fromElem, (IRPClassifier) toElem,
+                            CommonUtil.createInheritance((IRPClass) fromElem, (IRPClassifier) toElem,
                                     description);
                         } else if (Constants.RHAPSODY_REVERSE_INHERITANCE.equals(type)) {
-                            ClassDiagramUtil.createInheritance((IRPClass) toElem, (IRPClassifier) fromElem,
+                            CommonUtil.createInheritance((IRPClass) toElem, (IRPClassifier) fromElem,
                                     description);
                         } else if (Constants.RHAPSODY_AGGREGATION.equals(type)) {
                             ClassDiagramUtil.createAggregation((IRPClass) toElem, (IRPClass) fromElem, description,
@@ -472,7 +482,7 @@ public class ClassDiagram {
                 String toName = entry.getValue();
                 IRPModelElement toElem = elementMap.get(toName);
                 if (fromElem instanceof IRPClass && toElem instanceof IRPClassifier) {
-                    ClassDiagramUtil.createRealization((IRPClass) fromElem, (IRPClassifier) toElem);
+                    CommonUtil.createRealization((IRPClass) fromElem, (IRPClassifier) toElem);
                 }
             } catch (Exception e) {
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
@@ -486,7 +496,7 @@ public class ClassDiagram {
                 String toName = entry.getValue();
                 IRPModelElement toElem = elementMap.get(toName);
                 if (fromElem instanceof IRPClass && toElem instanceof IRPClassifier) {
-                    ClassDiagramUtil.createInheritance((IRPClass) fromElem, (IRPClassifier) toElem, "");
+                    CommonUtil.createInheritance((IRPClass) fromElem, (IRPClassifier) toElem, "");
                 }
             } catch (Exception e) {
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
@@ -495,16 +505,8 @@ public class ClassDiagram {
         }
     }
 
-    private void createBDD(IRPPackage basePackage, JSONObject jsonObject,int fileCount,Boolean hasMultipleFiles) {
+    private void createBDD(IRPPackage basePackage, String  title,int fileCount,Boolean hasMultipleFiles) {
         try {
-            String title = Constants.RHAPSODY_CLASS_DIAGRAM;
-            if(hasMultipleFiles){
-                title = title + "_" + fileCount;
-            }
-            Object titleObject = jsonObject.get(Constants.JSON_TITLE);
-            if (titleObject != null && titleObject != JSONObject.NULL) {
-                title = titleObject.toString();
-            }
             IRPObjectModelDiagram diagram = ClassDiagramUtil.addClassDiagram(basePackage, title);
             if (diagram != null) {
                 ClassDiagramUtil.addStereotype(diagram, Constants.RHAPSODY_CLASS_DIAGRAM_STEREOTYPE,
