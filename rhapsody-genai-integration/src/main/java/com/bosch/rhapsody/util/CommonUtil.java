@@ -170,8 +170,8 @@ public class CommonUtil {
                 Constants.RHAPSODY_PACKAGE);
         if (newPackage != null) {
             newPackage.locateInBrowser();
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "INFO: The package '" + packageName + "' already exists." + Constants.NEW_LINE);
+            // Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+            //         "INFO: The package '" + packageName + "' already exists." + Constants.NEW_LINE);
             boolean response = UiUtil.showQuestionPopup("The package '" + packageName
                     + "' already exists. Do you want to overwrite it?");
             if (response) {
