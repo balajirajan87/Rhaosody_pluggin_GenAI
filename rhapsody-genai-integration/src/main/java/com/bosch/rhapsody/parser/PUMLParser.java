@@ -78,9 +78,9 @@ public class PUMLParser {
                 }
             }  
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                "INFO: Diagram generated completed." + Constants.NEW_LINE);
+                "INFO: Diagram generation completed." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
-                "Diagram generated completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
+                "Diagram generation completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);
