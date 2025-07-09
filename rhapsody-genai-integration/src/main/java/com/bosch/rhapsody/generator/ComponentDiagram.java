@@ -171,6 +171,12 @@ public class ComponentDiagram {
                     if(componentName == null || componentName.isEmpty()){
                         componentName = componentLabel;
                     }
+                    if (stereotype == null) {
+                        stereotype = componentObject.has(Constants.JSON_STEREOTYPE)
+                                && !componentObject.isNull(Constants.JSON_STEREOTYPE)
+                                        ? componentObject.getString(Constants.JSON_STEREOTYPE)
+                                        : null;
+                    }
                     IRPComponent rhapsodyComponent = ComponentDiagramUtil.addComponent((IRPPackage) container, componentName,basePackage);
                     if (rhapsodyComponent != null) {
                         addStereotype(rhapsodyComponent, stereotype);
