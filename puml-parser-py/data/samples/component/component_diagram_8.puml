@@ -1,0 +1,83 @@
+@startuml
+' Global style for clarity
+<style>
+componentDiagram {
+  BackGroundColor #f8f8ff
+  LineThickness 2
+  LineColor #003366
+}
+</style>
+
+package "Voltage Monitoring System" {
+  [cl_RTAOS] as RTAOS <<component>>
+  [cl_adc] as ADC <<component>>
+  [cl_VoltMon] as VoltMon <<component>>
+  [cl_ErrMgmt] as ErrMgmt <<component>>
+  [cl_OsInterrupt] as OsInterrupt <<component>>
+  [cl_EcuM] as EcuM <<component>>
+  [Stub Software] as Stub <<component>>
+}
+
+' API interfaces
+interface "Adc_GetGroupStatus()" as I_AdcGetGroupStatus
+interface "Adc_StartGroupConversion()" as I_AdcStartGroupConversion
+interface "Adc_ReadGroup()" as I_AdcReadGroup
+interface "Adc_Init()" as I_AdcInit
+interface "rbsfty_ErrMgt_ReportError()" as I_ReportError
+
+' Connections
+EcuM -[hidden]-> ADC
+EcuM ..> I_AdcInit : <<calls>>
+I_AdcInit --|> ADC
+
+RTAOS ..> VoltMon : <<triggers monitoring>>
+RTAOS ..> ADC : <<calls>>
+RTAOS ..> OsInterrupt : <<schedules>>
+
+ADC ..> I_AdcGetGroupStatus : <<provides>>
+ADC ..> I_AdcStartGroupConversion : <<provides>>
+ADC ..> I_AdcReadGroup : <<provides>>
+
+VoltMon ..> ADC : <<reads voltages>>
+VoltMon ..> ErrMgmt : <<reports error>>
+VoltMon ..> Stub : <<uses for test injection>>
+
+ErrMgmt ..> I_ReportError : <<provides>>
+
+OsInterrupt ..> ADC : <<handles ADC IRQs>>
+
+Stub ..> ADC : <<overrides readings>>
+
+' Notes for clarity
+note right of RTAOS
+10ms scheduler task
+Calls ADC conversion/read
+Triggers monitoring logic
+end note
+
+note right of VoltMon
+Compares ADC readings to thresholds
+Calls error management on deviation
+Supports test/fault injection via stub
+end note
+
+note right of Stub
+Test/fault injection
+Overrides ADC readings for verification
+end note
+
+note right of ErrMgmt
+Logs DTC, sets degradation mode
+Provides error reporting API
+end note
+
+note right of ADC
+ADC driver interface
+Provides group status, start, read APIs
+end note
+
+note right of EcuM
+Initializes ADC at startup
+end note
+
+@enduml
