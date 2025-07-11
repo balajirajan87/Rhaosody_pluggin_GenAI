@@ -1,0 +1,96 @@
+start: "@startuml" (title | skinparam | actor | package | component | interface | relationship | note| database | cloud| node)* "@enduml"
+
+title: "title" description
+
+skinparam: "skinparam" (sparam stereotype? svalue | sparam "{" skinparam_entry* "}")
+
+skinparam_entry: sparam stereotype? svalue
+
+stereotype: "<<" CNAME ">>"
+
+package: "package" package_name stereotype? "{" ( actor | component | interface | relationship | note| database | cloud| node)* "}"
+
+actor: "actor" CNAME
+
+COMPONENT_TAG: "<<" "component" ">>"
+
+component: ("component" "[" component_name "]" ("as" alias_name)? COMPONENT_TAG? )
+         | ("component" alias_name COMPONENT_TAG? )
+         | ("[" component_name "]" ("as" alias_name)? COMPONENT_TAG?)
+         | ("component" ESCAPED_STRING ("as" alias_name) "{" component_body "}")
+         | ("component" ESCAPED_STRING ("as" alias_name))
+
+component_body: (component_element)*
+
+component_element: "[" component_element_name "]"
+
+database:  "database" ESCAPED_STRING ("as" alias_name)
+
+node: "node" ESCAPED_STRING ("as" alias_name)
+
+cloud: "cloud" ESCAPED_STRING ("as" alias_name)
+
+note: "note" note_position note_target note_lines "end note"
+    | note_position note_target ":" note_inline
+
+note_position: "left of"    -> left
+             | "right of"   -> right
+             | "top of"     -> top
+             | "bottom of"  -> bottom
+
+INTERFACE_TAG: "<<" "interface" ">>"
+
+interface: ("interface" ESCAPED_STRING ("as" alias_name))
+
+relationship: (relation_source relation_type relation_target (":" description)?)
+
+note_inline: /[^\n]+/ NEWLINE
+
+note_lines: (LINE | NEWLINE)*
+
+LINE: /(?!(end note))(.+)/
+
+NEWLINE: /\\r?\\n/
+
+component_name: /[^\]]+/
+
+alias_name: CNAME
+
+component_element_name: /[^\]]+/
+
+relation_type: "--|>" -> inheritance
+             | "<|--" -> reverse_inheritance
+             | "-->" -> association
+             | "<--" -> reverse_directed_association
+             | "*--" -> composition
+             | "o--" -> aggregation
+             | "..>" -> dependency
+             | "<.." -> reverse_dependency
+             | "..|>" -> realization
+             | "<|.." -> reverse_realization
+             | ".."  -> association
+             | "--" -> association
+
+description: /.+/
+sparam: CNAME 
+svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+
+COLOR: /#[a-zA-Z0-9]+/
+COMMENT: "'" /[^\n]*/
+note_target: CNAME | "[" component_name "]"
+STYLE_BLOCK: /<style>(.|\n)*?<\/style>/
+relation_source: CNAME | "[" component_name "]"
+relation_target: CNAME | "[" component_name "]"
+package_name: ESCAPED_STRING | CNAME
+
+%import common.CNAME
+%import common.ESCAPED_STRING
+%import common.SIGNED_NUMBER
+%import common.WORD
+%import common.DIGIT
+%import common.WS
+%ignore WS
+%ignore /\!define[^\n]*/
+%ignore /\|\*[^\n]*/
+%ignore COMMENT
+%ignore /[ \t]+/
+%ignore STYLE_BLOCK

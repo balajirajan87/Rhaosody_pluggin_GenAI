@@ -96,6 +96,7 @@ partition_name: ESCAPED_STRING
 note_multiline_content: (LINE | NEWLINE)*
 LINE: /(?!(end note))(.+)/
 NEWLINE: /\\r?\\n/
+STYLE_BLOCK: /<style>(.|\n)*?<\/style>/
 
 %import common.CNAME
 %import common.ESCAPED_STRING
@@ -108,3 +109,4 @@ NEWLINE: /\\r?\\n/
 %ignore /\|\*[^\n]*/
 %ignore COMMENT
 %ignore /[ \t]+/
+%ignore STYLE_BLOCK
