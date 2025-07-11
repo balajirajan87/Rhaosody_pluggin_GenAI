@@ -86,9 +86,9 @@ package "Test" {
   end note
 
   ' Storage Devices
-  database "SSD/EMMC" as Storage
+  database "SSD/EMMC" as Storage 
 
-  cloud "Amazon Web Service " as AWS
+  cloud "Amazon Web Service " as AWS #e3f2fd
 }
 
 @enduml
