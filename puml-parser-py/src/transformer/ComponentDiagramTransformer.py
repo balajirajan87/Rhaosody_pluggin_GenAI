@@ -114,26 +114,78 @@ class ComponentDiagramTransformer(Transformer):
         }
     
     @v_args(inline=True)
-    def component(self, internal_name, alias_name=None, *args):
-        alias = None
-        body = None
-        # Check if a component body is present in args
-        for arg in args:
-            if isinstance(arg, list):
-                body = arg
-        if alias_name and str(alias_name) != "COMPONENT_TAG":
-            alias_name = ParsingUtil.parse_tree(alias_name)
-            alias = None if str(alias_name) == "<<component>>" else alias_name
+    def component1(self, *args):
+        """
+        Parses a component definition.
+        Extracts:
+        - component_name: required, from arg tree
+        - alias_name: optional, from arg tree
+        - stereotype: optional, from arg tree
+        """
         component_dict = {
-            "name": ParsingUtil.parse_tree(internal_name).replace("\"", ""),
-            "alias_name": alias
+            "name": None,
+            "alias_name": None,
+            "stereotype": None
         }
-        if body is not None:
-            # Parse component body elements
-            component_dict["body"] = [ParsingUtil.parse_tree(el) for el in body]
-        return {
-            "component": component_dict
+
+        # Parse the Tree to extract component_name, alias_name, stereotype
+        for child in args:
+            if hasattr(child, 'data'):
+                if child.data == "component_name":
+                    component_dict["name"] = ParsingUtil.parse_tree(child)
+                elif child.data == "alias_name":
+                    component_dict["alias_name"] = ParsingUtil.parse_tree(child)
+                elif child.data == "stereotype":
+                    component_dict["stereotype"] = ParsingUtil.parse_tree(child)
+
+        return {"component": component_dict}
+
+    @v_args(inline=True)
+    def component(self, *args):
+        """
+        Parses a component definition.
+        Extracts:
+        - component_name: required, from arg tree
+        - alias_name: optional, from arg tree
+        - stereotype: optional, from arg tree
+        """
+        component_dict = {
+            "name": None,
+            "alias_name": None,
+            "stereotype": None,
+            "color": None,
+            "body": []
         }
+
+        if args and isinstance(args[0], Tree):
+            for child in args:
+                if hasattr(child, 'data'):
+                    if child.data == "component_name":
+                        component_dict["name"] = ParsingUtil.parse_tree(child)
+                    elif child.data == "alias_name":
+                        component_dict["alias_name"] = ParsingUtil.parse_tree(child)
+                    elif child.data == "stereotype":
+                        component_dict["stereotype"] = ParsingUtil.parse_tree(child)
+                    elif child.data == "color_name":
+                        component_dict["color"] = ParsingUtil.parse_tree(child)
+        else:
+            # Fallback: positional parsing if not a Tree
+            if len(args) > 0:
+                if args[0] is not None:
+                    component_dict["name"] = str(ParsingUtil.parse_tree(args[0])).replace("\"", "")
+            # If the last argument is a list, treat it as the component body
+            if len(args) > 0 and isinstance(args[-1], list):
+                component_dict["body"] = args[-1]
+            for child in args:
+                if hasattr(child, 'data'):
+                    if child.data == "alias_name":
+                        component_dict["alias_name"] = ParsingUtil.parse_tree(child)
+                    elif child.data == "stereotype":
+                        component_dict["stereotype"] = ParsingUtil.parse_tree(child)
+                    elif child.data == "color_name":
+                        component_dict["color"] = ParsingUtil.parse_tree(child)
+        
+        return {"component": component_dict}
 
     @v_args(inline=True)
     def component_body(self, *elements):

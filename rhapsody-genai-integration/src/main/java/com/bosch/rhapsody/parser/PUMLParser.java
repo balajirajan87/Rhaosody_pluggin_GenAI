@@ -35,6 +35,8 @@ public class PUMLParser {
         // ActivityTransitionAdder.swimlane = new HashSet<>();
         // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
         // diagramHandler.createActivityDiagram(outputFileActivity);
+        ComponentDiagram componentDiagram=new ComponentDiagram();
+        componentDiagram.createComponentDiagram("C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhapsody_Pluggin_UML_Designs_to_Project_Window\\Rhaosody_pluggin_GenAI\\puml-parser-py\\data\\processed\\component.json", 1, false);
     }
 
     public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {

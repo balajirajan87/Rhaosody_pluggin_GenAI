@@ -2,23 +2,21 @@ start: "@startuml" (title | skinparam | actor | package | component | interface 
 
 title: "title" description
 
+stereotype: "<<" stereotype_name ">>"
+
 skinparam: "skinparam" (sparam stereotype? svalue | sparam "{" skinparam_entry* "}")
 
 skinparam_entry: sparam stereotype? svalue
-
-stereotype: "<<" CNAME ">>"
 
 package: "package" package_name stereotype? "{" ( actor | component | interface | relationship | note| database | cloud| node)* "}"
 
 actor: "actor" CNAME
 
-COMPONENT_TAG: "<<" "component" ">>"
-
-component: ("component" "[" component_name "]" ("as" alias_name)? COMPONENT_TAG? )
-         | ("component" alias_name COMPONENT_TAG? )
-         | ("[" component_name "]" ("as" alias_name)? COMPONENT_TAG?)
-         | ("component" ESCAPED_STRING ("as" alias_name) "{" component_body "}")
-         | ("component" ESCAPED_STRING ("as" alias_name))
+component: ("component" "[" component_name "]" ("as" alias_name)? stereotype? color_name?)
+         | ("component" alias_name stereotype? color_name?)
+         | ("[" component_name "]" ("as" alias_name)? stereotype? color_name?)
+         | ("component" ESCAPED_STRING ("as" alias_name) stereotype? color_name? "{" component_body "}")
+         | ("component" ESCAPED_STRING ("as" alias_name) stereotype? color_name?)
 
 component_body: (component_element)*
 
@@ -70,16 +68,21 @@ relation_type: "--|>" -> inheritance
              | "<|.." -> reverse_realization
              | ".."  -> association
              | "--" -> association
+             | "-right->" -> association
+             | "-down->" -> association
+             | "-left->" -> association
 
 description: /.+/
 sparam: CNAME 
-svalue: COLOR | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+
-COLOR: /#[a-zA-Z0-9]+/
+svalue: color_name | CNAME | ESCAPED_STRING | SIGNED_NUMBER | (DIGIT)+
+color_name: /#[a-zA-Z0-9]+/
 COMMENT: "'" /[^\n]*/
 note_target: CNAME | "[" component_name "]"
 STYLE_BLOCK: /<style>(.|\n)*?<\/style>/
 relation_source: CNAME | "[" component_name "]"
 relation_target: CNAME | "[" component_name "]"
+stereotype_name: /[^>][^>]*/
+ALPHANUM_SPECIAL_STEREOTYPE: /[a-zA-Z0-9_ ]+/
 package_name: ESCAPED_STRING | CNAME
 
 %import common.CNAME
