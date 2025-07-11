@@ -35,8 +35,8 @@ public class PUMLParser {
         // ActivityTransitionAdder.swimlane = new HashSet<>();
         // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
         // diagramHandler.createActivityDiagram(outputFileActivity);
-        ComponentDiagram componentDiagram=new ComponentDiagram();
-        componentDiagram.createComponentDiagram("C:\\MyDir\\01_Common\\02_CrowdSourc\\Rhapsody_GenAI\\repo\\Rhapsody_Pluggin_UML_Designs_to_Project_Window\\Rhaosody_pluggin_GenAI\\puml-parser-py\\data\\processed\\component.json", 1, false);
+        // ComponentDiagram componentDiagram=new ComponentDiagram();
+        // componentDiagram.createComponentDiagram("", 1, false);
     }
 
     public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
@@ -45,6 +45,7 @@ public class PUMLParser {
             List<String> inputFiles = extractAllPumlBlocks(chatContent);
             int fileCount = 1;
             Boolean hasMultipleFiles = false;
+            boolean outputFileExists = false;
             if(inputFiles.size() > 1)
                 hasMultipleFiles = true;
             for(String inputFile:inputFiles){
@@ -65,6 +66,7 @@ public class PUMLParser {
                         if (!Files.exists(Paths.get(outputFile))) {
                             throw new IOException("Output file was not generated: " + outputFile);
                         }
+                        outputFileExists = true;
                         createDiagram(diagramType, outputFile,fileCount,hasMultipleFiles);
                         fileCount++;
                         if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
@@ -73,16 +75,18 @@ public class PUMLParser {
                     }     
                 } catch (IOException io) {
                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                        "ERROR: Error creating diagram " + io.getMessage()+ Constants.NEW_LINE);
+                        "ERROR: JSON " + io.getMessage()+ Constants.NEW_LINE);
                 } catch (Exception e) {
                     Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                        "ERROR: Error creating diagram " + e.getMessage()+ Constants.NEW_LINE);
+                        "ERROR: JSON " + e.getMessage()+ Constants.NEW_LINE);
                 }
-            }  
+            }
+            if (outputFileExists) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                 "INFO: Diagram generation completed." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
                 "Diagram generation completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
+             }
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);

@@ -112,33 +112,6 @@ class ComponentDiagramTransformer(Transformer):
                "name" : str(name)
             }
         }
-    
-    @v_args(inline=True)
-    def component1(self, *args):
-        """
-        Parses a component definition.
-        Extracts:
-        - component_name: required, from arg tree
-        - alias_name: optional, from arg tree
-        - stereotype: optional, from arg tree
-        """
-        component_dict = {
-            "name": None,
-            "alias_name": None,
-            "stereotype": None
-        }
-
-        # Parse the Tree to extract component_name, alias_name, stereotype
-        for child in args:
-            if hasattr(child, 'data'):
-                if child.data == "component_name":
-                    component_dict["name"] = ParsingUtil.parse_tree(child)
-                elif child.data == "alias_name":
-                    component_dict["alias_name"] = ParsingUtil.parse_tree(child)
-                elif child.data == "stereotype":
-                    component_dict["stereotype"] = ParsingUtil.parse_tree(child)
-
-        return {"component": component_dict}
 
     @v_args(inline=True)
     def component(self, *args):
@@ -254,43 +227,55 @@ class ComponentDiagramTransformer(Transformer):
         return {"package": package_dict}
     
     @v_args(inline=True)
-    def database(self, name, alias_name=None):
+    def database(self, name, alias_name=None, color_name=None):
         """
         Parses a database definition.
-        - name: The database name (ESCAPED_STRING or CNAME)
-        - alias_name: Optional alias (CNAME)
+        Supports:
+        - database ESCAPED_STRING ("as" alias_name)? color_name?
         """
         db_dict = {
-            "name": ParsingUtil.parse_tree(name).replace("\"", "")
+            "name": ParsingUtil.parse_tree(name).replace("\"", ""),
+            "alias_name": None,
+            "color":None
         }
         if alias_name is not None:
             db_dict["alias_name"] = ParsingUtil.parse_tree(alias_name)
+        if color_name is not None:
+            db_dict["color"] = ParsingUtil.parse_tree(color_name)
         return {"database": db_dict}
 
     @v_args(inline=True)
-    def cloud(self, name, alias_name=None):
+    def cloud(self, name, alias_name=None, color_name=None):
         """
         Parses a cloud definition.
         - name: The cloud name (ESCAPED_STRING or CNAME)
         - alias_name: Optional alias (CNAME)
         """
         cloud_dict = {
-            "name": ParsingUtil.parse_tree(name).replace("\"", "")
+            "name": ParsingUtil.parse_tree(name).replace("\"", ""),
+            "alias_name": None,
+            "color":None
         }
         if alias_name is not None:
             cloud_dict["alias_name"] = ParsingUtil.parse_tree(alias_name)
+        if color_name is not None:
+            cloud_dict["color"] = ParsingUtil.parse_tree(color_name)
         return {"cloud": cloud_dict}
 
     @v_args(inline=True)
-    def node(self, name, alias_name=None):
+    def node(self, name, alias_name=None, color_name=None):
         """
         Parses a node definition.
         - name: The node name (ESCAPED_STRING or CNAME)
         - alias_name: Optional alias (CNAME)
         """
         node_dict = {
-            "name": ParsingUtil.parse_tree(name).replace("\"", "")
+            "name": ParsingUtil.parse_tree(name).replace("\"", ""),
+            "alias_name": None,
+            "color":None
         }
         if alias_name is not None:
             node_dict["alias_name"] = ParsingUtil.parse_tree(alias_name)
+        if color_name is not None:
+            node_dict["color"] = ParsingUtil.parse_tree(color_name)
         return {"node": node_dict}

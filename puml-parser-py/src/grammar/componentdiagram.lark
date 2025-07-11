@@ -22,11 +22,11 @@ component_body: (component_element)*
 
 component_element: "[" component_element_name "]"
 
-database:  "database" ESCAPED_STRING ("as" alias_name)
+database:  "database" ESCAPED_STRING ("as" alias_name) color_name?
 
-node: "node" ESCAPED_STRING ("as" alias_name)
+node: "node" ESCAPED_STRING ("as" alias_name) color_name?
 
-cloud: "cloud" ESCAPED_STRING ("as" alias_name)
+cloud: "cloud" ESCAPED_STRING ("as" alias_name) color_name?
 
 note: "note" note_position note_target note_lines "end note"
     | note_position note_target ":" note_inline
