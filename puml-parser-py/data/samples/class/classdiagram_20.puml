@@ -1,0 +1,121 @@
+Class Diagram:
+ 
+@startuml
+ 
+package "PMIC_BIST" <<SwComponent>> {
+ 
+    class PmicBist_c {
+
+        +PmicBist_EnableABIST2():void
+
+        +PmicBist_CheckBistStatus():bool
+
+        +PmicBist_HandleBistFault():void
+
+        +PmicBist_EnterSafeState():void
+
+        +PmicBist_RaiseDTC():void
+
+        -rbvr5510Mon_LBISTErrstatus:int
+
+        -rbvr5510Mon_ABIST1Errstatus:int
+
+        -rbvr5510Mon_ABIST2Errstatus:int
+
+        -rbvr5510Mon_BISTErrstatus:int
+
+    }
+ 
+    class PmicBist_h {
+
+        +PmicBist_EnableABIST2():void
+
+        +PmicBist_CheckBistStatus():bool
+
+        +PmicBist_HandleBistFault():void
+
+        +PmicBist_EnterSafeState():void
+
+        +PmicBist_RaiseDTC():void
+
+    }
+ 
+    class PmicBist_Registers_c {
+
+        +rbVR5510_ReadRegister_u8(unit:int, addr:int, value:int):int
+
+        +rbVR5510_WriteRegister_u8(unit:int, addr:int, value:int):int
+
+        +rbVR5510_ReadnCalc_challengerWdg_Resp_u8():int
+
+        +rbVR5510_triggerWatchdog_challenger_u8():int
+
+    }
+ 
+    class PmicBist_Registers_h {
+
+        +rbVR5510_ReadRegister_u8(unit:int, addr:int, value:int):int
+
+        +rbVR5510_WriteRegister_u8(unit:int, addr:int, value:int):int
+
+        +rbVR5510_ReadnCalc_challengerWdg_Resp_u8():int
+
+        +rbVR5510_triggerWatchdog_challenger_u8():int
+
+    }
+ 
+    class PmicBist_DTC_c {
+
+        +PmicBist_RaiseDTC():void
+
+    }
+ 
+    class PmicBist_DTC_h {
+
+        +PmicBist_RaiseDTC():void
+
+    }
+ 
+    class PmicBist_SafeState_c {
+
+        +PmicBist_EnterSafeState():void
+
+        +rbVR5510_Get_FailSafeMode():int
+
+        +rbVR5510_stateTransDelay(mode:int):void
+
+    }
+ 
+    class PmicBist_SafeState_h {
+
+        +PmicBist_EnterSafeState():void
+
+        +rbVR5510_Get_FailSafeMode():int
+
+        +rbVR5510_stateTransDelay(mode:int):void
+
+    }
+
+}
+ 
+' Dependencies
+
+PmicBist_c ..> PmicBist_Registers_c : uses
+
+PmicBist_c ..> PmicBist_DTC_c : uses
+
+PmicBist_c ..> PmicBist_SafeState_c : uses
+ 
+' Interface dependencies
+
+PmicBist_c ..> PmicBist_h
+
+PmicBist_Registers_c ..> PmicBist_Registers_h
+
+PmicBist_DTC_c ..> PmicBist_DTC_h
+
+PmicBist_SafeState_c ..> PmicBist_SafeState_h
+ 
+@enduml
+ 
+ 
