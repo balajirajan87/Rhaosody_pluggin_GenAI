@@ -71,6 +71,7 @@ relation_type: "--|>" -> inheritance
              | "-right->" -> association
              | "-down->" -> association
              | "-left->" -> association
+             | "-[hidden]->" -> hidden_not_required
 
 description: /.+/
 sparam: CNAME 
