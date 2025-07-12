@@ -114,6 +114,7 @@ LINE: /(?!(end note))(.+)/
 NEWLINE: /\\r?\\n/
 ALPHANUM_SPECIAL_PARAM: /[a-zA-Z0-9_!@#$%^&*(\[\]:;"'.<>\/?\\|`~\-]+/
 ALPHANUM_SPECIAL_STEREOTYPE: /[a-zA-Z0-9_!@#$%^&*()\[\]:;"'.,<\/?\\|`~\- ]+/
+STYLE_BLOCK: /<style>(.|\n)*?<\/style>/
 
 %import common.CNAME
 %import common.ESCAPED_STRING
@@ -124,3 +125,4 @@ ALPHANUM_SPECIAL_STEREOTYPE: /[a-zA-Z0-9_!@#$%^&*()\[\]:;"'.,<\/?\\|`~\- ]+/
 %ignore WS
 %ignore COMMENT
 %ignore /[\t]+/  // Ignore spaces and tabs
+%ignore STYLE_BLOCK

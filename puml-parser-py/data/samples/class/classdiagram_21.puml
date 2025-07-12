@@ -1,0 +1,54 @@
+@startuml
+' Diagram: PMIC BIST Software Class Diagram
+ 
+package "PMIC_BIST_Software" {
+ 
+    class BISTController_c {
+        +trigger_LBIST_ABIST1(): void
+        +enable_ABIST2(): void
+        +check_BIST_status(): bool
+        -lbistStatus: bool
+        -abist1Status: bool
+        -abist2Status: bool
+    }
+ 
+    class RegisterInterface_c {
+        +ReadRegister_u8(unit: int, addr: int, value: *uint8_t): uint8_t
+        +WriteRegister_u8(unit: int, addr: int, value: uint8_t): void
+    }
+ 
+    class FaultHandler_c {
+        +raise_DTC(code: int): void
+        -bistErrorStatus: bool
+    }
+ 
+    class SafeStateController_c {
+        +configure_safe_state(): void
+        +assert_FSOB(): void
+        +assert_RSTB(): void
+    }
+ 
+    class StateMachine_c {
+        +getCurrentState(): State
+        -currentState: State
+    }
+ 
+    ' Interfaces (header files)
+    interface FS_DIAG_SAFETY_h
+    interface FS_I_ABIST2_CTRL_h
+    interface FS_STATES_h
+ 
+    ' Relationships
+    BISTController_c --> RegisterInterface_c : uses
+    BISTController_c --> StateMachine_c : queries
+    BISTController_c --> FaultHandler_c : notifies on error
+    BISTController_c --> SafeStateController_c : triggers on error
+    BISTController_c ..> FS_DIAG_SAFETY_h : reads
+    BISTController_c ..> FS_I_ABIST2_CTRL_h : writes
+    SafeStateController_c ..> FS_STATES_h : polls
+ 
+    FaultHandler_c ..> BISTController_c : checks status
+ 
+}
+ 
+@enduml

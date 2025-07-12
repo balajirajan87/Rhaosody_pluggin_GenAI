@@ -1,0 +1,49 @@
+@startuml
+|cl_VoltMon|
+start
+ 
+:Initialize ADC;
+note right: Only at startup
+:Adc_Init();
+ 
+repeat
+    :Wait for 10ms period;
+    :Start ADC conversions for all groups;
+    :Adc_StartGroupConversion(groupId);
+ 
+    :Wait for ADC conversion to complete;
+    :Adc_GetGroupStatus(groupId);
+ 
+    if (Conversion completed?) then (yes)
+        :Read ADC results;
+        :voltages[] = Adc_ReadGroup(groupId);
+ 
+        :For each voltage channel;
+        fork
+            :Compare voltage to thresholds;
+            if (Voltage < UV or > OV?) then (yes)
+                :Increment debounce counter;
+                if (debounce counter >= 5?) then (yes)
+                    :Prepare Fault Info (FaultID, DTC, etc.);
+                    :Report fault to Error Handler;
+                    :rbsfty_ErrMgt_ReportError(ErrInfo_u16, Add_info_u32, Dem_status);
+ 
+                    :Trigger Safe State (SS02);
+                    :triggerSafeState(ssCode);
+ 
+                    :Reset debounce counter;
+                else (no)
+                    :Continue monitoring;
+                endif
+            else (no)
+                :Reset debounce counter;
+            endif
+        end fork
+    else (no)
+        :Continue waiting for ADC completion;
+    endif
+ 
+repeat while (System running?)
+ 
+stop
+@enduml

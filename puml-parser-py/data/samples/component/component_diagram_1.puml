@@ -12,43 +12,83 @@ skinparam componentStyle rectangle
 skinparam backgroundColor #f8faff
 
 skinparam component {
-    BackgroundColor #e3f2fd
-    BorderColor #1976d2
-    FontColor #0d47a1
+  BackgroundColor #e3f2fd
+  BorderColor #1976d2
+  FontColor #0d47a1
 }
 skinparam interface {
-    BackgroundColor #fffde7
-    BorderColor #fbc02d
-    FontColor #f57c00
+  BackgroundColor #fffde7
+  BorderColor #fbc02d
+  FontColor #f57c00
 }
 skinparam note {
-    BackgroundColor #fffde7
-    BorderColor #fbc02d
-    FontColor #6d4c41
+  BackgroundColor #fffde7
+  BorderColor #fbc02d
+  FontColor #6d4c41
 }
 
 title Periodic Voltage Monitoring Software - Component Diagram
 
-' NOTES for clarity
-note right of VoltMon
-  - Monitors 7 voltages every 10ms
-  - Triggers error if 5 consecutive faults
-  - Uses StubADC for SW-only fault injection
-end note
+package "Test" {
+  ' External Client/Middleware
+  actor Client
 
-note right of ErrMgmt
-  - Raises DTCs (e.g., BOSCH_SECPOWERSUPPLY_FAILURE)
-  - Handles system degradation modes
-end note
+  actor Client1
 
-note right of ADC
-  - Hardware abstraction for ADC
-  - Provides standard ADC APIs
-end note
+  actor Client2
 
-note right of StubADC
-  - Allows test code to inject/read voltages
-  - Enables boundary/fault injection tests
-end note
+  [cl_VoltMon] as VoltMon <<component>>
+  [cl_ErrMgmt] as ErrMgmt <<component>>
+  [State Machine] <<component>>
+  [FPGA Configurator] <<component>>
+
+  [First component]
+  [Another component] as Comp2
+  component Comp3
+  component [Last\ncomponent] as Comp4
+
+  ' Network/DRB Manager
+  component "Network/DRB Manager" as DRBMgr {
+    [RBM_GetOMFIFOpath()]
+    [RBM_OpenOMFIFO()]
+    [RBM_PDUFrame_tst]
+  }
+
+  interface "Adc_StartGroupConversion" as I_StartGroupConversion
+  interface "Adc_ReadGroup" as I_ReadGroup
+
+  ErrMgmt -- I_StartGroupConversion
+
+  VoltMon ..> ErrMgmt : forwards errors
+
+  ' NOTES for clarity
+  note bottom of VoltMon
+    - Monitors 7 voltages every 10ms
+    - Triggers error if 5 consecutive faults
+    - Uses StubADC for SW-only fault injection
+  end note
+
+  note top of ErrMgmt
+    - Raises DTCs (e.g., BOSCH_SECPOWERSUPPLY_FAILURE)
+    - Handles system degradation modes
+  end note
+
+  note left of Comp2 : Web Service only
+
+  note right of Comp3
+    A note can also
+    be on several lines
+  end note
+
+  note left of DRBMgr
+    A left note can also
+    be on several lines
+  end note
+
+  ' Storage Devices
+  database "SSD/EMMC" as Storage 
+
+  cloud "Amazon Web Service " as AWS #e3f2fd
+}
 
 @enduml

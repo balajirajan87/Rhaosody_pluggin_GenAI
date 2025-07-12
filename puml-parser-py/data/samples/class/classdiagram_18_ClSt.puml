@@ -1,0 +1,111 @@
+@startuml
+title VR5510 PMIC BIST & Safe State Handling - Class Diagram
+ 
+' -- Packages for logical grouping --
+package "PMIC BIST Management" {
+    class VR5510_BISTManager {
+        +rbVR5510_init()
+        +rbVR5510_FailSafeInit_u8()
+        +rbVR5510_FailSafeInit_Wdg_En_u8()
+        +rbVR5510_writeFSICfg()
+        +rbVR5510_PMIC_BIST_ErrStatus()
+        +rbVR5510_stateTransDelay(DestState_u8)
+        +enableABIST2()
+        +monitorBIST()
+        +handleBISTFailure()
+    }
+}
+ 
+package "Register Access" {
+    class VR5510_RegisterAccess {
+        +rbVR5510_ReadRegister_u8(eDestination_tu16, RegAddr_u8, ValueOut_pu16)
+        +rbVR5510_WriteRegister_u8(LogicUnit_tu16, regAddress_u8, writeData_u16)
+    }
+    class FS_I_ABIST2_CTRL {
+        +VMONx_ABIST2 : bool
+        +VCORE_ABIST2 : bool
+        +VDDIO_ABIST2 : bool
+        +setABIST2Bits()
+    }
+    class FS_DIAG_SAFETY {
+        +LBIST_status : bool
+        +ABIST1_status : bool
+        +ABIST2_status : bool
+        +clearStatus()
+    }
+}
+ 
+package "Error Management" {
+    class ErrorManager {
+        +rbsfty_ErrMgt_Process_info(ErrorID_u16, Add_info_u32)
+        +ErrMgt_PMIC_GetBISTErrStatus()
+        +ErrMgt_PMIC_GetLBISTErrStatus()
+        +ErrMgt_PMIC_GetABIST1ErrStatus()
+        +ErrMgt_PMIC_GetABIST2ErrStatus()
+        +PMIC_BIST_Err()
+    }
+}
+ 
+package "Safe State Control" {
+    class SafeStateController {
+        +configureSS01()
+        +assertFSOB()
+        +assertRSTB()
+    }
+}
+ 
+package "External Control" {
+    class Dio {
+        +Dio_ReadChannel(channel)
+        +Dio_WriteChannel(channel, value)
+    }
+}
+ 
+' -- Relationships --
+ 
+' BISTManager uses RegisterAccess for register operations
+VR5510_BISTManager ..> VR5510_RegisterAccess : uses
+ 
+' BISTManager uses FS_I_ABIST2_CTRL and FS_DIAG_SAFETY registers
+VR5510_BISTManager ..> FS_I_ABIST2_CTRL : configures
+VR5510_BISTManager ..> FS_DIAG_SAFETY : reads/monitors
+ 
+' BISTManager uses ErrorManager for error reporting
+VR5510_BISTManager ..> ErrorManager : reports errors
+ 
+' BISTManager uses SafeStateController for safe state
+VR5510_BISTManager ..> SafeStateController : triggers safe state
+ 
+' SafeStateController uses Dio for pin control
+SafeStateController ..> Dio : asserts pins
+ 
+' ErrorManager uses Error IDs (e.g., BOSCH_VR5510BIST_FAILURE)
+class BOSCH_VR5510BIST_FAILURE << (E,orchid) >> {
+    <<constant>>
+    +ErrorID : uint16
+}
+ 
+ErrorManager ..> BOSCH_VR5510BIST_FAILURE : raises DTC
+ 
+' -- Notes for clarity --
+note right of VR5510_BISTManager
+    - Orchestrates BIST monitoring, ABIST2 enablement,
+      and safe state transition.
+    - Calls error handling and register access APIs.
+end note
+ 
+note right of SafeStateController
+    - Configures SS01 safe state on BIST failure.
+    - Asserts FSOB and RSTB pins via Dio.
+end note
+ 
+note right of FS_I_ABIST2_CTRL
+    - ABIST2 bits are set only in INIT_FS state.
+end note
+ 
+note right of FS_DIAG_SAFETY
+    - Holds BIST status bits.
+    - Cleared by writing FFFF.
+end note
+ 
+@enduml

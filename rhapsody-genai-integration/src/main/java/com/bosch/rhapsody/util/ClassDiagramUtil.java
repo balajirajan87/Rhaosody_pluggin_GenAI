@@ -20,22 +20,6 @@ public class ClassDiagramUtil {
         return null;
     }
 
-    public static IRPClass addInterface(IRPPackage pkg, String interfaceName, IRPPackage basePackage) {
-        try {
-            IRPModelElement element = basePackage.findNestedElementRecursive(interfaceName,
-                    Constants.RHAPSODY_INTERFACE);
-            if (element != null && element instanceof IRPClass) {
-                return (IRPClass) element;
-            } else {
-                return (IRPClass) pkg.addNewAggr(Constants.RHAPSODY_INTERFACE, interfaceName);
-            }
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: addInterface: " + e.getMessage() + Constants.NEW_LINE);
-        }
-        return null;
-    }
-
     public static IRPType addEnum(IRPPackage pkg, String enumName, IRPPackage basePackage) {
         try {
             IRPModelElement element = basePackage.findNestedElementRecursive(enumName, Constants.RHAPSODY_TYPE);
@@ -179,78 +163,15 @@ public class ClassDiagramUtil {
         return null;
     }
 
-    public static void createAssociation(IRPClass from, IRPClass to, String description, String end1_multiplicity,
-            String end2_multiplicity) {
-        try {
-            from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
-                    Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: createAssociation: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void createDirectedAssociation(IRPClass from, IRPClass to, String description,
-            String end1_multiplicity) {
-        try {
-            IRPRelation association = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
-                    Constants.RHAPSODY_ASSOCIATION_TYPE, "", description);
-            if (null != association) {
-                association.makeUnidirect();
-            }
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: createDirectedAssociation: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void createDependency(IRPModelElement from, IRPModelElement to, String description) {
-        try {
-            IRPDependency dep = from.addDependencyTo(to);
-            if (null != dep) {
-                dep.setName(description);
-            }
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: createDependency: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void createRealization(IRPClass from, IRPClassifier to) {
-        try {
-            from.addGeneralization(to);
-            IRPGeneralization gen = from.findGeneralization(to.getName());
-            if (gen != null)
-                gen.changeTo(Constants.RHAPSODY_REALIZATION_TYPE);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: createRealization: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
-
-    public static void createInheritance(IRPClass from, IRPClassifier to, String description) {
-        try {
-            from.addGeneralization(to);
-            IRPGeneralization gen = from.findGeneralization(to.getName());
-            if (gen != null)
-                gen.setName(description);
-        } catch (Exception e) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "ERROR: createInheritance: " + e.getMessage() + Constants.NEW_LINE);
-        }
-    }
 
     public static void createAggregation(IRPClass from, IRPClass to, String description, String end1_multiplicity,
             String end2_multiplicity) {
 
         try {
             from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
+                    CommonUtil.isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
                     Constants.RHAPSODY_AGGREGATION_TYPE,
-                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
+                    CommonUtil.isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
         } catch (Exception e) {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: createAggregation: " + e.getMessage() + Constants.NEW_LINE);
@@ -261,9 +182,9 @@ public class ClassDiagramUtil {
             String end2_multiplicity) {
         try {
             IRPRelation comp = from.addRelationTo(to, "", Constants.RHAPSODY_ASSOCIATION_TYPE,
-                    isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
+                    CommonUtil.isValidMultiplicity(end1_multiplicity) ? end1_multiplicity : "", "",
                     Constants.RHAPSODY_AGGREGATION_TYPE,
-                    isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
+                    CommonUtil.isValidMultiplicity(end2_multiplicity) ? end2_multiplicity : "", description);
             if (null != comp) {
                 comp.setRelationType(Constants.RHAPSODY_COMPOSITION_TYPE);
             }
@@ -311,29 +232,6 @@ public class ClassDiagramUtil {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: setGraphicalProperty: " + e.getMessage() + Constants.NEW_LINE);
         }
-    }
-
-    /**
-     * Validates if the given multiplicity string is allowed.
-     * Allowed values: "1", "*", "1..*", "0..*", or any whole number.
-     * 
-     * @param multiplicity the multiplicity string to validate
-     * @return true if valid, false otherwise
-     */
-    public static boolean isValidMultiplicity(String multiplicity) {
-        if (multiplicity == null)
-            return false;
-        multiplicity = multiplicity.trim();
-        // Allowed literals
-        if (multiplicity.equals("1") || multiplicity.equals("*") ||
-                multiplicity.equals("1..*") || multiplicity.equals("0..*")) {
-            return true;
-        }
-        // Whole number
-        if (multiplicity.matches("\\d+")) {
-            return true;
-        }
-        return false;
     }
 
 }

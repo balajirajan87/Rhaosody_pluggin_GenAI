@@ -1,0 +1,78 @@
+@startuml
+' Global style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #f8f8ff
+skinparam component {
+    BackgroundColor #e6f2ff
+    BorderColor #003366
+    FontColor #003366
+}
+
+' Main software components
+package "SOC Power Supply Monitoring" {
+    [cl_RTAOS] <<component>> #e6f2ff
+    [cl_VoltMon] <<component>> #e6f2ff
+    [cl_adc] <<component>> #e6f2ff
+    [cl_ErrMgmt] <<component>> #e6f2ff
+    [cl_OsInterrupt] <<component>> #e6f2ff
+    [cl_EcuM] <<component>> #e6f2ff
+    [Stub_ADC] <<component>> #fff2cc
+}
+
+' External/Hardware
+database "ADC Hardware" as ADC_HW #d9ead3
+
+' API Functions (as interfaces)
+interface "Adc_Init()" as I_AdcInit
+interface "Adc_GetGroupStatus()" as I_AdcGetGroupStatus
+interface "Adc_StartGroupConversion()" as I_AdcStartGroupConversion
+interface "Adc_ReadGroup()" as I_AdcReadGroup
+interface "rbsfty_ErrMgt_ReportError()" as I_ReportError
+
+' Connections
+[cl_RTAOS] --> [cl_VoltMon] : triggers (10ms)
+[cl_VoltMon] --> [cl_adc] : read voltages
+[cl_VoltMon] --> [cl_ErrMgmt] : report error
+[cl_adc] ..> [Stub_ADC] : (test mode override)
+[cl_adc] --> ADC_HW : ADC channel access
+[cl_adc] ..> I_AdcGetGroupStatus
+[cl_adc] ..> I_AdcStartGroupConversion
+[cl_adc] ..> I_AdcReadGroup
+[cl_ErrMgmt] ..> I_ReportError
+[cl_OsInterrupt] --> [cl_adc] : ADC interrupt
+[cl_EcuM] ..> I_AdcInit
+[cl_EcuM] --> [cl_adc] : ADC initialization
+
+' Notes for clarity
+note right of [cl_RTAOS]
+10ms periodic task
+end note
+
+note right of [cl_VoltMon]
+- Monitors 6 supply voltages
+- Detects threshold deviations
+- 5 consecutive faults logic
+end note
+
+note right of [Stub_ADC]
+Stub for test/fault injection:
+- Read/modify ADC values
+- Switchable normal/test mode
+end note
+
+note right of [cl_ErrMgmt]
+- Receives error info
+- Sets degradation mode
+- Reports DTCs
+end note
+
+note right of [cl_adc]
+- Interfaces with ADC hardware
+- Supports stub override
+end note
+
+note right of ADC_HW
+Physical ADC hardware
+end note
+
+@enduml

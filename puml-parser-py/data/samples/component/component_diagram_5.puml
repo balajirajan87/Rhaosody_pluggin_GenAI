@@ -1,0 +1,60 @@
+@startuml
+' Set style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #F8F8FF
+
+package "Voltage Monitoring System" {
+    [cl_RTAOS] <<Scheduler>>
+    [cl_VoltMon] <<Voltage Monitor>>
+    [cl_adc] <<ADC Interface>>
+    [cl_ErrMgmt] <<Error Management>>
+    [cl_OsInterrupt] <<Interrupt Handler>>
+    [cl_EcuM] <<ECU Manager>>
+    [TestStub] <<Stub/Fault Injection>>
+}
+
+' Scheduler triggers periodic monitoring
+[cl_RTAOS] --> [cl_VoltMon] : triggers (every 10ms)
+
+' Voltage Monitor uses ADC interface
+[cl_VoltMon] --> [cl_adc] : Adc_GetGroupStatus()\nAdc_StartGroupConversion()\nAdc_ReadGroup()
+
+' ADC interface supports stub/fault injection
+[TestStub] ..> [cl_adc] : inject/read voltages
+
+' ADC interface uses interrupts
+[cl_adc] --> [cl_OsInterrupt] : IsrAdc0, IsrAdc1
+
+' ECU Manager initializes ADC
+[cl_EcuM] --> [cl_adc] : Adc_Init()
+
+' Voltage Monitor reports errors
+[cl_VoltMon] --> [cl_ErrMgmt] : rbsfty_ErrMgt_ReportError()
+
+' Error Management logs DTCs
+[cl_ErrMgmt] ..> [DTC_Storage] : log DTC
+
+' Notes for clarity
+note right of [cl_VoltMon]
+- Monitors 6 voltages
+- Compares to thresholds
+- 5 consecutive faults = error
+end note
+
+note right of [cl_adc]
+- Interfaces with ADC HW
+- Supports stub for test/fault injection
+end note
+
+note right of [TestStub]
+- Allows tester to inject/read voltages
+- Used for qualification/fault injection
+end note
+
+note right of [cl_ErrMgmt]
+- Handles error reporting
+- Sets degradation mode
+- Logs DTCs
+end note
+
+@enduml

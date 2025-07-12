@@ -1,0 +1,58 @@
+@startuml
+' Global style for clarity
+skinparam componentStyle rectangle
+skinparam backgroundColor #f8f8ff
+
+package "SOC Power Supply Monitoring" {
+    [cl_RTAOS] <<scheduler>>  #palegreen
+    [cl_VoltMon] <<component>> #lightyellow
+    [cl_adc] <<component>> #lightblue
+    [cl_OsInterrupt] <<component>> #wheat
+    [cl_EcuM] <<component>> #thistle
+    [cl_ErrMgmt] <<component>> #mistyrose
+    [Stub/FaultInjection] <<component>> #lightpink
+}
+
+' API interfaces
+interface "Adc_GetGroupStatus()" as I_AdcGetGroupStatus
+interface "Adc_StartGroupConversion()" as I_AdcStartGroupConversion
+interface "Adc_ReadGroup()" as I_AdcReadGroup
+interface "Adc_Init()" as I_AdcInit
+interface "rbsfty_ErrMgt_ReportError()" as I_ErrMgtReportError
+
+' Connections
+[cl_RTAOS] -down-> [cl_VoltMon] : triggers (10ms)
+[cl_VoltMon] -down-> [cl_adc] : requests ADC read
+[cl_adc] ..> I_AdcGetGroupStatus
+[cl_adc] ..> I_AdcStartGroupConversion
+[cl_adc] ..> I_AdcReadGroup
+
+[cl_OsInterrupt] -right-> [cl_adc] : handles ADC interrupts
+
+[cl_EcuM] ..> I_AdcInit
+[cl_EcuM] -down-> [cl_adc] : initializes ADC
+
+[cl_VoltMon] -right-> [cl_ErrMgmt] : report error
+[cl_ErrMgmt] ..> I_ErrMgtReportError
+
+' Fault injection/test stub
+[Stub/FaultInjection] -left-> [cl_VoltMon] : injects test voltages
+
+' Notes for clarity
+note right of [cl_VoltMon]
+- Monitors 6 voltages
+- 5 consecutive faults triggers DTC
+- Supports stub/fault injection
+end note
+
+note right of [Stub/FaultInjection]
+- Allows test code to read/modify voltages
+- Enables/disables fault injection
+end note
+
+note right of [cl_ErrMgmt]
+- Logs BOSCH_SECPOWERSUPPLY_FAILURE DTC
+- Sets degradation mode
+end note
+
+@enduml
