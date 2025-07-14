@@ -117,18 +117,25 @@ public class ComponentDiagram {
     }
 
     private void addStereotype(IRPModelElement element, String stereotypeName) {
-        if (stereotypeName != null) {
-            IRPStereotype stereotype = null;
-            String metaType = element.getMetaClass();
-            stereotype = stereotypeMap.get(stereotypeName);
-            if (stereotype == null) {
-                stereotype = (IRPStereotype) baseStereotypePackage.addNewAggr(Constants.RHAPSODY_STEREOTYPE,
-                        stereotypeName);
-                stereotypeMap.put(stereotypeName, stereotype);
+s        try {
+            if (stereotypeName != null) {
+                stereotypeName = stereotypeName.replaceAll("[^a-zA-Z0-9 ]", "_");
+                IRPStereotype stereotype = null;
+                String metaType = element.getMetaClass();
+                stereotype = stereotypeMap.get(stereotypeName);
+                if (stereotype == null) {
+                    stereotype = (IRPStereotype) baseStereotypePackage.addNewAggr(Constants.RHAPSODY_STEREOTYPE,
+                            stereotypeName);
+                    stereotypeMap.put(stereotypeName, stereotype);
+                }
+                stereotype.addMetaClass(metaType);
+                element.addSpecificStereotype(stereotype);
             }
-            stereotype.addMetaClass(metaType);
-            element.addSpecificStereotype(stereotype);
+        } catch (Exception e) {
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                    "ERROR: Error while creating stereotype " + e.getMessage() + Constants.NEW_LINE);
         }
+
     }
 
     private void createElements(IRPModelElement container, JSONObject obj) {
@@ -158,7 +165,7 @@ public class ComponentDiagram {
 
     }
 
-    private void createComponent(IRPModelElement container, JSONArray components, String stereotype) {
+    private void createComponent(IRPModelElement container, JSONArray components, String type) {
         if (components != null) {
             for (int i = 0; i < components.length(); i++) {
                 try {
@@ -170,9 +177,16 @@ public class ComponentDiagram {
                     if (componentName == null || componentName.isEmpty()) {
                         componentName = componentLabel;
                     }
+                    String stereotype = componentObject.has(Constants.JSON_STEREOTYPE)
+                            && !componentObject.isNull(Constants.JSON_STEREOTYPE)
+                                    ? componentObject.getString(Constants.JSON_STEREOTYPE)
+                                    : null;
                     IRPComponent rhapsodyComponent = ComponentDiagramUtil.addComponent((IRPPackage) container,
                             componentName, basePackage);
                     if (rhapsodyComponent != null) {
+                        if (type != null && !type.isEmpty()) {
+                            addStereotype(rhapsodyComponent, type);
+                        }
                         addStereotype(rhapsodyComponent, stereotype);
                         rhapsodyComponent.setDisplayName(componentLabel);
                         elementMap.put(componentName, rhapsodyComponent);

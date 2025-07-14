@@ -39,7 +39,7 @@ public class PUMLParser {
         // componentDiagram.createComponentDiagram("", 1, false);
     }
 
-    public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
+    public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {s
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
             List<String> inputFiles = extractAllPumlBlocks(chatContent);
@@ -66,8 +66,8 @@ public class PUMLParser {
                         if (!Files.exists(Paths.get(outputFile))) {
                             throw new IOException("Output file was not generated: " + outputFile);
                         }
-                        outputFileExists = true;
                         createDiagram(diagramType, outputFile,fileCount,hasMultipleFiles);
+                        outputFileExists = true;
                         fileCount++;
                         if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
                             pythonBackendProcess.destroy();
@@ -86,6 +86,11 @@ public class PUMLParser {
                 "INFO: Diagram generation completed." + Constants.NEW_LINE);
             UiUtil.showInfoPopup(
                 "Diagram generation completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
+             }else{
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "ERROR: Diagram generation failed." + Constants.NEW_LINE);
+                UiUtil.showErrorPopup(
+                "Diagram generation failed. \n\nFor more details see Rhapsody log window.\n");     
              }
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
@@ -94,16 +99,16 @@ public class PUMLParser {
         }
     }
 
-    private void createDiagram(String diagramType, String outputFile,int fileCount,Boolean hasMultipleFiles) {
+    private void createDiagram(String diagramType, String outputFile, int fileCount, Boolean hasMultipleFiles) {
         ActivityTransitionAdder.swimlane = new HashSet<>();
         ActivityTransitionAdder.AddMergeNode(outputFile);
         if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("class")) {
             ClassDiagram diagramHandler = new ClassDiagram();
-            diagramHandler.createClassDiagram(outputFile,fileCount,hasMultipleFiles);
+            diagramHandler.createClassDiagram(outputFile, fileCount, hasMultipleFiles);
         } else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("activity")) {
             ActivityDiagram diagramHandler = new ActivityDiagram();
-            diagramHandler.createActivityDiagram(outputFile,fileCount,hasMultipleFiles);
-        }else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("component")) {
+            diagramHandler.createActivityDiagram(outputFile, fileCount, hasMultipleFiles);
+        } else if (!diagramType.isEmpty() && diagramType.toLowerCase().contains("component")) {
             ComponentDiagram diagramHandler = new ComponentDiagram();
             diagramHandler.createComponentDiagram(outputFile, fileCount, hasMultipleFiles);
         }
@@ -138,7 +143,6 @@ public class PUMLParser {
         }
         return filePaths;
     }
-
 
     private void getParentDir(String outputFilePath) throws IOException {
         // Ensure parent directories exist
