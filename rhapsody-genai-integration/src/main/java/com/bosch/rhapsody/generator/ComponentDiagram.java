@@ -117,7 +117,7 @@ public class ComponentDiagram {
     }
 
     private void addStereotype(IRPModelElement element, String stereotypeName) {
-s        try {
+        try {
             if (stereotypeName != null) {
                 stereotypeName = stereotypeName.replaceAll("[^a-zA-Z0-9 ]", "_");
                 IRPStereotype stereotype = null;

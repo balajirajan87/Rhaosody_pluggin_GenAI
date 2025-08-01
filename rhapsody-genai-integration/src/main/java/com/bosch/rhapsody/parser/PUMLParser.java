@@ -30,7 +30,7 @@ public class PUMLParser {
         // String outputFile = "";
         // ClassDiagram diagramHandler = new ClassDiagram();
         // diagramHandler.createClassDiagram(outputFile);
-                // String outputFileActivity = "";
+        // String outputFileActivity = "";
         // ActivityDiagram diagramHandler = new ActivityDiagram();
         // ActivityTransitionAdder.swimlane = new HashSet<>();
         // ActivityTransitionAdder.AddMergeNode(outputFileActivity);
@@ -39,24 +39,24 @@ public class PUMLParser {
         // componentDiagram.createComponentDiagram("", 1, false);
     }
 
-    public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {s
+    public void generateJsonFromPuml(String chatContent, String diagramType) throws IOException {
         if (!chatContent.isEmpty() && chatContent.contains("@startuml") && chatContent.contains("@enduml")) {
             String outputFile = "C:\\temp\\GenAI\\generatedJson.json";
             List<String> inputFiles = extractAllPumlBlocks(chatContent);
             int fileCount = 1;
             Boolean hasMultipleFiles = false;
             boolean outputFileExists = false;
-            if(inputFiles.size() > 1)
+            if (inputFiles.size() > 1)
                 hasMultipleFiles = true;
-            for(String inputFile:inputFiles){
+            for (String inputFile : inputFiles) {
                 try {
                     boolean isValid = PlantUMLValidator.isValidPuml(inputFile);
-                    if(isValid){
+                    if (isValid) {
                         ProcessBuilder processBuilder = new ProcessBuilder(
-                            Constants.PUML_PARSER_PATH,
-                            "-i", inputFile,
-                            "-o", outputFile,
-                            "-t", diagramType);
+                                Constants.PUML_PARSER_PATH,
+                                "-i", inputFile,
+                                "-o", outputFile,
+                                "-t", diagramType);
                         processBuilder.redirectErrorStream(true);
                         Process pythonBackendProcess = processBuilder.start();
                         int exitCode = pythonBackendProcess.waitFor();
@@ -66,32 +66,32 @@ public class PUMLParser {
                         if (!Files.exists(Paths.get(outputFile))) {
                             throw new IOException("Output file was not generated: " + outputFile);
                         }
-                        createDiagram(diagramType, outputFile,fileCount,hasMultipleFiles);
+                        createDiagram(diagramType, outputFile, fileCount, hasMultipleFiles);
                         outputFileExists = true;
                         fileCount++;
                         if (pythonBackendProcess != null && pythonBackendProcess.isAlive()) {
                             pythonBackendProcess.destroy();
                         }
-                    }     
+                    }
                 } catch (IOException io) {
-                   Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                        "ERROR: JSON " + io.getMessage()+ Constants.NEW_LINE);
+                    Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                            "ERROR: JSON " + io.getMessage() + Constants.NEW_LINE);
                 } catch (Exception e) {
                     Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                        "ERROR: JSON " + e.getMessage()+ Constants.NEW_LINE);
+                            "ERROR: JSON " + e.getMessage() + Constants.NEW_LINE);
                 }
             }
             if (outputFileExists) {
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                "INFO: Diagram generation completed." + Constants.NEW_LINE);
-            UiUtil.showInfoPopup(
-                "Diagram generation completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");     
-             }else{
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                "ERROR: Diagram generation failed." + Constants.NEW_LINE);
+                        "INFO: Diagram generation completed." + Constants.NEW_LINE);
+                UiUtil.showInfoPopup(
+                        "Diagram generation completed. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
+            } else {
+                Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                        "ERROR: Diagram generation failed." + Constants.NEW_LINE);
                 UiUtil.showErrorPopup(
-                "Diagram generation failed. \n\nFor more details see Rhapsody log window.\n");     
-             }
+                        "Diagram generation failed. \n\nFor more details see Rhapsody log window.\n");
+            }
         } else {
             Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                     "ERROR: PUML not found, Make sure valid PUML exist in chat window." + Constants.NEW_LINE);

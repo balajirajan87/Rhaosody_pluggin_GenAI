@@ -8,7 +8,7 @@ import com.telelogic.rhapsody.core.IRPProject;
  */
 public class Constants {
 
-        public static final String VERSION = " v1.5.0_2025-07-11";
+        public static final String VERSION = " v1.5.1_2025-08-01";
 
         public static final String RHP_VERSION = " 10.0.1";
 
@@ -38,7 +38,7 @@ public class Constants {
         public static IRPProject project;
 
         public static String[] reqExtension = { "*.pdf" };
-        public static String[] refExtension = { "*.pdf" };
+        public static String[] refExtension = { "*.pdf", "*.puml", "*.plantuml", "*.xmi", "*.txt" };
         public static String[] refCodeExtension = {
                         "*.c", "*.cpp", "*.h", "*.hpp", "*.xml", "*.arxml", "*.json", "*.py", "*.ipynb", "*.yaml",
                         "*.sh", "*.bat", "*.puml", "*.xmi", "*.md", "*.j2", "*.yml", "*.java" };
@@ -49,7 +49,7 @@ public class Constants {
         public static final String JSON_CLASSES = "classes";
         public static final String JSON_COMPONENTS = "components";
         public static final String JSON_DATABASE = "databases";
-        public static final String JSON_CLOUDS= "clouds";
+        public static final String JSON_CLOUDS = "clouds";
         public static final String JSON_NODES = "nodes";
         public static final String JSON_INTERFACES = "interfaces";
         public static final String JSON_ENUMS = "enums";
@@ -139,7 +139,6 @@ public class Constants {
         public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_OPERATIONS = "ObjectModelGe.Interface.ShowOperations";
         public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_ATTRIBUTES = "ObjectModelGe.Interface.ShowAttributes";
         public static final String OBJECT_MODEL_GE_INTERFACE_SHOW_NAME = "ObjectModelGe.Interface.ShowName";
-
 
         public static final String NEW_LINE = "\n";
 }
