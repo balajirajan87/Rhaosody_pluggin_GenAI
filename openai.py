@@ -240,7 +240,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
                         "content": [
                             {
                                 "type": "text",
-                                "text": "Describe this image in detail. Make sure to capture all the important details like texts, relationships, flow, etc. If the image contains UML diagrams, understand and describe its components, and the relationship between components."
+                                "text": "Describe this image in detail. Make sure to capture all the important details like texts, relationships, flow, etc. If the image contains UML diagrams, Capture and understand all of its components, and the relationship between components."
                             },
                             {
                                 "type": "image_url",
@@ -253,7 +253,7 @@ class MyEmbeddingFunction(EmbeddingFunction):
                     }
                 ],
                 "max_tokens": 500,
-                "temperature": 0.1,
+                "temperature": 0.0,
                 "top_p": 1.0
             }
 
@@ -484,7 +484,7 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
     chunks = split_text_into_chunks(full_text, chunk_size=1000)  # You can adjust the chunk_size as needed
 
     #extract images
-    images = extract_images_from_pdf(pdf_path)
+    # images = extract_images_from_pdf(pdf_path)
     
     # Initialize embedding function (assuming you're using Ollama or any other embedding function)
     embF = MyEmbeddingFunction(batch_size=10)
@@ -505,7 +505,7 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
                 embeddings=[embedding],
                 ids=[f"{pdf_path}_chunk{i}"]
             )
-    
+    """
     if images:
         #Generate Embeddings for Images:
         image_embeddings = embF.get_image_embedding(images)
@@ -521,7 +521,7 @@ def create_embeddings_for_pdf(pdf_path, collection, metadata, metadata_file):
                     embeddings=[embedding],
                     ids=[f"{pdf_path}_image{i}"]
                 )
-          
+    """
     # Update metadata
     metadata[pdf_hash] = {'path': pdf_path}
     save_metadata(metadata, metadata_file)
@@ -587,6 +587,90 @@ def process_reference_code(directory, collection, metadata_file):
         with open(file_path, 'r', encoding='utf-8') as f:
             file_content = f.read()
         chunks = split_text_into_chunks(file_content, chunk_size=1000)
+        
+        # Generate embeddings for the chunks
+        embF = MyEmbeddingFunction(batch_size=10)
+        embeddings = embF.__call__(chunks)
+        
+        # Add embeddings to the collection
+        for i, embedding in enumerate(embeddings):
+            if embedding is not None:
+                collection.add(
+                    documents=[chunks[i]],
+                    metadatas=[{
+                        'chunk_id': i,
+                        'doc_hash': file_hash,
+                        'source': file_path
+                    }],
+                    embeddings=[embedding],
+                    ids=[f"{file_path}_chunk{i}"]
+                )
+        
+        # Update metadata
+        metadata[file_hash] = {'path': file_path}
+        save_metadata(metadata, metadata_file)
+        print(f"Embeddings for '{file_path}' created successfully.")
+
+# Function to process header and source files
+def process_reference_plantUML_design_code(directory, collection, metadata_file):
+    """
+    Processes reference code files in a given directory by generating embeddings for their content
+    and storing the embeddings in a specified collection.
+    Args:
+        directory (str): The root directory containing the 'inc' and 'src' subdirectories 
+                         with header (.h) and source (.c) files respectively.
+        collection (object): The collection object where embeddings will be stored. 
+                             It should support the `add` method for adding documents, metadata, and embeddings.
+        metadata_file (str): The path to the metadata file used to track processed files and their hashes.
+    Workflow:
+        1. Load metadata from the specified metadata file.
+        2. Identify all header (.h) and source (.c) files in the 'inc' and 'src' subdirectories.
+        3. Calculate a hash for each file to determine if it has been processed before.
+        4. Skip processing for files that are unchanged based on their hash.
+        5. For each unprocessed file:
+            - Read the file content and split it into chunks.
+            - Generate embeddings for each chunk using a custom embedding function.
+            - Add the embeddings, along with metadata, to the specified collection.
+        6. Update the metadata file with the hash and path of the processed file.
+    Notes:
+        - The function assumes the existence of helper functions such as `load_metadata`, 
+          `calculate_pdf_hash`, `check_document_in_chroma_metadata`, `split_text_into_chunks`, 
+          `MyEmbeddingFunction`, and `save_metadata`.
+        - The `chunk_size` for splitting text and `batch_size` for embedding generation are hardcoded.
+    Raises:
+        FileNotFoundError: If the specified metadata file or any required subdirectory/file is not found.
+        Exception: For any other errors encountered during file processing or embedding generation.
+    Example:
+        process_reference_code(
+            directory="/path/to/codebase",
+            collection=my_collection,
+            metadata_file="/path/to/metadata.json"
+    """
+    metadata = load_metadata(metadata_file)
+
+     # Remove entries for deleted PDFs
+    remove_deleted_plantuml_code_files_from_chroma(directory, collection, metadata, metadata_file)
+    
+    # List all header and source files in the directory
+    # List all relevant source and header files in the directory
+    code_extensions = ('.puml','plantuml', '.txt', 'xmi', '.pdf')
+    code_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(code_extensions)]
+    
+    for file_path in code_files:
+        # Calculate hash to check if the file has changed
+        file_hash = calculate_pdf_hash(file_path)  # Reuse the hash function for consistency
+        
+        # Skip if already processed
+        if check_document_in_chroma_metadata(file_hash, metadata):
+            print(f"File '{file_path}' unchanged. Skipping re-embedding.")
+            continue
+        
+        print(f"Processing file: {file_path}")
+        
+        # Read and split the file content into chunks
+        with open(file_path, 'r', encoding='utf-8') as f:
+            file_content = f.read()
+        chunks = split_text_into_chunks(file_content, chunk_size=4000)
         
         # Generate embeddings for the chunks
         embF = MyEmbeddingFunction(batch_size=10)
@@ -694,6 +778,51 @@ def remove_deleted_code_files_from_chroma(directory, collection, metadata, metad
     
     # Save the updated metadata
     save_metadata(metadata, metadata_file)
+
+# Remove embeddings for deleted PDFs
+def remove_deleted_plantuml_code_files_from_chroma(directory, collection, metadata, metadata_file):
+    """
+    Remove embeddings for deleted PDFs from the collection.
+
+    This function performs the following tasks:
+    1. Identifies PDF files that have been deleted from the "docs" directory.
+    2. Removes the corresponding entries from the collection and metadata.
+
+    Parameters:
+    collection (object): The collection object from which the PDF embeddings and metadata will be removed.
+    metadata (dict): A dictionary containing metadata about the PDFs, where the key is the PDF hash and the value is a dictionary with PDF information.
+
+    Returns:
+    None
+
+    Detailed Steps:
+    1. Identify Existing Files: The function creates a set of existing PDF files in the "docs" directory.
+    2. Identify Deleted Files: It then identifies which PDFs have been deleted by comparing the existing files with the metadata.
+    3. Remove Deleted Files: For each deleted PDF, the function removes the corresponding entry from the collection and metadata, and prints a message indicating the removal.
+    4. Save Updated Metadata: Finally, the function saves the updated metadata.
+
+    Notes:
+    - Ensure that the `save_metadata` function is defined and imported in the script.
+    - The "docs" directory should contain only the PDF files that are currently in use.
+    """
+    code_extensions = ('.puml', '.plantuml', '.txt', 'xmi', '.pdf')
+    # Identify existing .c and .h files
+    existing_files = {f for f in os.listdir(directory) if f.endswith(code_extensions)}
+    
+    # Identify hashes of .c and .h files that no longer exist in the directory
+    hashes_to_remove = [
+        file_hash for file_hash, info in metadata.items()
+        if os.path.basename(info['path']) not in existing_files and info['path'].endswith(code_extensions)
+    ]
+
+    # Remove deleted .c and .h files from the collection and metadata
+    for file_hash in hashes_to_remove:
+        print(f"Removing deleted code file with hash: {file_hash}")
+        collection.delete(where={"doc_hash": file_hash})
+        del metadata[file_hash]
+    
+    # Save the updated metadata
+    save_metadata(metadata, metadata_file)
     
 # Process all PDFs in the docs/ directory
 def process_all_pdfs(directory, collection, metadata_file):
@@ -769,7 +898,7 @@ def find_relevant_chunk(user_query, collection):
     
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=5
+        n_results=10
     )
     
     if results and 'documents' in results and len(results['documents']) > 0:
@@ -820,7 +949,7 @@ def detect_intent_llm(user_input):
     return "generate"
 
 # Prompting the model for text generation
-def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 2000, temperature: float = 0.0, top_p: float = 1.0, max_retries: int = 5, backoff_factor: int = 2) -> str:
+def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temperature: float = 0.0, top_p: float = 1.0, max_retries: int = 5, backoff_factor: int = 2) -> str:
     """
     Prompt the model for text generation.
 
@@ -860,11 +989,14 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 2000, temp
             data_ = response.json()
             
             # Debugging: Print the response for troubleshooting
-            # print("API Response:", data_)
+            print("API Response:", data_)
 
             if 'choices' in data_ and len(data_['choices']) > 0:
                 return data_['choices'][0]['message']['content']
             return None
+        except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError) as e:
+            print(f"Network/Proxy error: {e}. Retrying in {backoff_factor * (2 ** attempt)} seconds...")
+            time.sleep(backoff_factor * (2 ** attempt))
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError) and e.response is not None and e.response.status_code == 429:
                 # Handle rate limiting
@@ -917,6 +1049,7 @@ def summarize_requirements(messages, collection):
             1. Identify and categorize all functional and non-functional requirements.
             2. Highlight any constraints, dependencies, or assumptions that may impact system design.
             3. Ignore unrelated or ambiguous information and ensure consistency.
+            4. Do not make any assumptions. Only speak Facts based on your analysis of the provided documents.
             """
         },
         {
@@ -972,13 +1105,14 @@ def extract_design_information(messages, collection):
         {
             "role": "system",
             "content": """
-            You are a highly skilled AI assistant specializing in understanding Software Architechture. You are provided with Requirements and Information from Software Architechture delimited by tripple backticks.
+            You are a highly skilled AI assistant specializing in understanding Software Architecture. You are provided with Requirements and Information from Software Architecture delimited by tripple backticks.
             Your task is to:
             1. First understand the requirements and identify all the critical / important points mentioned in the requirements.
             2. Next, understand the extracted Software Architecture and identify relevant API functions, parameters, protocols, and constraints.
-            3. Next Combine the understanding of the Software Architechture and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed to realize the input Requirements.
+            3. Next Combine the understanding of the Software Architecture and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed in the software architecture to realize the input Requirements.
             4. Make sure that the generated output addresses all the requirements and is consistent with the Software Architecture.
             5. Ignore unrelated or ambiguous information and ensure consistency.
+            6. ***IMPORTANT*** Do not make any assumptions. Only speak Facts based on your analysis of the provided documents.
             """
         },
         {
@@ -1029,9 +1163,10 @@ def extract_code_information(messages, collection):
             Your task is to:
             1. First understand the requirements and identify all the critical / important points mentioned in the requirements.
             2. Next, understand the extracted Code Information and in your understanding include all relevant API functions, parameters, protocols, and constraints.
-            3. Next Combine the understanding of the extracted Code Information and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed to realize the input Requirements.
+            3. Next Combine the understanding of the extracted Code Information and the input Requirements into a unified view. If needed, bring out the delta information (or additional information) that is needed in the provided code, to realize the input Requirements.
             4. Make sure that the generated output addresses all the requirements and is consistent with the extracted Code Information.
             5. Ignore unrelated or ambiguous information and ensure consistency.
+            6. ***IMPORTANT*** Do not make any assumptions. Only speak Facts based on your analysis of the provided documents.
             """
         },
         {
@@ -1107,6 +1242,10 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
         print("No UML design guidelines found.")
         return None
     
+    Summarized_Reqs = messages[1].get("content")
+    if not Summarized_Reqs:
+        raise ValueError("Requirement Information not found in the Second dictionary of messages.")
+    
     design_info = messages[3].get("content")
     if not design_info:
         raise ValueError("Design Information not found in the fourth dictionary of messages.")
@@ -1154,20 +1293,25 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
         system_message = f"""
         You are a highly skilled AI assistant specializing in creating Software UML designs.
         Your task is to:
-        1. Understand the provided Design Information and Code Design Information and UML Design Guidelines delimited by triple backticks.
-        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information and Code Design Information and by adhering to the guidelines provided in UML Design Guidelines.
-        3. Make sure all the identified API Functions from the Design Information and Code Design Information are included in the UML Design.
-        4. Provide PlantUML codes for the requested ({UML_Diagram}).
-        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        1. Understand the provided Design Information, Code Design Information, Requirements and UML Design Guidelines delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) that satisfies the Requirements based on your understanding of the Design Information and Code Design Information and by adhering to the guidelines provided in UML Design Guidelines.
+        3. Provide PlantUML codes for the requested ({UML_Diagram}).
+        4. Provide a detailed explanation of the requested PlantUML diagrams.
+        5. ***IMPORTANT*** Do not make any assumptions. Only speak Facts based on your analysis of the provided documents.
 
         For Class Diagram additionally consider the below Project Specific Guidelines:
-        1. Classes appearing in the Sequence Diagram should be the same as the classes created in the Class Diagram.
-        2. Function names need not be generated as Classes in the Class Diagram.
-        3. File names needs to be generated as Classes in the Class Diagram, and methods in the Files as methods inside the class.
-        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes. Color Coding needs to be differentiated between header files and source files.
+        1. Only create classes in the Class Diagram for the Participants appearing in the Sequence Diagram.
+        2. Do not create Classes for the functions in the Class Diagram.
+        3. A Class appearing in the class Diagram would be equivalent to a File in the source Code, and the methods defined in the class diagram would manifest as functions inside the file. Keep this in mind when you create classes.
+        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes.
+        5. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
+        6. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
+        7. Make sure that classes implements the interfaces in your generated Class Diagram.
 
         For Activity Diagram additionally consider the below Project specific Guidelines:
         1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
+        2. Make sure to include all the relevant identified variables inside the generated Activity Diagram.
+        3. Make sure that you also include the Diagram name inside your generated plantUML Code. Do not include any other additional information between @startuml and title.
         """
         # User message when code design information is available
         user_message = f"""
@@ -1177,26 +1321,33 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
         ```{Code_design_info}```
         UML Design Guidelines:
         ```{uml_guidelines}```
+        Requirements:
+        ```{Summarized_Reqs}```
         """
     else:
         # System message when code design information is not available
         system_message = f"""
         You are a highly skilled AI assistant specializing in creating Software UML designs.
         Your task is to:
-        1. Understand the provided Design Information delimited by triple backticks.
-        2. Create the requested ({UML_Diagram}) based on your understanding of the Design Information.
-        3. Make sure all the identified API Functions from the Design Information are included in the UML Design.
-        4. Provide PlantUML codes for the requested ({UML_Diagram}).
-        5. Provide a detailed explanation of the requested PlantUML diagrams.
+        1. Understand the provided Design Information, Requirements and UML Design Guidelines delimited by triple backticks.
+        2. Create the requested ({UML_Diagram}) that satisfies the Requirements based on your understanding of the Design Information by adhering to the guidelines provided in UML Design Guidelines.
+        3. Provide PlantUML codes for the requested ({UML_Diagram}).
+        4. Provide a detailed explanation of the requested PlantUML diagrams.
+        5. ***IMPORTANT*** Do not make any assumptions. Only speak Facts based on your analysis of the provided documents.
 
         For Class Diagram additionally consider the below Project Specific Guidelines:
-        1. Classes appearing in the Sequence Diagram should be the same as the classes created in the Class Diagram.
-        2. Function names need not be generated as Classes in the Class Diagram.
-        3. File names needs to be generated as Classes in the Class Diagram, and methods in the Files as methods inside the class.
-        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes. Color Coding needs to be differentiated between header files and source files.
+        1. Only create classes in the Class Diagram for the Participants appearing in the Sequence Diagram.
+        2. Do not create Classes for the functions in the Class Diagram.
+        3. A Class appearing in the class Diagram would be equivalent to a File in the source Code, and the methods defined in the class diagram would manifest as functions inside the file. Keep this in mind when you create classes.
+        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes.
+        5. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
+        6. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
+        7. Make sure that classes implements the interfaces in your generated Class Diagram.
 
         For Activity Diagram additionally consider the below Project specific Guidelines:
         1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
+        2. Make sure to include all the relevant identified variables inside the generated Activity Diagram.
+        3. Make sure that you also include the Diagram name inside your generated plantUML Code. Do not include any other additional information between @startuml and title.
         """
         # User message when code design information is not available
         user_message = f"""
@@ -1204,6 +1355,8 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
         ```{design_info}```
         UML Design Guidelines:
         ```{uml_guidelines}```
+        Requirements:
+        ```{Summarized_Reqs}```
         """
 
     # Construct the messages for the prompt
@@ -1325,7 +1478,7 @@ def embed_reference_documents():
         Refclient, ref_collection = init_chroma_client(collection_name)
         for pdf_path in data:
             if os.path.exists(pdf_path):
-                process_all_pdfs(pdf_path, ref_collection, REFERENCE_DATA_METADATA_FILE)
+                process_reference_plantUML_design_code(pdf_path, ref_collection, REFERENCE_DATA_METADATA_FILE)
             else:
                 print(f"File not found: {pdf_path}")
 
@@ -1470,8 +1623,11 @@ def summarize_requirements_api():
     # Generate the requirements summary
     requirements_summary = summarize_requirements(messages, req_collection)
 
-    # Add the response to the session context
-    messages.append({"role": "assistant", "content": requirements_summary})
+    if requirements_summary is not None:
+        messages.append({"role": "assistant", "content": requirements_summary})
+    else:
+        # Remove the previously appended user message if summary is None
+        messages.pop()
 
     return jsonify({"requirements_summary": requirements_summary, "session_id": session_id})
 
@@ -1524,8 +1680,11 @@ def extract_design_information_api():
 
     design_info = extract_design_information(messages, ref_collection)
 
-    # Add the response to the session context
-    messages.append({"role": "assistant", "content": design_info})
+    if design_info is not None:
+        # Add the response to the session context
+        messages.append({"role": "assistant", "content": design_info})
+    else:
+        messages.pop()
 
     return jsonify({"design_info": design_info, "session_id": session_id})
 
@@ -1568,11 +1727,14 @@ def extract_code_information_api():
 
     code_design_info = extract_code_information(messages, code_collection)
 
-    # Set the global flag to True after extraction
-    session_tracker.set_code_info_extracted(True)
+    if code_design_info is not None:
+        # Add the response to the session context
+        messages.append({"role": "assistant", "content": code_design_info})
 
-    # Add the response to the session context
-    messages.append({"role": "assistant", "content": code_design_info})
+        # Set the global flag to True after extraction
+        session_tracker.set_code_info_extracted(True)
+    else:
+        messages.pop()
 
     return jsonify({"code_design_info": code_design_info, "session_id": session_id})
 
@@ -1641,9 +1803,11 @@ def create_uml_design_api():
         else:
             plantuml_code = uml_design  # fallback if not found
     """
-
-    # Add the response to the session context
-    messages.append({"role": "assistant", "content": uml_design})
+    if uml_design is not None:
+        # Add the response to the session context
+        messages.append({"role": "assistant", "content": uml_design})
+    else:
+        messages.pop()
 
     return jsonify({"uml_design": uml_design, "session_id": session_id})
 
