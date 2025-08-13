@@ -240,8 +240,8 @@ public class GenAiHandler {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
       // Set request method to POST
-      // connection.setConnectTimeout(1200000); // Set connection timeout to 20 minutes
-      // connection.setReadTimeout(1200000); // Set read timeout to 20 minutes
+      connection.setConnectTimeout(1200000); // Set connection timeout to 20 minutes
+      connection.setReadTimeout(1200000); // Set read timeout to 20 minutes
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json");
       connection.setRequestProperty("Accept", "application/json");
@@ -334,8 +334,8 @@ public class GenAiHandler {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
       // Set request method to POST
-      // connection.setConnectTimeout(60000); // Set connection timeout to 40 seconds
-      // connection.setReadTimeout(60000);
+      connection.setConnectTimeout(1200000); // Set connection timeout to 20 minutes
+      connection.setReadTimeout(1200000);
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json");
       connection.setRequestProperty("Accept", "application/json");

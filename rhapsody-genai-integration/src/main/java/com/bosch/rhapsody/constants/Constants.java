@@ -8,7 +8,7 @@ import com.telelogic.rhapsody.core.IRPProject;
  */
 public class Constants {
 
-        public static final String VERSION = " v1.5.2_2025-08-11";
+        public static final String VERSION = " v1.5.3_2025-08-13";
 
         public static final String RHP_VERSION = " 10.0.1";
 
