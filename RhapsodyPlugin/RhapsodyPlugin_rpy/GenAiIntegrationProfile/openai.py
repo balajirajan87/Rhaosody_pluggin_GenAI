@@ -989,14 +989,11 @@ def prompt_model(messages, model: str = CHAT_MODEL, max_tokens: int = 1000, temp
             data_ = response.json()
             
             # Debugging: Print the response for troubleshooting
-            print("API Response:", data_)
+            # print("API Response:", data_)
 
             if 'choices' in data_ and len(data_['choices']) > 0:
                 return data_['choices'][0]['message']['content']
             return None
-        except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError) as e:
-            print(f"Network/Proxy error: {e}. Retrying in {backoff_factor * (2 ** attempt)} seconds...")
-            time.sleep(backoff_factor * (2 ** attempt))
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError) and e.response is not None and e.response.status_code == 429:
                 # Handle rate limiting
@@ -1285,7 +1282,7 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
         ]
-        return prompt_model(prompt_messages)
+        return prompt_model(prompt_messages, max_tokens = 2000)
 
     # Define system and user messages based on the availability of code design information
     if Code_design_info:
@@ -1301,15 +1298,20 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
 
         For Class Diagram additionally consider the below Project Specific Guidelines:
         1. Only create classes in the Class Diagram for the Participants appearing in the Sequence Diagram.
-        2. Do not create Classes for the functions in the Class Diagram.
-        3. A Class appearing in the class Diagram would be equivalent to a File in the source Code, and the methods defined in the class diagram would manifest as functions inside the file. Keep this in mind when you create classes.
-        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes.
-        5. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
-        6. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
-        7. Make sure that classes implements the interfaces in your generated Class Diagram.
+        2. Do not create Classes for the functions in the Class Diagram. 
+        3. Comments are not needed for Classes.
+        4. Classes in the class diagram should be named as <participant_name>_c where participant_name is the name of the participant in the Sequence Diagram without the prefix 'cl'.
+        5. Interfaces in the class diagram should be named as <participant_name>_h.
+        6. A Class appearing in the class Diagram would be equivalent to a source (.c) File in the source Code, and the methods defined in the classes would be equivalent to functions inside the file. Keep this in mind when you create classes.
+        7. An Interface appearing in the Class Diagram would be equivalent to a Header file (.h) in the source code, methods and variables defined in the Interface would be equivalent to functions and variables defined in the header file. Keep this in mind when you create interfaces. 
+        8. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
+        9. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
+        10. Make sure that the Classes implements the Interfaces in your generated Class Diagram.
+        11. Also bring out the relationships between the Classes in the Class Diagram.
 
         For Activity Diagram additionally consider the below Project specific Guidelines:
-        1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
+        1. First identify APIs that needs to be modified, or created in order to realize the Requirements.
+        2. Next Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
         2. Make sure to include all the relevant identified variables inside the generated Activity Diagram.
         3. Make sure that you also include the Diagram name inside your generated plantUML Code. Do not include any other additional information between @startuml and title.
         """
@@ -1337,15 +1339,20 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
 
         For Class Diagram additionally consider the below Project Specific Guidelines:
         1. Only create classes in the Class Diagram for the Participants appearing in the Sequence Diagram.
-        2. Do not create Classes for the functions in the Class Diagram.
-        3. A Class appearing in the class Diagram would be equivalent to a File in the source Code, and the methods defined in the class diagram would manifest as functions inside the file. Keep this in mind when you create classes.
-        4. Comments are not needed for Classes. Header files (.h) are interfaces, not classes.
-        5. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
-        6. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
-        7. Make sure that classes implements the interfaces in your generated Class Diagram.
+        2. Do not create Classes for the functions in the Class Diagram. 
+        3. Comments are not needed for Classes.
+        4. Classes in the class diagram should be named as <participant_name>_c where participant_name is the name of the participant in the Sequence Diagram without the prefix 'cl'.
+        5. Interfaces in the class diagram should be named as <participant_name>_h.
+        6. A Class appearing in the class Diagram would be equivalent to a source (.c) File in the source Code, and the methods defined in the classes would be equivalent to functions inside the file. Keep this in mind when you create classes.
+        7. An Interface appearing in the Class Diagram would be equivalent to a Header file (.h) in the source code, methods and variables defined in the Interface would be equivalent to functions and variables defined in the header file. Keep this in mind when you create interfaces. 
+        8. Make sure that the classes / interfaces have methods that follow the template : <access_specifiers><method_name>(<parameter1_name> : <parameter1_type>,....,<parameterN_name> : <parameterN_type>) : <return_type>
+        9. Make sure that the classes / interfaces have variables that follow the template : <access_specifiers><variable_name> : <variable_type>.
+        10. Make sure that the Classes implements the Interfaces in your generated Class Diagram.
+        11. Also bring out the relationships between the Classes in the Class Diagram.
 
         For Activity Diagram additionally consider the below Project specific Guidelines:
-        1. Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
+        1. First identify APIs that needs to be modified, or created in order to realize the Requirements.
+        2. Next Create individual Activity Diagrams for the individual APIs identified, instead of generating Activity Diagram for the complete functionality.
         2. Make sure to include all the relevant identified variables inside the generated Activity Diagram.
         3. Make sure that you also include the Diagram name inside your generated plantUML Code. Do not include any other additional information between @startuml and title.
         """
@@ -1366,7 +1373,7 @@ def create_uml_design(messages, uml_guidelines_collection, interactive=False):
     ]
 
     # Call the prompt_model function
-    uml_design = prompt_model(prompt_messages)
+    uml_design = prompt_model(prompt_messages, max_tokens = 2000)
     return uml_design
 
 
