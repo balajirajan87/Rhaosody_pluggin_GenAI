@@ -3,6 +3,7 @@ import json
 from lark import Lark, exceptions
 from transformer.ClassDiagramTransformer import ClassDiagramTransformer
 from transformer.ActivityDiagramTransformer import ActivityDiagramTransformer
+from transformer.ComponentDiagramTransformer import ComponentDiagramTransformer
 
 def process_diagram(input_file, output_file, diagram_type):
     """
@@ -20,6 +21,9 @@ def process_diagram(input_file, output_file, diagram_type):
     elif "activity" in diagram_type:
         grammar_file = "activitydiagram.lark"
         transformer = ActivityDiagramTransformer()
+    elif "component" in diagram_type:
+        grammar_file = "componentdiagram.lark"
+        transformer = ComponentDiagramTransformer()
     else:
         raise ValueError("Unsupported diagram_type. Use 'class' or 'activity'.")
 

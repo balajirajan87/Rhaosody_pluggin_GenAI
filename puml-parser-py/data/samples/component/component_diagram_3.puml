@@ -7,7 +7,7 @@ skinparam backgroundColor #f8faff
 actor Client
  
 ' Main RBM Core Component
-component "RBM Core" as RBM_Core {
+component "RBM Core" as RBM_Core <<Stub/Fault Injection>> #lightpink {
   [RBM_EnterStandby()]
   [RBM_ReInit()]
   [RBM_StartBuffering()]

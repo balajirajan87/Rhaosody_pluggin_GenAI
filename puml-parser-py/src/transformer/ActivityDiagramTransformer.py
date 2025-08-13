@@ -1,9 +1,6 @@
 from lark import Transformer, Tree, v_args
 from utils.parsing_utils import ParsingUtil
 
-from lark import Transformer, v_args
-from utils.parsing_utils import ParsingUtil
-
 class ActivityDiagramTransformer(Transformer):
     def __init__(self):
         self.result_template = {

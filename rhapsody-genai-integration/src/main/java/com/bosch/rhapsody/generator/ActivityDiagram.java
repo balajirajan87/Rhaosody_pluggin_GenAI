@@ -4,7 +4,6 @@ import com.bosch.rhapsody.constants.Constants;
 import com.bosch.rhapsody.parser.ActivityTransitionAdder;
 import com.bosch.rhapsody.util.ActivityDiagramUtil;
 import com.bosch.rhapsody.util.CommonUtil;
-import com.bosch.rhapsody.util.UiUtil;
 import com.telelogic.rhapsody.core.*;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -25,12 +24,16 @@ public class ActivityDiagram {
     private IRPCollection elementsToPopulate;
 
 
-    public void createActivityDiagram(String outputFile) {
+    public void createActivityDiagram(String outputFile,int fileCount,Boolean hasMultipleFiles) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(outputFile)));
             JSONObject json = new JSONObject(content);
-            IRPPackage basePackage = CommonUtil.createBasePackage(Constants.project,
-                    Constants.RHAPSODY_ACTIVITY_DIAGRAM);
+            IRPPackage basePackage;
+             if(fileCount == 1)
+                basePackage = CommonUtil.createBasePackage(Constants.project,Constants.RHAPSODY_ACTIVITY_DIAGRAM); 
+            else
+                 basePackage = CommonUtil.createOrGetPackage(Constants.project,Constants.RHAPSODY_ACTIVITY_DIAGRAM); 
+
             if (basePackage == null) {
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
                         "ERROR: Could not create/find base package for activity diagram." + Constants.NEW_LINE);
@@ -38,7 +41,13 @@ public class ActivityDiagram {
             }
             elementsToPopulate = Constants.rhapsodyApp.createNewCollection();
             ActivityDiagramUtil.getActivitySpecificStereotypes(Constants.project);
-            String diagramName = json.optString("title", "ActivityDiagram").replaceAll("[^a-zA-Z0-9]", "_");
+            String title = "ActivityDiagram";
+            if(hasMultipleFiles){
+                title = title + "_" + fileCount;
+            }
+            String diagramName = json.optString("title", title).replaceAll("[^a-zA-Z0-9]", "_");
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "INFO: Creating activity diagram :" + diagramName); 
             IRPFlowchart fc = ActivityDiagramUtil.createActivityDiagram(basePackage, diagramName);
             JSONArray sections = json.optJSONArray("sections");
             if (sections != null) {
@@ -83,13 +92,12 @@ public class ActivityDiagram {
             CommonUtil.pause(3000);
             IRPDiagram activityDiagram = fc.getFlowchartDiagram();
             CommonUtil.populateNote(activityDiagram , elementsToPopulate);
-            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                    "INFO: Activity Diagram generated successfully." + Constants.NEW_LINE);
-            UiUtil.showInfoPopup(
-                    "Activity Diagram generated successfully. \n\nTo view the generated diagram in Rhapsody, please close the close the Chat UI.\n");
             activityDiagram.openDiagram();
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "INFO: Activity diagram created :" + diagramName+ Constants.NEW_LINE);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
+                "ERROR: Error creating activity diagram " + e.getMessage()+ Constants.NEW_LINE);
         } finally {
             try {
                 java.nio.file.Path outputPath = java.nio.file.Paths.get(outputFile);
@@ -98,7 +106,7 @@ public class ActivityDiagram {
                 }
             } catch (Exception ex) {
                 Constants.rhapsodyApp.writeToOutputWindow(Constants.LOG_TITLE_GEN_AI_PLUGIN,
-                        "ERROR: Could not delete output file: " + ex.getMessage() + Constants.NEW_LINE);
+                    "ERROR: Could not delete output file: " + ex.getMessage() + Constants.NEW_LINE);
             }
 
         }

@@ -1,0 +1,54 @@
+@startuml
+' Package for the PMIC BIST Component
+package "PMIC_BIST_Component" {
+ 
+    class rbVR5510_PMIC_BIST_c {
+        +rbVR5510_PMIC_BIST_ErrStatus(void) : void
+        +Enable_ABIST2(void) : void
+        +Check_BIST_Status(void) : void
+        +Handle_BIST_Fault(void) : void
+        +Enter_SafeState(void) : void
+        -rbvr5510Mon_BISTErrstatus : bool
+    }
+ 
+    interface rbVR5510_PMIC_BIST_h
+ 
+    class rbVR5510_RegisterAccess_c {
+        +rbVR5510_ReadRegister_u8(uint8_t unit, uint16_t addr, uint8_t* value) : int
+        +rbVR5510_WriteRegister_u8(uint8_t unit, uint16_t addr, uint8_t value) : int
+    }
+ 
+    interface rbVR5510_RegisterAccess_h
+ 
+    class rbsfty_ErrMgt_c {
+        +rbsfty_ErrMgt_ReportError(uint16_t errorCode, const char* details) : void
+    }
+ 
+    interface rbsfty_ErrMgt_h
+ 
+    ' Constants and bit masks (could be in a shared header)
+    class BIST_Constants {
+<<static>>
+        +FS_DIAG_SAFETY_ADDR : uint16_t
+        +FS_I_ABIST2_CTRL_ADDR : uint16_t
+        +RBVR5510_FS_DIAG_SAFETY_LBIST_PASS_MASK16 : uint16_t
+        +RBVR5510_FS_DIAG_SAFETY_ABIST1_OK_MASK16 : uint16_t
+        +RBVR5510_FS_DIAG_SAFETY_ABIST2_OK_MASK16 : uint16_t
+        +RBVR5510_FS_DIAG_SAFETY_LBIST_PASS_SHIFT16 : uint8_t
+        +RBVR5510_FS_DIAG_SAFETY_ABIST1_OK_SHIFT16 : uint8_t
+        +RBVR5510_FS_DIAG_SAFETY_ABIST2_OK_SHIFT16 : uint8_t
+        +RBVR5510_FS_DIAG_SAFETY_LBIST_ABIST_DEFAULT : uint16_t
+        +BOSCH_VR5510BIST_FAILURE : uint16_t
+    }
+ 
+    ' Relationships
+    rbVR5510_PMIC_BIST_c ..> rbVR5510_RegisterAccess_c : uses
+    rbVR5510_PMIC_BIST_c ..> rbsfty_ErrMgt_c : uses
+    rbVR5510_PMIC_BIST_c ..> BIST_Constants : uses
+ 
+    rbVR5510_PMIC_BIST_c ..|> rbVR5510_PMIC_BIST_h
+    rbVR5510_RegisterAccess_c ..|> rbVR5510_RegisterAccess_h
+    rbsfty_ErrMgt_c ..|> rbsfty_ErrMgt_h
+}
+ 
+@enduml
