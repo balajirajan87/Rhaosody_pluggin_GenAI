@@ -1,7 +1,0 @@
-{
-    "java.project.sourcePaths": [
-        "rhapsody-genai-integration"
-    ],
-    "java.configuration.updateBuildConfiguration": "disabled",
-    "java.debug.settings.onBuildFailureProceed": true
-}
